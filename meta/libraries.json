@@ -1,0 +1,16 @@
+{
+    "key": "prometheus",
+    "name": "Prometheus",
+    "authors": [
+        "Vladislav Soulgard"
+    ],
+    "description": "A Prometheus client library.",
+    "category": [
+        "Concurrent",
+        "IO"
+    ],
+    "maintainers": [
+        "Vladislav Soulgard <vsoulgard@gmail.com>"
+    ],
+    "cxxstd": "20"
+}
