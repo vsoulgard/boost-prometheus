@@ -104,13 +104,13 @@ jobs:
             cxxstd: '23'
             build-type: 'Release'
 
-          # Clang with libc++
+          # Clang with libc++ (note that some functions needs -fexperimental-library)
           - toolset: clang-19
             install: 'clang-19 libc++-19-dev libc++abi-19-dev'
             container: ubuntu:24.04
             cxxstd: '20'
             build-type: 'Debug'
-            cxxflags: '-stdlib=libc++'
+            cxxflags: '-stdlib=libc++ -fexperimental-library'
             ldflags: '-lc++'
 
           - toolset: clang-21
@@ -131,7 +131,7 @@ jobs:
             ldflags: '-fsanitize=address,undefined'
 
           - toolset: clang-22
-            install: clang-22
+            install: 'clang-22 libclang-rt-22-dev'
             container: ubuntu:26.04
             cxxstd: '20'
             build-type: 'Debug'
@@ -148,7 +148,7 @@ jobs:
             ldflags: '-fsanitize=thread'
 
           - toolset: clang-22
-            install: clang-22
+            install: 'clang-22 libclang-rt-22-dev'
             container: ubuntu:26.04
             cxxstd: '23'
             build-type: 'Debug'
@@ -294,6 +294,18 @@ jobs:
             build-shared-libs: 0
 
           - toolset: msvc-14.3
+            generator: "Visual Studio 17 2022"
+            cxxstd: '20'
+            build-type: 'Release'
+            build-shared-libs: 1
+
+          - toolset: msvc-14.4
+            generator: "Visual Studio 17 2022"
+            cxxstd: '20'
+            build-type: 'Debug'
+            build-shared-libs: 0
+
+          - toolset: msvc-14.4
             generator: "Visual Studio 17 2022"
             cxxstd: '20'
             build-type: 'Release'
