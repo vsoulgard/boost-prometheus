@@ -171,7 +171,10 @@ jobs:
           apt-get install -y --no-install-recommends \
             sudo \
             git \
+            g++ \
             ca-certificates \
+            openssl \
+            libssl-dev \
             cmake \
             make \
             python3 \
@@ -259,7 +262,11 @@ jobs:
           apt-get update
           apt-get install -y --no-install-recommends \
             git \
+            g++ \
             python3 \
+            openssl \
+            libssl-dev \
+            ca-certificates \
             ${{ matrix.install }}
 
       - name: Setup Boost
