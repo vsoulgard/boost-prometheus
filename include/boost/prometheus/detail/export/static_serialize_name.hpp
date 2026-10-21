@@ -67,7 +67,7 @@ struct static_serialize_name_impl
 };
 
 // Formats metric name with all labels
-template <typename MetricType, string_buffer... LabelValues>
+template <typename MetricType, auto... LabelValues>
 struct static_serialize_name
 {
     static constexpr string_buffer value = []() consteval

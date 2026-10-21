@@ -32,35 +32,39 @@ BOOST_AUTO_TEST_CASE(counter_name)
     {
         using test_counter_with_labels = static_counter<"http_requests",
             labels<"first">>;
-        using serialized_name_with_labels = static_serialize_name<test_counter_with_labels, "1">;
+        using serialized_name_with_labels = static_serialize_name<test_counter_with_labels, string_buffer("1")>;
         static_assert(serialized_name_with_labels::value == std::string_view(
             "http_requests_total{first=\"1\"} "));
     }
     {
         using test_counter_with_labels = static_counter<"http_requests",
             labels<"first", "second">>;
-        using serialized_name_with_labels = static_serialize_name<test_counter_with_labels, "1", "2">;
+        using serialized_name_with_labels = static_serialize_name<test_counter_with_labels,
+            string_buffer("1"), string_buffer("2")>;
         static_assert(serialized_name_with_labels::value == std::string_view(
             "http_requests_total{first=\"1\",second=\"2\"} "));
     }
     {
         using test_counter_with_labels = static_counter<"http_requests",
             labels<"first", "second", "third">>;
-        using serialized_name_with_labels = static_serialize_name<test_counter_with_labels, "1", "2", "3">;
+        using serialized_name_with_labels = static_serialize_name<test_counter_with_labels,
+            string_buffer("1"), string_buffer("2"), string_buffer("3")>;
         static_assert(serialized_name_with_labels::value == std::string_view(
             "http_requests_total{first=\"1\",second=\"2\",third=\"3\"} "));
     }
     {
         using test_counter_with_labels = static_counter<"http_requests",
             labels<"first", "second", "third", "fourth">>;
-        using serialized_name_with_labels = static_serialize_name<test_counter_with_labels, "1", "2", "3", "4">;
+        using serialized_name_with_labels = static_serialize_name<test_counter_with_labels,
+            string_buffer("1"), string_buffer("2"), string_buffer("3"), string_buffer("4")>;
         static_assert(serialized_name_with_labels::value == std::string_view(
             "http_requests_total{first=\"1\",fourth=\"4\",second=\"2\",third=\"3\"} "));
     }
     {
         using test_counter_with_labels = static_counter<"http_requests",
             labels<"first", "second", "third", "fourth", "fifth">>;
-        using serialized_name_with_labels = static_serialize_name<test_counter_with_labels, "1", "2", "3", "4", "5">;
+        using serialized_name_with_labels = static_serialize_name<test_counter_with_labels,
+            string_buffer("1"), string_buffer("2"), string_buffer("3"), string_buffer("4"), string_buffer("5")>;
         static_assert(serialized_name_with_labels::value == std::string_view(
             "http_requests_total{fifth=\"5\",first=\"1\",fourth=\"4\",second=\"2\",third=\"3\"} "));
     }
@@ -78,35 +82,40 @@ BOOST_AUTO_TEST_CASE(gauge_name)
     {
         using test_gauge_with_labels = static_gauge<"test_g",
             labels<"first">>;
-        using serialized_name_with_labels = static_serialize_name<test_gauge_with_labels, "1">;
+        using serialized_name_with_labels = static_serialize_name<test_gauge_with_labels,
+            string_buffer("1")>;
         static_assert(serialized_name_with_labels::value == std::string_view(
             "test_g{first=\"1\"} "));
     }
     {
         using test_gauge_with_labels = static_gauge<"test_g",
             labels<"first", "second">>;
-        using serialized_name_with_labels = static_serialize_name<test_gauge_with_labels, "1", "2">;
+        using serialized_name_with_labels = static_serialize_name<test_gauge_with_labels,
+            string_buffer("1"), string_buffer("2")>;
         static_assert(serialized_name_with_labels::value == std::string_view(
             "test_g{first=\"1\",second=\"2\"} "));
     }
     {
         using test_gauge_with_labels = static_gauge<"test_g",
             labels<"first", "second", "third">>;
-        using serialized_name_with_labels = static_serialize_name<test_gauge_with_labels, "1", "2", "3">;
+        using serialized_name_with_labels = static_serialize_name<test_gauge_with_labels,
+            string_buffer("1"), string_buffer("2"), string_buffer("3")>;
         static_assert(serialized_name_with_labels::value == std::string_view(
             "test_g{first=\"1\",second=\"2\",third=\"3\"} "));
     }
     {
         using test_gauge_with_labels = static_gauge<"test_g",
             labels<"first", "second", "third", "fourth">>;
-        using serialized_name_with_labels = static_serialize_name<test_gauge_with_labels, "1", "2", "3", "4">;
+        using serialized_name_with_labels = static_serialize_name<test_gauge_with_labels,
+            string_buffer("1"), string_buffer("2"), string_buffer("3"), string_buffer("4")>;
         static_assert(serialized_name_with_labels::value == std::string_view(
             "test_g{first=\"1\",fourth=\"4\",second=\"2\",third=\"3\"} "));
     }
     {
         using test_gauge_with_labels = static_gauge<"test_g",
             labels<"first", "second", "third", "fourth", "fifth">>;
-        using serialized_name_with_labels = static_serialize_name<test_gauge_with_labels, "1", "2", "3", "4", "5">;
+        using serialized_name_with_labels = static_serialize_name<test_gauge_with_labels,
+            string_buffer("1"), string_buffer("2"), string_buffer("3"), string_buffer("4"), string_buffer("5")>;
         static_assert(serialized_name_with_labels::value == std::string_view(
             "test_g{fifth=\"5\",first=\"1\",fourth=\"4\",second=\"2\",third=\"3\"} "));
     }
