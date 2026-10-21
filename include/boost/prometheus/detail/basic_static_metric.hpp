@@ -77,7 +77,6 @@ public:
             static_assert(sizeof...(LabelValues) == labels_type::size(), "Incorrect label values count");
 
             std::size_t index = static_labels_registrator<derived_type, LabelValues...>::index;
-            BOOST_ASSERT(&impl_.value_ref(index) != nullptr);
             return impl_.value_ref(index);
         }
         else
@@ -86,7 +85,6 @@ public:
 
             (void)static_labels_registrator<derived_type>::index;
             BOOST_ASSERT((static_labels_registrator<derived_type>::index == 0));
-            BOOST_ASSERT(&impl_.value_ref(0) != nullptr);
             return impl_.value_ref(0);
         }
     }

@@ -130,8 +130,8 @@ jobs:
             cxxflags: '-fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer'
             ldflags: '-fsanitize=address,undefined'
 
-          - toolset: clang-22
-            install: clang-22
+          - toolset: clang-21
+            install: clang-21
             container: ubuntu:26.04
             cxxstd: '20'
             build-type: 'Debug'
@@ -147,8 +147,8 @@ jobs:
             cxxflags: '-fsanitize=thread'
             ldflags: '-fsanitize=thread'
 
-          - toolset: clang-22
-            install: clang-22
+          - toolset: clang-21
+            install: clang-21
             container: ubuntu:26.04
             cxxstd: '23'
             build-type: 'Debug'
@@ -242,8 +242,8 @@ jobs:
             container: ubuntu:24.04
             cxxstd: '20,23'
 
-          - toolset: clang-22
-            install: clang-22
+          - toolset: clang-21
+            install: clang-21
             container: ubuntu:26.04
             cxxstd: '23'
 

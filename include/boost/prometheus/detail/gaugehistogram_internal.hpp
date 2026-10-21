@@ -53,7 +53,7 @@ struct gaugehistogram_internal : public basic_metric_internal<AtomicPolicyType, 
     {
         using bucket_value_type = histogram_bucket_value<
             AtomicPolicyType,
-            base_type::template alignment<count_type>,
+            base_type::template alignment<std::uint64_t>,
             // Use signed integer for for clear 
             // visibility of sub() logic errors
             std::int64_t>;

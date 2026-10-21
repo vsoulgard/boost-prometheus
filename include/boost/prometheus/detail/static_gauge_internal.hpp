@@ -31,7 +31,7 @@ struct static_gauge_internal
         alignas(alignment<double>)
         double value;
 
-        double get_value() const noexcept
+        const double get_value() const noexcept
         {
             if constexpr (AtomicPolicyType::enabled)
             {

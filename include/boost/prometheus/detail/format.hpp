@@ -358,7 +358,7 @@ struct format
             std::string& sums,
             std::string& counts)
         {
-            if constexpr (histogram_internal.is_atomic())
+            if constexpr (GaugehistogramType::is_atomic())
             {
                 std::lock_guard lock(histogram_internal.mtx_);
                 // Switch active buffer idx
