@@ -5,7 +5,9 @@
 # file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 #
 
+if(NOT (BOOST_SUPERPROJECT_VERSION OR DEFINED BOOST_SUPERPROJECT_SOURCE_DIR))
 find_package(Boost REQUIRED COMPONENTS unit_test_framework CONFIG)
+endif()
 
 function(add_boost_test test_name)
     add_executable(${PROJECT_NAME}_${test_name} src/entry_point.cpp ${ARGN})
