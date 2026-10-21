@@ -32,11 +32,11 @@ BOOST_AUTO_TEST_CASE(basic)
 BOOST_AUTO_TEST_CASE(with_labels)
 {
     using h = static_histogram<"test_h", labels<"first", "second">>;
-    static_assert(static_serialize_bucket_name<h, "0.1", "1", "2">::value ==
+    static_assert(static_serialize_bucket_name<h, "0.1", string_buffer("1"), string_buffer("2")>::value ==
         std::string_view("test_h_bucket{first=\"1\",le=\"0.1\",second=\"2\"} "));
-    static_assert(static_serialize_bucket_name<h, "0.2", "1", "2">::value ==
+    static_assert(static_serialize_bucket_name<h, "0.2", string_buffer("1"), string_buffer("2")>::value ==
         std::string_view("test_h_bucket{first=\"1\",le=\"0.2\",second=\"2\"} "));
-    static_assert(static_serialize_bucket_name<h, "+Inf", "3", "4">::value ==
+    static_assert(static_serialize_bucket_name<h, "+Inf", string_buffer("3"), string_buffer("4")>::value ==
         std::string_view("test_h_bucket{first=\"3\",le=\"+Inf\",second=\"4\"} "));
 }
 

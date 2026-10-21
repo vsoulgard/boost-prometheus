@@ -19,7 +19,7 @@
 namespace boost::prometheus::detail {
 
 // Registrates static metric with passed labelvalues and returns it's vector index.
-template <typename MetricType, string_buffer... LabelValues>
+template <typename MetricType, auto... LabelValues>
 struct static_labels_registrator
 {
     inline static std::size_t index = []()
