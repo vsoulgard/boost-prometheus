@@ -82,7 +82,6 @@ struct static_serialize_name
             else
                 return MetricType::metric_name;
         }();
-        MetricType::metric_name;
 
         return static_serialize_name_impl<metric_name, labels_type, LabelValues...>::value;
     }();

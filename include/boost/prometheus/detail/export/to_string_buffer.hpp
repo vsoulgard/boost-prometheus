@@ -48,9 +48,9 @@ struct U128
         {
             for (std::size_t i = 4 - ws; i < 4; i++)
             if (w[i]) lost = true;
-            for (std::size_t i = 3; i >= int(ws); i--)
+            for (std::size_t i = 3; i >= ws; i--)
                 w[i] = w[i - ws];
-            for (std::size_t i = 0; i < int(ws); i++)
+            for (std::size_t i = 0; i < ws; i++)
                 w[i] = 0;
         }
         if (bs > 0)

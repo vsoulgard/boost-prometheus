@@ -424,7 +424,6 @@ struct format
         static void serialize(MetricType& metric, BufferType& out_buffer)
         {
             append(metric.internal_.prometheus_prefix_sv_, out_buffer);
-            auto& internal = metric.internal_;
             serialize_histogram(metric.internal_, out_buffer);
         }
 
@@ -433,7 +432,6 @@ struct format
         static void serialize(MetricType& metric, BufferType& out_buffer)
         {
             append(metric.internal_.prometheus_prefix_sv_, out_buffer);
-            auto& internal = metric.internal_;
             serialize_gaugehistogram(metric.internal_, out_buffer);
         }
 
@@ -579,7 +577,6 @@ struct format
         static void serialize(MetricType& metric, BufferType& out_buffer)
         {
             append(metric.internal_.openmetrics_prefix_sv_, out_buffer);
-            auto& internal = metric.internal_;
             serialize_histogram(metric.internal_, out_buffer);
         }
 

@@ -97,16 +97,16 @@ BOOST_AUTO_TEST_CASE(non_atomic_observe)
 BOOST_AUTO_TEST_CASE(size)
 {
     using empty_histogram = static_histogram<"size_test_empty_histogram">;
-    BOOST_TEST(empty_histogram::size() == 0);
+    BOOST_TEST(empty_histogram::size() == 0u);
 
     using test_histogram = static_histogram<"size_test_histogram">;
-    BOOST_TEST(test_histogram::size() == 1);
+    BOOST_TEST(test_histogram::size() == 1u);
     test_histogram::observe(1.0);
-    BOOST_TEST(test_histogram::size() == 1);
+    BOOST_TEST(test_histogram::size() == 1u);
 
     using test_histogram_labels = static_histogram<"size_test_histogram_labels", labels<"label_1", "label_2">>;
     // 3 different label sequences were created
-    BOOST_TEST(test_histogram_labels::size() == 3);
+    BOOST_TEST(test_histogram_labels::size() == 3u);
 
     test_histogram_labels::observe<"value_1", "value_2">(1.0);
     test_histogram_labels::observe<"value_1", "value_2">(1.0);
@@ -117,7 +117,7 @@ BOOST_AUTO_TEST_CASE(size)
 
     test_histogram_labels::observe<"value_5", "value_6">(1.0);
 
-    BOOST_TEST(test_histogram_labels::size() == 3);
+    BOOST_TEST(test_histogram_labels::size() == 3u);
 }
 
 BOOST_AUTO_TEST_CASE(is_atomic)

@@ -27,7 +27,7 @@ BOOST_AUTO_TEST_CASE(sharing_1)
     shared_registry::register_metric<counter3>();
     shared_registry::register_metric<counter4>();
 
-    BOOST_TEST(shared_registry::size() == 8);
+    BOOST_TEST(shared_registry::size() == 8u);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

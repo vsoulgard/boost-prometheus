@@ -110,8 +110,6 @@ auto serialize_histogram_names_impl(
         result.buckets_offsets.push_back(bucket_offset);
         std::size_t off = bucket_offset;
         char* bucket_data = result.base_string.data();
-        const std::size_t bucket_size =
-            before_value.size() + le_value.size() + std::string_view("\"} ").size();
 
         std::memcpy(bucket_data + off, before_value.data(), before_value.size());
         off += before_value.size();
