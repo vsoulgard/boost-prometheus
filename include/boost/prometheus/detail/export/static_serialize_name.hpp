@@ -37,7 +37,7 @@ struct format_labels_impl
     }();
 };
 
-template <string_buffer MetricName, typename LabelsType, string_buffer... LabelValues>
+template <string_buffer MetricName, typename LabelsType, auto... LabelValues>
 struct static_serialize_name_impl
 {
     static constexpr string_buffer value = []() consteval

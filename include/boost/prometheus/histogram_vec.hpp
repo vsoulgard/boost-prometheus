@@ -36,7 +36,7 @@ class histogram_vec : public detail::basic_metric_vec<
     std::vector<double> bucket_boundaries_;
 
     // Serialization
-    friend class boost::prometheus::format;
+    friend struct boost::prometheus::format;
 
     void init(histogram_opts&& options)
     {

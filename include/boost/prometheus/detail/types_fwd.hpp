@@ -18,13 +18,13 @@ template <typename, typename, typename>
 class basic_metric_vec;
 
 template <typename>
-class static_gauge_internal;
+struct static_gauge_internal;
 
 template <typename>
-class static_histogram_internal;
+struct static_histogram_internal;
 
 template <typename>
-class static_info_internal;
+struct static_info_internal;
 
 }
 

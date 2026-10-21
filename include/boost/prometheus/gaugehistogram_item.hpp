@@ -44,7 +44,7 @@ class gaugehistogram_item
     friend class detail::basic_metric_vec;
 
     // Serialization
-    friend class boost::prometheus::format;
+    friend struct boost::prometheus::format;
 
 public:
 
