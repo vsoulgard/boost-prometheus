@@ -8,7 +8,7 @@
 #ifndef BOOST_PROMETHEUS_DETAIL_EXTRACT_OPTION_HPP
 #define BOOST_PROMETHEUS_DETAIL_EXTRACT_OPTION_HPP
 
-#include <boost/prometheuS/detail/is_specialization_of.hpp>
+#include <boost/prometheus/detail/is_specialization_of.hpp>
 
 namespace boost::prometheus::detail {
 
