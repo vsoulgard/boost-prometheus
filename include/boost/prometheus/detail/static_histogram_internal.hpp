@@ -36,7 +36,7 @@ struct static_histogram_internal
     {
         struct histogram_buffer
         {
-            using bucket_value_type = histogram_bucket_value<AtomicPolicyType, alignment<count_type>>;
+            using bucket_value_type = histogram_bucket_value<AtomicPolicyType, alignment<std::uint64_t>>;
             using buffer_count_type = std::conditional_t<
                 AtomicPolicyType::enabled,
                 std::uint64_t,

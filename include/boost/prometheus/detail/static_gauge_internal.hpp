@@ -29,13 +29,13 @@ struct static_gauge_internal
         // Metric name in text format
         std::string_view formatted_name;
         alignas(alignment<double>)
-        double value;
+        mutable double value;
 
-        const double get_value() const noexcept
+        double get_value() const noexcept
         {
             if constexpr (AtomicPolicyType::enabled)
             {
-                std::atomic_ref<const double> atomic_value(value);
+                std::atomic_ref<double> atomic_value(value);
                 return atomic_value.load(std::memory_order_relaxed);
             }
             else
