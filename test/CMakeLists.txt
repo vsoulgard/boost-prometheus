@@ -17,8 +17,10 @@ function(add_boost_test test_name)
             Boost::unit_test_framework
     )
 
+    # Follow the Boost convention: don't build test targets by default,
+    # and only when explicitly requested by building target tests
+    set_target_properties(${PROJECT_NAME}_${test_name} PROPERTIES EXCLUDE_FROM_ALL ON)
     add_dependencies(tests ${PROJECT_NAME}_${test_name})
-
     add_test(
         NAME ${PROJECT_NAME}_${test_name}
         COMMAND ${PROJECT_NAME}_${test_name}
