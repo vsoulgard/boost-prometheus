@@ -14,7 +14,7 @@
 
 namespace boost::prometheus::detail {
 
-template <typename HistogramType, string_buffer LeValue, auto... LabelValues>
+template <typename HistogramType, auto LeValue, auto... LabelValues>
 struct static_serialize_bucket_name
 {
     static constexpr string_buffer value = []() consteval

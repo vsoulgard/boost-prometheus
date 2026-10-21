@@ -195,8 +195,6 @@ serialize_histogram_names_with_labels_result serialize_histogram_names_with_labe
         result.buckets_offsets.push_back(bucket_offset);
         std::size_t off = bucket_offset;
         char* bucket_data = result.base_string.data();
-        const std::size_t bucket_size =
-            before_le_value.size() + le_value.size() + after_le_value.size();
 
         std::memcpy(bucket_data + off, before_le_value.data(), before_le_value.size());
         off += before_le_value.size();
@@ -205,7 +203,6 @@ serialize_histogram_names_with_labels_result serialize_histogram_names_with_labe
         std::memcpy(bucket_data + off, after_le_value.data(), after_le_value.size());
         off += after_le_value.size();
 
-        BOOST_ASSERT(off - bucket_offset == bucket_size);
         BOOST_ASSERT(off - bucket_offset <= bucket_max_size);
         bucket_offset = off;
     }

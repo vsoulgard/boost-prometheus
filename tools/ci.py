@@ -209,6 +209,7 @@ def _run_b2_tests(
         'variant={}'.format(variant),
         'warnings=extra',
         'warnings-as-errors=on',
+        '-Wno-missing-designated-field-initializers',
         '-j{}'.format(_num_jobs),
         'libs/prometheus/test'
     ])

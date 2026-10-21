@@ -15,7 +15,7 @@
 
 namespace boost::prometheus::detail {
 
-template <string_buffer MetricName, typename PairsValueTuple>
+template <auto MetricName, typename PairsValueTuple>
 struct format_labels_impl
 {
     static constexpr string_buffer value = []() consteval
@@ -37,7 +37,7 @@ struct format_labels_impl
     }();
 };
 
-template <string_buffer MetricName, typename LabelsType, auto... LabelValues>
+template <auto MetricName, typename LabelsType, auto... LabelValues>
 struct static_serialize_name_impl
 {
     static constexpr string_buffer value = []() consteval

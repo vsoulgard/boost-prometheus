@@ -28,7 +28,7 @@ struct static_info_internal;
 
 }
 
-class format;
+struct format;
 
 template <typename>
 class counter;

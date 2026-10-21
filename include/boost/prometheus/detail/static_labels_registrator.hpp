@@ -57,7 +57,7 @@ struct static_labels_registrator
 
             static constexpr string_buffer formatted_inf_bucket = static_serialize_bucket_name<
                 MetricType,
-                "+Inf",
+                string_buffer("+Inf"),
                 LabelValues...
             >::value;
 

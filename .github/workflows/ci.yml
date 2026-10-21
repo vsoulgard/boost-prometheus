@@ -104,13 +104,13 @@ jobs:
             cxxstd: '23'
             build-type: 'Release'
 
-          # Clang with libc++ (note that some functions needs -fexperimental-library)
-          - toolset: clang-19
-            install: 'clang-19 libc++-19-dev libc++abi-19-dev'
+          # Clang with libc++
+          - toolset: clang-20
+            install: 'clang-20 libc++-20-dev libc++abi-20-dev'
             container: ubuntu:24.04
             cxxstd: '20'
             build-type: 'Debug'
-            cxxflags: '-stdlib=libc++ -fexperimental-library'
+            cxxflags: '-stdlib=libc++'
             ldflags: '-lc++'
 
           - toolset: clang-21
@@ -367,7 +367,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        build-system: [cmake, b2]
+        build-system: [CMake, B2]
 
     steps:
       - name: Checkout
@@ -380,7 +380,7 @@ jobs:
         run: python3 ./tools/ci.py build-b2-distro --toolset clang
 
       - name: Build and run the tests using CMake
-        if: matrix.build-system == 'cmake'
+        if: matrix.build-system == 'CMake'
         run: |
           python3 ./tools/ci.py build-cmake-distro \
             --build-type Debug \
@@ -389,7 +389,7 @@ jobs:
             "--cxxflags=-Werror"
 
       - name: Run B2 tests
-        if: matrix.build-system == 'b2'
+        if: matrix.build-system == 'B2'
         run: |
           python3 ./tools/ci.py run-b2-tests \
             --toolset clang \
