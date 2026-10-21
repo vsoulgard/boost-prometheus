@@ -1,0 +1,35 @@
+#
+# Copyright (c) 2026 Vladislav Soulgard (vsoulgard at gmail dot com)
+#
+# Distributed under the Boost Software License, Version 1.0. (See accompanying
+# file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+#
+
+require-b2 5.2 ;
+
+constant boost_dependencies :
+    /boost/asio//boost_asio
+    /boost/assert//boost_assert
+    /boost/beast//boost_beast
+    /boost/config//boost_config
+    /boost/container//boost_container
+    /boost/container_hash//boost_container_hash
+    /boost/core//boost_core
+    /boost/crc//boost_crc
+    /boost/predef//boost_predef
+    /boost/system//boost_system
+    /boost/unordered//boost_unordered
+    ;
+
+project /boost/prometheus
+    : common-requirements
+        <include>include
+    ;
+
+explicit
+    [ alias boost_prometheus : : : : <library>$(boost_dependencies) ]
+    [ alias all : boost_prometheus test ]
+    ;
+
+call-if : boost-library prometheus
+    ;

@@ -1,0 +1,44 @@
+#
+# Copyright (c) 2026 Vladislav Soulgard (vsoulgard at gmail dot com)
+#
+# Distributed under the Boost Software License, Version 1.0. (See accompanying
+# file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+#
+
+import ac ;
+import testing ;
+
+local requirements =
+    <library>/boost/prometheus//boost_prometheus
+    <library>/boost/test//boost_unit_test_framework/<warnings-as-errors>off
+    <define>BOOST_ALL_NO_LIB=1
+    <cxxstd>20
+    <include>include
+    ;
+
+run
+    src/entry_point.cpp
+    [ glob unit/*.cpp ]
+: requirements $(requirements)
+: target-name boost_prometheus_unittests
+;
+
+explicit boost_prometheus_unittests ;
+
+using openssl ;
+
+# OpenSSL required for SSL integration tests
+local integration-requirements =
+    $(requirements)
+    [ ac.check-library /openssl//ssl : <library>/openssl//ssl : <build>no ]
+    [ ac.check-library /openssl//ssl : <library>/openssl//crypto : <build>no ]
+    ;
+
+run
+    src/entry_point.cpp
+    [ glob integration/*.cpp ]
+: requirements $(integration-requirements)
+: target-name boost_prometheus_integrationtests
+;
+
+explicit boost_prometheus_integrationtests ;
