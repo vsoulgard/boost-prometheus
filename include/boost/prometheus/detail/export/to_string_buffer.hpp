@@ -11,10 +11,40 @@
 #include <boost/prometheus/detail/string_buffer.hpp>
 
 #include <array>
+#include <bit>
+#include <concepts>
 #include <cmath>
+#include <cstddef>
 #include <limits>
 
 namespace boost::prometheus::detail {
+
+template <std::floating_point T>
+[[nodiscard]] consteval bool constexpr_signbit(T value) noexcept
+{
+    if constexpr (sizeof(T) == sizeof(std::uint32_t))
+    {
+        return (std::bit_cast<std::uint32_t>(value) >> 31) != 0u;
+    }
+    else if constexpr (sizeof(T) == sizeof(std::uint64_t))
+    {
+        return (std::bit_cast<std::uint64_t>(value) >> 63) != 0u;
+    }
+    else
+    {
+        const auto bytes = std::bit_cast<std::array<std::byte, sizeof(T)>>(value);
+
+        constexpr std::size_t significant =
+            (std::numeric_limits<T>::digits == 64) ? 10u : sizeof(T);
+
+        constexpr std::size_t sign_byte =
+            (std::endian::native == std::endian::little)
+                ? significant - 1u
+                : 0u;
+
+        return (std::to_integer<unsigned char>(bytes[sign_byte]) & 0x80u) != 0u;
+    }
+}
 
 struct U128
 {
@@ -177,7 +207,7 @@ consteval auto to_string_buffer()
         std::size_t idx = 0;
 
         std::uint64_t raw_bits = std::bit_cast<std::uint64_t>(Value);
-        bool negative = std::signbit(Value);
+        bool negative = constexpr_signbit(Value);
         std::uint64_t bits = raw_bits & ~(std::uint64_t(1) << 63);
 
         std::uint32_t raw_exp = std::uint32_t((bits >> 52) & 0x7FFu);

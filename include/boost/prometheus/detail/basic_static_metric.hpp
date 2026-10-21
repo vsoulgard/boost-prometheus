@@ -32,8 +32,8 @@ template <
 >
 class basic_static_metric
 {
-protected:
-    
+public:
+
     using labels_type = extract_option<labels, Options...>::type;
     using help_type = extract_option<help, Options...>::type;
     using unit_type = extract_option<unit, Options...>::type;
