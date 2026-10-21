@@ -16,12 +16,29 @@ target_include_directories(boost_prometheus INTERFACE include)
 
 target_compile_features(boost_prometheus INTERFACE cxx_std_20)
 
-find_package(Boost 1.90 REQUIRED CONFIG)
-
-target_link_libraries(
-    boost_prometheus
-    INTERFACE Boost::headers
-)
+if(BOOST_SUPERPROJECT_VERSION OR DEFINED BOOST_SUPERPROJECT_SOURCE_DIR)
+    target_link_libraries(
+        boost_prometheus
+        INTERFACE
+        Boost::asio
+        Boost::assert
+        Boost::beast
+        Boost::config
+        Boost::container
+        Boost::container_hash
+        Boost::core
+        Boost::crc
+        Boost::predef
+        Boost::system
+        Boost::unordered
+    )
+else()
+    find_package(Boost 1.90 REQUIRED CONFIG)
+    target_link_libraries(
+        boost_prometheus
+        INTERFACE Boost::headers
+    )
+endif()
 
 if(BUILD_TESTING)
     # Custom target tests; required by the Boost superproject
