@@ -22,6 +22,22 @@ namespace boost::prometheus::detail {
 template <typename MetricType, auto... LabelValues>
 struct static_labels_registrator
 {
+    template <std::size_t I>
+    static void process_histogram_bucket(auto& value_ref)
+    {
+        constexpr double val = MetricType::buckets_type::values[I];
+        constexpr auto le_value = to_string_buffer<val>();
+
+        static constexpr string_buffer formatted_bucket =
+            static_serialize_bucket_name<
+                MetricType,
+                le_value,
+                LabelValues...
+            >::value;
+
+        value_ref.bucket_names_svs_.push_back(formatted_bucket);
+    }
+
     inline static std::size_t index = []()
     {
         std::size_t index;
@@ -37,22 +53,8 @@ struct static_labels_registrator
             index = MetricType::impl_.add_entry(bucket_count);
             auto& value_ref = MetricType::impl_.value_ref(index);
 
-            [&]<std::size_t... Is>(std::index_sequence<Is...>)
-            {
-                ([&]()
-                {
-                    constexpr double val = MetricType::buckets_type::values[Is];
-
-                    constexpr auto le_value = to_string_buffer<val>();
-
-                    static constexpr string_buffer formatted_bucket = static_serialize_bucket_name<
-                        MetricType,
-                        le_value,
-                        LabelValues...
-                    >::value;
-
-                    value_ref.bucket_names_svs_.push_back(formatted_bucket);
-                }(), ...);
+            [&]<std::size_t... Is>(std::index_sequence<Is...>) {
+                (process_histogram_bucket<Is>(value_ref), ...);
             }(std::make_index_sequence<MetricType::buckets_type::values.size()>{});
 
             static constexpr string_buffer formatted_inf_bucket = static_serialize_bucket_name<

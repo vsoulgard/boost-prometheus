@@ -83,8 +83,8 @@ void test_counter_prometheus_0_0_4()
         "# TYPE http_requests_total counter\n"
         "http_requests_total 8\n"));
     // Multiple counters
-    counter<AtomicPolicyType> c2("http_requests2", {.help = "help text"});
-    counter<AtomicPolicyType> c3("test_c_seconds", {.unit = "seconds"});
+    counter<AtomicPolicyType> c2("http_requests2", {.help = "help text", .unit = ""});
+    counter<AtomicPolicyType> c3("test_c_seconds", {.help = "", .unit = "seconds"});
     c3.inc();
     reg.register_metric(c2);
     reg.register_metric(c3);
@@ -146,8 +146,8 @@ void test_counter_openmetrics_1_0()
         "http_requests_total 8\n"
         "# EOF\n"));
     // Multiple counters
-    counter<AtomicPolicyType> c2("http_requests2", {.help = "help text"});
-    counter<AtomicPolicyType> c3("test_c_seconds", {.unit = "seconds"});
+    counter<AtomicPolicyType> c2("http_requests2", {.help = "help text", .unit = ""});
+    counter<AtomicPolicyType> c3("test_c_seconds", {.help = "", .unit = "seconds"});
     c3.inc();
     reg.register_metric(c2);
     reg.register_metric(c3);
@@ -221,8 +221,8 @@ void test_counter_vec_prometheus_0_0_4()
     BOOST_TEST(metric_pos > header_pos);
     BOOST_TEST(result.size() == 35u + 44u + 44u + 44u);
     // Multiple counter_vecs
-    counter_vec<AtomicPolicyType> c2("http_requests2", {.help = "help text"}, {"third", "fourth"});
-    counter_vec<AtomicPolicyType> c3("test_c_seconds", {.unit = "seconds"}, {"first", "fifth"});
+    counter_vec<AtomicPolicyType> c2("http_requests2", {.help = "help text", .unit = ""}, {"third", "fourth"});
+    counter_vec<AtomicPolicyType> c3("test_c_seconds", {.help = "", .unit = "seconds"}, {"first", "fifth"});
     c2.with_labels({"3", "4"}).inc();
     c3.with_labels({"1", "5"}).inc();
     reg.register_metric(c2);
@@ -315,8 +315,8 @@ void test_counter_vec_openmetrics_1_0()
     ));
     BOOST_TEST(result.size() == 29u + 44u + 44u + 44u + 6u);
     // Multiple counter_vecs
-    counter_vec<AtomicPolicyType> c2("http_requests2", {.help = "help text"}, {"third", "fourth"});
-    counter_vec<AtomicPolicyType> c3("test_c_seconds", {.unit = "seconds"}, {"first", "fifth"});
+    counter_vec<AtomicPolicyType> c2("http_requests2", {.help = "help text", .unit = ""}, {"third", "fourth"});
+    counter_vec<AtomicPolicyType> c3("test_c_seconds", {.help = "", .unit = "seconds"}, {"first", "fifth"});
     c2.with_labels({"3", "4"}).inc();
     c3.with_labels({"1", "5"}).inc();
     reg.register_metric(c2);
@@ -392,8 +392,8 @@ void test_gauge_prometheus_0_0_4()
         "# TYPE test_gauge gauge\n"
         "test_gauge -3\n"));
     // Multiple gauges
-    gauge<AtomicPolicyType> g2("test_gauge2", {.help = "help text"});
-    gauge<AtomicPolicyType> g3("test_gauge_bytes", {.unit = "bytes"});
+    gauge<AtomicPolicyType> g2("test_gauge2", {.help = "help text", .unit = ""});
+    gauge<AtomicPolicyType> g3("test_gauge_bytes", {.help = "", .unit = "bytes"});
     g3.inc();
     reg.register_metric(g2);
     reg.register_metric(g3);
@@ -455,8 +455,8 @@ void test_gauge_openmetrics_1_0()
         "test_gauge -3\n"
         "# EOF\n"));
     // Multiple gauges
-    gauge<AtomicPolicyType> g2("test_gauge2", {.help = "help text"});
-    gauge<AtomicPolicyType> g3("test_gauge_bytes", {.unit = "bytes"});
+    gauge<AtomicPolicyType> g2("test_gauge2", {.help = "help text", .unit = ""});
+    gauge<AtomicPolicyType> g3("test_gauge_bytes", {.help = "", .unit = "bytes"});
     g3.inc();
     reg.register_metric(g2);
     reg.register_metric(g3);
@@ -530,8 +530,8 @@ void test_gauge_vec_prometheus_0_0_4()
     BOOST_TEST(metric_pos > header_pos);
     BOOST_TEST(result.size() == 24u + 35u + 35u + 36u);
     // Multiple gauge_vecs
-    gauge_vec<AtomicPolicyType> g2("test_gauge2", {.help = "help text"}, {"third", "fourth"});
-    gauge_vec<AtomicPolicyType> g3("test_gauge_bytes", {.unit = "bytes"}, {"first", "fifth"});
+    gauge_vec<AtomicPolicyType> g2("test_gauge2", {.help = "help text", .unit = ""}, {"third", "fourth"});
+    gauge_vec<AtomicPolicyType> g3("test_gauge_bytes", {.help = "", .unit = "bytes"}, {"first", "fifth"});
     g2.with_labels({"3", "4"}).inc();
     g3.with_labels({"1", "5"}).inc();
     reg.register_metric(g2);
@@ -625,8 +625,8 @@ void test_gauge_vec_openmetrics_1_0()
     ));
     BOOST_TEST(result.size() == 24u + 35u + 35u + 36u + 6u);
     // Multiple gauge_vecs
-    gauge_vec<AtomicPolicyType> g2("test_gauge2", {.help = "help text"}, {"third", "fourth"});
-    gauge_vec<AtomicPolicyType> g3("test_gauge_bytes", {.unit = "bytes"}, {"first", "fifth"});
+    gauge_vec<AtomicPolicyType> g2("test_gauge2", {.help = "help text", .unit = ""}, {"third", "fourth"});
+    gauge_vec<AtomicPolicyType> g3("test_gauge_bytes", {.help = "", .unit = "bytes"}, {"first", "fifth"});
     g2.with_labels({"3", "4"}).inc();
     g3.with_labels({"1", "5"}).inc();
     reg.register_metric(g2);
@@ -733,8 +733,8 @@ void test_histogram_prometheus_0_0_4()
         "test_histogram_count 3\n"));
     result.clear();
     // Multiple histograms
-    histogram<AtomicPolicyType> h2("test_histogram2", {.help = "help text", .buckets = {0.1, 0.2, 0.3}});
-    histogram<AtomicPolicyType> h3("request_duration_seconds", {.unit = "seconds"});
+    histogram<AtomicPolicyType> h2("test_histogram2", {.help = "help text", .unit = "", .buckets = {0.1, 0.2, 0.3}});
+    histogram<AtomicPolicyType> h3("request_duration_seconds", {.help = "", .unit = "seconds", .buckets = {}});
     reg.register_metric(h2);
     reg.register_metric(h3);
     h2.observe(0.02);
@@ -875,8 +875,8 @@ void test_histogram_openmetrics_1_0()
         "# EOF\n"));
     result.clear();
     // Multiple histograms
-    histogram<AtomicPolicyType> h2("test_histogram2", {.help = "help text", .buckets = {0.1, 0.2, 0.3}});
-    histogram<AtomicPolicyType> h3("request_duration_seconds", {.unit = "seconds"});
+    histogram<AtomicPolicyType> h2("test_histogram2", {.help = "help text", .unit = "", .buckets = {0.1, 0.2, 0.3}});
+    histogram<AtomicPolicyType> h3("request_duration_seconds", {.help = "", .unit = "seconds", .buckets = {}});
     reg.register_metric(h2);
     reg.register_metric(h3);
     h2.observe(0.02);
@@ -1025,8 +1025,10 @@ void test_histogram_vec_prometheus_0_0_4()
     BOOST_TEST(result.size() == 32u + 753u + 751u);
     result.clear();
     // Multiple histogram_vecs
-    histogram_vec<AtomicPolicyType> h2("test_histogram2", {.help = "help text", .buckets = {0.1, 0.2, 0.3}}, {"third", "fourth"});
-    histogram_vec<AtomicPolicyType> h3("request_duration_seconds", {.unit = "seconds"}, {"method"});
+    histogram_vec<AtomicPolicyType> h2("test_histogram2",
+        {.help = "help text", .unit = "", .buckets = {0.1, 0.2, 0.3}},
+        {"third", "fourth"});
+    histogram_vec<AtomicPolicyType> h3("request_duration_seconds", {.help = "", .unit = "seconds", .buckets = {}}, {"method"});
     h2.with_labels({"3", "4"}).observe(0.01);
     h3.with_labels({"GET"}).observe(0.5);
     reg.register_metric(h2);
@@ -1174,8 +1176,11 @@ void test_histogram_vec_openmetrics_1_0()
     BOOST_TEST(result.size() == 32u + 753u + 751u + 6u);
     result.clear();
     // Multiple histogram_vecs
-    histogram_vec<AtomicPolicyType> h2("test_histogram2", {.help = "help text", .buckets = {0.1, 0.2, 0.3}}, {"third", "fourth"});
-    histogram_vec<AtomicPolicyType> h3("request_duration_seconds", {.unit = "seconds"}, {"method"});
+    histogram_vec<AtomicPolicyType> h2("test_histogram2",
+        {.help = "help text", .unit = "", .buckets = {0.1, 0.2, 0.3}},
+        {"third", "fourth"});
+    histogram_vec<AtomicPolicyType> h3("request_duration_seconds",
+        {.help = "", .unit = "seconds", .buckets = {}}, {"method"});
     h2.with_labels({"3", "4"}).observe(0.01);
     h3.with_labels({"GET"}).observe(0.5);
     reg.register_metric(h2);
@@ -1323,8 +1328,10 @@ void test_gaugehistogram_prometheus_0_0_4()
         "test_ghist_gcount 1\n"));
     result.clear();
     // Multiple gaugehistograms
-    gaugehistogram<AtomicPolicyType> h2("test_ghist2", {.help = "help text", .buckets = {0.1, 0.2, 0.3}});
-    gaugehistogram<AtomicPolicyType> h3("temperature_dist_celsius", {.unit = "celsius"});
+    gaugehistogram<AtomicPolicyType> h2("test_ghist2",
+        {.help = "help text", .unit = "", .buckets = {0.1, 0.2, 0.3}});
+    gaugehistogram<AtomicPolicyType> h3("temperature_dist_celsius",
+        {.help = "", .unit = "celsius", .buckets = {}});
     reg.register_metric(h2);
     reg.register_metric(h3);
     h2.observe(0.02);
@@ -1473,8 +1480,10 @@ void test_gaugehistogram_openmetrics_1_0()
         "# EOF\n"));
     result.clear();
     // Multiple gaugehistograms
-    gaugehistogram<AtomicPolicyType> h2("test_ghist2", {.help = "help text", .buckets = {0.1, 0.2, 0.3}});
-    gaugehistogram<AtomicPolicyType> h3("temperature_dist_celsius", {.unit = "celsius"});
+    gaugehistogram<AtomicPolicyType> h2("test_ghist2",
+        {.help = "help text", .unit = "", .buckets = {0.1, 0.2, 0.3}});
+    gaugehistogram<AtomicPolicyType> h3("temperature_dist_celsius",
+        {.help = "", .unit = "celsius", .buckets = {}});
     reg.register_metric(h2);
     reg.register_metric(h3);
     h2.observe(0.02);
@@ -1631,8 +1640,12 @@ void test_gaugehistogram_vec_prometheus_0_0_4()
     BOOST_TEST(result.size() == 28u + 615u + 615u + 29u + 42u + 40u + 31u + 42u + 42u);
     result.clear();
     // Multiple gaugehistogram_vecs
-    gaugehistogram_vec<AtomicPolicyType> h2("test_ghist2", {.help = "help text", .buckets = {0.1, 0.2, 0.3}}, {"third", "fourth"});
-    gaugehistogram_vec<AtomicPolicyType> h3("temperature_dist_celsius", {.unit = "celsius"}, {"region"});
+    gaugehistogram_vec<AtomicPolicyType> h2("test_ghist2",
+        {.help = "help text", .unit = "", .buckets = {0.1, 0.2, 0.3}},
+        {"third", "fourth"});
+    gaugehistogram_vec<AtomicPolicyType> h3("temperature_dist_celsius",
+        {.help = "", .unit = "celsius", .buckets = {}},
+        {"region"});
     h2.with_labels({"3", "4"}).observe(0.01);
     h3.with_labels({"42"}).observe(0.5);
     reg.register_metric(h2);
@@ -1789,8 +1802,12 @@ void test_gaugehistogram_vec_openmetrics_1_0()
     BOOST_TEST(result.size() == 33u + 699u + 697u + 6u);
     result.clear();
     // Multiple gaugehistogram_vecs
-    gaugehistogram_vec<AtomicPolicyType> h2("test_ghist2", {.help = "help text", .buckets = {0.1, 0.2, 0.3}}, {"third", "fourth"});
-    gaugehistogram_vec<AtomicPolicyType> h3("temperature_dist_celsius", {.unit = "celsius"}, {"region"});
+    gaugehistogram_vec<AtomicPolicyType> h2("test_ghist2",
+        {.help = "help text", .unit = "", .buckets = {0.1, 0.2, 0.3}},
+        {"third", "fourth"});
+    gaugehistogram_vec<AtomicPolicyType> h3("temperature_dist_celsius",
+        {.help = "", .unit = "celsius", .buckets = {}},
+        {"region"});
     h2.with_labels({"3", "4"}).observe(0.01);
     h3.with_labels({"42"}).observe(0.5);
     reg.register_metric(h2);
@@ -2634,7 +2651,7 @@ BOOST_AUTO_TEST_CASE(concurrent_histogram_openmetrics_1_0, * boost::unit_test::t
 
     for (std::size_t i = 0u; i < num_threads; i++)
     {
-        threads.emplace_back([&, i]()
+        threads.emplace_back([&]()
         {
             ready_count.fetch_add(1u, std::memory_order_release);
             
@@ -2751,7 +2768,7 @@ BOOST_AUTO_TEST_CASE(concurrent_gaugehistogram_openmetrics_1_0, * boost::unit_te
 
     for (std::size_t i = 0u; i < num_observe_threads; i++)
     {
-        threads.emplace_back([&, i]()
+        threads.emplace_back([&]()
         {
             ready_count.fetch_add(1u, std::memory_order_release);
             
@@ -2768,7 +2785,7 @@ BOOST_AUTO_TEST_CASE(concurrent_gaugehistogram_openmetrics_1_0, * boost::unit_te
     }
     for (std::size_t i = 0u; i < num_sub_threads; i++)
     {
-        threads.emplace_back([&, i]()
+        threads.emplace_back([&]()
         {
             ready_count.fetch_add(1, std::memory_order_release);
             
@@ -2924,7 +2941,7 @@ BOOST_AUTO_TEST_CASE(concurrent_static_histogram_openmetrics_1_0, * boost::unit_
 
     for (std::size_t i = 0u; i < num_threads; i++)
     {
-        threads.emplace_back([&, i]()
+        threads.emplace_back([&]()
         {
             ready_count.fetch_add(1u, std::memory_order_release);
             

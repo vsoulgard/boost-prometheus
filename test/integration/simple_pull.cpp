@@ -153,7 +153,7 @@ BOOST_AUTO_TEST_CASE(prometheus_0_0_4)
         "# TYPE http_requests_total counter\n"
         "http_requests_total{method=\"GET\"} 1\n"
     ) != std::string_view::npos);
-    BOOST_TEST(result.size() == 94 + 637 + 31 + 71);
+    BOOST_TEST(result.size() == 94u + 637u + 31u + 71u);
 
     stream.socket().shutdown(ip::tcp::socket::shutdown_both, ec);
 
@@ -254,10 +254,10 @@ BOOST_AUTO_TEST_CASE(openmetrics_1_0)
         "# TYPE http_requests counter\n"
         "http_requests_total{method=\"GET\"} 1\n"
     ) != std::string_view::npos);
-    BOOST_TEST(result.substr(result.size() - 6, 6) == std::string_view(
+    BOOST_TEST(result.substr(result.size() - 6u, 6u) == std::string_view(
         "# EOF\n"
     ));
-    BOOST_TEST(result.size() == 110 + 677 + 31 + 65 + 6);
+    BOOST_TEST(result.size() == 110u + 677u + 31u + 65u + 6u);
 
     stream.socket().shutdown(ip::tcp::socket::shutdown_both, ec);
 
@@ -334,10 +334,10 @@ BOOST_AUTO_TEST_CASE(registry_swap)
         "# TYPE http_requests counter\n"
         "http_requests_total{method=\"GET\"} 1\n"
     ) != std::string_view::npos);
-    BOOST_TEST(result.substr(result.size() - 6, 6) == std::string_view(
+    BOOST_TEST(result.substr(result.size() - 6u, 6u) == std::string_view(
         "# EOF\n"
     ));
-    BOOST_TEST(result.size() == 110 + 677 + 31 + 65 + 6);
+    BOOST_TEST(result.size() == 110u + 677u + 31u + 65u + 6u);
 
     // Swap registry
     exp.expose(reg_2);
@@ -390,10 +390,10 @@ BOOST_AUTO_TEST_CASE(registry_swap)
         "# TYPE http_requests counter\n"
         "http_requests_total{method=\"GET\"} 1\n"
     ) != std::string_view::npos);
-    BOOST_TEST(result.substr(result.size() - 6, 6) == std::string_view(
+    BOOST_TEST(result.substr(result.size() - 6u, 6u) == std::string_view(
         "# EOF\n"
     ));
-    BOOST_TEST(result.size() == 110 + 677 + 31 + 65 + 6);
+    BOOST_TEST(result.size() == 110u + 677u + 31u + 65u+ 6u);
 
     stream.socket().shutdown(ip::tcp::socket::shutdown_both, ec);
 
@@ -405,9 +405,9 @@ BOOST_AUTO_TEST_CASE(registry_swap)
 
 BOOST_AUTO_TEST_CASE(concurrent_scraping)
 {
-    constexpr std::size_t num_server_threads = 4;
-    constexpr std::size_t num_scrapers = 4;
-    constexpr std::size_t scrapes_per_thread = 500;
+    constexpr std::size_t num_server_threads = 4u;
+    constexpr std::size_t num_scrapers = 4u;
+    constexpr std::size_t scrapes_per_thread = 500u;
 
     asio::thread_pool pool(num_server_threads);
 
@@ -425,13 +425,13 @@ BOOST_AUTO_TEST_CASE(concurrent_scraping)
     reg.register_metric(h);
     exp.expose(reg);
 
-    std::atomic<std::size_t> successes{0};
-    std::atomic<std::size_t> failures{0};
+    std::atomic<std::size_t> successes{0u};
+    std::atomic<std::size_t> failures{0u};
 
     std::vector<std::thread> scrapers;
     scrapers.reserve(num_scrapers);
 
-    for (std::size_t i = 0; i < num_scrapers; i++)
+    for (std::size_t i = 0u; i < num_scrapers; i++)
     {
         scrapers.emplace_back([&, i]() {
             io_context local_ioc;
@@ -441,11 +441,11 @@ BOOST_AUTO_TEST_CASE(concurrent_scraping)
             stream.connect(target_ep, ec);
             if (ec)
             {
-                failures.fetch_add(1, std::memory_order_release);
+                failures.fetch_add(1u, std::memory_order_release);
                 return;
             }
 
-            for (std::size_t j = 0; j < scrapes_per_thread; j++)
+            for (std::size_t j = 0u; j < scrapes_per_thread; j++)
             {
                 http::request<http::empty_body> req{
                     http::verb::get, "/metrics", 11};
@@ -458,7 +458,7 @@ BOOST_AUTO_TEST_CASE(concurrent_scraping)
                 http::write(stream, req, ec);
                 if (ec)
                 {
-                    failures.fetch_add(1, std::memory_order_release);
+                    failures.fetch_add(1u, std::memory_order_release);
                     return;
                 }
 
@@ -467,20 +467,20 @@ BOOST_AUTO_TEST_CASE(concurrent_scraping)
                 http::read(stream, buffer, res, ec);
                 if (ec)
                 {
-                    failures.fetch_add(1, std::memory_order_release);
+                    failures.fetch_add(1u, std::memory_order_release);
                     return;
                 }
 
                 if (res.result() != http::status::ok)
                 {
-                    failures.fetch_add(1, std::memory_order_release);
+                    failures.fetch_add(1u, std::memory_order_release);
                     return;
                 }
 
                 auto const& body = res.body();
                 // Body must end with the OpenMetrics EOF marker.
-                if (body.size() < 6 ||
-                    body.substr(body.size() - 6) != "# EOF\n")
+                if (body.size() < 6u ||
+                    body.substr(body.size() - 6u) != "# EOF\n")
                 {
                     failures.fetch_add(1, std::memory_order_release);
                     return;
@@ -491,10 +491,10 @@ BOOST_AUTO_TEST_CASE(concurrent_scraping)
                     body.find("# TYPE request_duration_seconds histogram\n")
                         == std::string::npos)
                 {
-                    failures.fetch_add(1, std::memory_order_release);
+                    failures.fetch_add(1u, std::memory_order_release);
                     return;
                 }
-                successes.fetch_add(1, std::memory_order_release);
+                successes.fetch_add(1u, std::memory_order_release);
             }
 
             stream.socket().shutdown(ip::tcp::socket::shutdown_both, ec);
@@ -509,7 +509,7 @@ BOOST_AUTO_TEST_CASE(concurrent_scraping)
 
     pool.stop();
     pool.join();
-    BOOST_TEST(failures.load(std::memory_order_acquire) == 0);
+    BOOST_TEST(failures.load(std::memory_order_acquire) == 0u);
     BOOST_TEST(successes.load(std::memory_order_acquire) == (num_scrapers * scrapes_per_thread));
 }
 
@@ -1146,7 +1146,7 @@ BOOST_AUTO_TEST_CASE(gzip_encoding)
             "# TYPE http_requests_total counter\n"
             "http_requests_total{method=\"GET\"} 1\n"
         ) != std::string_view::npos);
-        BOOST_TEST(res.body().size() == 94 + 637 + 31 + 71);
+        BOOST_TEST(res.body().size() == 94u + 637u + 31u + 71u);
     }
     // Add more metrics to force the exposer to encode
     histogram h2("some_distribution", {.help = "another hist"});
@@ -1224,7 +1224,7 @@ BOOST_AUTO_TEST_CASE(gzip_encoding)
             "some_distribution_sum 0\n"
             "some_distribution_count 0\n"
         ) != std::string_view::npos);
-        BOOST_TEST(decoded.size() == 94 + 637 + 31 + 71 + 570);
+        BOOST_TEST(decoded.size() == 94u + 637u + 31u + 71u + 570u);
     }
 
     stream.socket().shutdown(ip::tcp::socket::shutdown_both, ec);
@@ -1322,7 +1322,7 @@ BOOST_AUTO_TEST_CASE(gzip_encoding_disabled)
             "# TYPE http_requests_total counter\n"
             "http_requests_total{method=\"GET\"} 1\n"
         ) != std::string_view::npos);
-        BOOST_TEST(res.body().size() == 94 + 637 + 31 + 71);
+        BOOST_TEST(res.body().size() == 94u + 637u + 31u + 71u);
     }
     // Add more metrics to force the exposer to compress
     gaugehistogram h2("temperature_dist_celsius", {.help = "another hist"});
@@ -1398,7 +1398,7 @@ BOOST_AUTO_TEST_CASE(gzip_encoding_disabled)
             "# TYPE temperature_dist_celsius_gcount gauge\n"
             "temperature_dist_celsius_gcount 0\n"
         ) != std::string_view::npos);
-        BOOST_TEST(res.body().size() == 94 + 637 + 31 + 71 + 772);
+        BOOST_TEST(res.body().size() == 94u + 637u + 31u + 71u + 772u);
     }
 
     stream.socket().shutdown(ip::tcp::socket::shutdown_both, ec);
@@ -1540,7 +1540,7 @@ BOOST_AUTO_TEST_CASE(ssl_mode)
             "# TYPE http_requests_total counter\n"
             "http_requests_total{method=\"GET\"} 1\n"
         ) != std::string_view::npos);
-        BOOST_TEST(res.body().size() == 94 + 637 + 31 + 71);
+        BOOST_TEST(res.body().size() == 94u + 637u + 31u + 71u);
 
         stream.shutdown(ec);
         if (ec == boost::asio::ssl::error::stream_truncated) ec = {};
@@ -1686,7 +1686,7 @@ BOOST_AUTO_TEST_CASE(with_static_registry_prometheus_0_0_4)
         "# TYPE http_requests_total counter\n"
         "http_requests_total{method=\"GET\"} 1\n"
     ) != std::string_view::npos);
-    BOOST_TEST(result.size() == 829 + 31 + 71);
+    BOOST_TEST(result.size() == 829u + 31u + 71u);
 
     stream.socket().shutdown(ip::tcp::socket::shutdown_both, ec);
 
@@ -1836,10 +1836,10 @@ BOOST_AUTO_TEST_CASE(with_static_registry_openmetrics_1_0)
         "# TYPE http_requests counter\n"
         "http_requests_total{method=\"GET\"} 1\n"
     ) != std::string_view::npos);
-    BOOST_TEST(result.substr(result.size() - 6, 6) == std::string_view(
+    BOOST_TEST(result.substr(result.size() - 6u, 6u) == std::string_view(
         "# EOF\n"
     ));
-    BOOST_TEST(result.size() == 914 + 31 + 65 + 6);
+    BOOST_TEST(result.size() == 914u + 31u + 65u + 6u);
 
     stream.socket().shutdown(ip::tcp::socket::shutdown_both, ec);
 
