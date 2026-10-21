@@ -155,7 +155,7 @@ struct format
     template <typename HistogramType, typename BufferType>
     static void serialize_histogram(HistogramType& histogram_internal, BufferType& out_buffer)
     {
-        if constexpr (histogram_internal.is_atomic())
+        if constexpr (HistogramType::is_atomic())
         {
             std::lock_guard lock(histogram_internal.mtx_);
             // Switch active buffer idx
@@ -214,7 +214,7 @@ struct format
     template <typename HistogramType, typename BufferType>
     static void serialize_static_histogram(HistogramType& histogram_internal, BufferType& out_buffer)
     {
-        if constexpr (histogram_internal.is_atomic())
+        if constexpr (HistogramType::is_atomic())
         {
             std::lock_guard lock(*histogram_internal.mtx_);
             // Switch active buffer idx
@@ -295,7 +295,7 @@ struct format
         template <typename GaugehistogramType, typename BufferType>
         static void serialize_gaugehistogram(GaugehistogramType& histogram_internal, BufferType& out_buffer)
         {
-            if constexpr (histogram_internal.is_atomic())
+            if constexpr (GaugehistogramType::is_atomic())
             {
                 std::lock_guard lock(histogram_internal.mtx_);
                 // Switch active buffer idx

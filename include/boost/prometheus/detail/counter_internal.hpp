@@ -33,7 +33,7 @@ struct counter_internal : public basic_metric_internal<AtomicPolicyType, true, H
         double
     >;
 
-    alignas(base_type::alignment)
+    alignas(base_type::template alignment<value_type>)
     value_type value_;
 
     counter_internal(std::string&& base_string)

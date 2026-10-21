@@ -16,6 +16,7 @@
 #include <boost/assert.hpp>
 
 #include <atomic>
+#include <mutex>
 #include <vector>
 #include <string>
 #include <span>
@@ -52,7 +53,7 @@ struct gaugehistogram_internal : public basic_metric_internal<AtomicPolicyType, 
     {
         using bucket_value_type = histogram_bucket_value<
             AtomicPolicyType,
-            base_type::alignment,
+            base_type::template alignment<count_type>,
             // Use signed integer for for clear 
             // visibility of sub() logic errors
             std::int64_t>;
@@ -63,10 +64,10 @@ struct gaugehistogram_internal : public basic_metric_internal<AtomicPolicyType, 
         >;
 
         std::vector<bucket_value_type> buckets;
-        alignas(base_type::alignment)
+        alignas(base_type::template alignment<sum_type>)
         sum_type sum;
         // count is used for synchronization as a counter with release semantics
-        [[no_unique_address]] alignas(base_type::alignment)
+        [[no_unique_address]] alignas(base_type::template alignment<buffer_count_type>)
         buffer_count_type count;
 
         gaugehistogram_buffer() = delete;
@@ -80,11 +81,11 @@ struct gaugehistogram_internal : public basic_metric_internal<AtomicPolicyType, 
     static constexpr std::size_t buffers_count = AtomicPolicyType::enabled ? 2 : 1;
     // Active and passive buffers for bucket values
     std::array<gaugehistogram_buffer, buffers_count> buffers_;
-    [[no_unique_address]] alignas(base_type::alignment)
+    [[no_unique_address]] alignas(base_type::template alignment<count_type>)
     count_type count_and_idx_;
 
     // Used in serialization
-    [[no_unique_address]] alignas(base_type::alignment)
+    [[no_unique_address]] alignas(base_type::template alignment<mutex_type>)
     mutex_type mtx_;
 
     // Serialized names

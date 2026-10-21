@@ -34,7 +34,7 @@ struct gauge_internal : public basic_metric_internal<AtomicPolicyType, true, Has
         double
     >;
 
-    alignas(base_type::alignment)
+    alignas(base_type::template alignment<value_type>)
     value_type value_;
 
     gauge_internal(std::string&& base_string)

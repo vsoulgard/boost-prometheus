@@ -21,13 +21,14 @@ namespace boost::prometheus::detail {
 template <typename AtomicPolicyType>
 struct static_gauge_internal
 {
-    static constexpr std::size_t alignment = AtomicPolicyType::enabled ? detail::cache_line_size : 1;
+    template <typename T>
+    static constexpr std::size_t alignment = AtomicPolicyType::enabled ? cache_line_size : alignof(T);
 
     struct gauge_entry
     {
         // Metric name in text format
         std::string_view formatted_name;
-        alignas(alignment)
+        alignas(alignment<double>)
         double value;
 
         double get_value() const noexcept

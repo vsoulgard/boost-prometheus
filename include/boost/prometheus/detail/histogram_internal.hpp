@@ -16,6 +16,7 @@
 #include <boost/assert.hpp>
 
 #include <atomic>
+#include <mutex>
 #include <vector>
 #include <string>
 #include <span>
@@ -50,7 +51,7 @@ struct histogram_internal : public basic_metric_internal<AtomicPolicyType, HasBa
 
     struct histogram_buffer
     {
-        using bucket_value_type = histogram_bucket_value<AtomicPolicyType, base_type::alignment>;
+        using bucket_value_type = histogram_bucket_value<AtomicPolicyType, base_type::template alignment<count_type>>;
         using buffer_count_type = std::conditional_t<
             AtomicPolicyType::enabled,
             std::atomic<std::uint64_t>,
@@ -58,10 +59,10 @@ struct histogram_internal : public basic_metric_internal<AtomicPolicyType, HasBa
         >;
 
         std::vector<bucket_value_type> buckets;
-        alignas(base_type::alignment)
+        alignas(base_type::template alignment<sum_type>)
         sum_type sum;
         // count is used for synchronization as a counter with release semantics
-        [[no_unique_address]] alignas(base_type::alignment)
+        [[no_unique_address]] alignas(base_type::template alignment<buffer_count_type>)
         buffer_count_type count;
 
         histogram_buffer() = delete;
@@ -75,11 +76,11 @@ struct histogram_internal : public basic_metric_internal<AtomicPolicyType, HasBa
     static constexpr std::size_t buffers_count = AtomicPolicyType::enabled ? 2 : 1;
     // Active and passive buffers for bucket values
     std::array<histogram_buffer, buffers_count> buffers_;
-    [[no_unique_address]] alignas(base_type::alignment)
+    [[no_unique_address]] alignas(base_type::template alignment<count_type>)
     count_type count_and_idx_;
 
     // Used in serialization
-    [[no_unique_address]] alignas(base_type::alignment)
+    [[no_unique_address]] alignas(base_type::template alignment<mutex_type>)
     mutex_type mtx_;
 
     // Serialized names
