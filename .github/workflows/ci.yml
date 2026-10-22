@@ -25,11 +25,11 @@ jobs:
             cxxstd: '20'
             build-type: 'Debug'
 
-          - toolset: gcc-11
-            install: g++-11
+          - toolset: gcc-12
+            install: g++-12
             container: ubuntu:22.04
             cxxstd: '20'
-            build-type: 'Release'
+            build-type: 'Debug'
 
           - toolset: gcc-12
             install: g++-12
@@ -62,29 +62,6 @@ jobs:
             build-type: 'Release'
 
           # Clang builds
-        #   - toolset: clang-14
-        #     install: clang-14
-        #     container: ubuntu:22.04
-        #     cxxstd: '20'
-        #     build-type: 'Debug'
-
-        #   - toolset: clang-14
-        #     install: clang-14
-        #     container: ubuntu:22.04
-        #     cxxstd: '20'
-        #     build-type: 'Release'
-
-          - toolset: clang-15
-            install: clang-15
-            container: ubuntu:22.04
-            cxxstd: '20'
-            build-type: 'Release'
-
-          - toolset: clang-16
-            install: clang-16
-            container: ubuntu:24.04
-            cxxstd: '20'
-            build-type: 'Debug'
 
           - toolset: clang-17
             install: clang-17
@@ -97,6 +74,12 @@ jobs:
             container: ubuntu:24.04
             cxxstd: '20'
             build-type: 'Debug'
+
+          - toolset: clang-18
+            install: clang-18
+            container: ubuntu:24.04
+            cxxstd: '20'
+            build-type: 'Release'
 
           - toolset: clang-19
             install: clang-19
@@ -163,7 +146,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install dependencies
         run: |
@@ -227,11 +210,6 @@ jobs:
             container: ubuntu:26.04
             cxxstd: '20,23'
 
-          - toolset: clang-14
-            install: clang-14
-            container: ubuntu:22.04
-            cxxstd: '20'
-
           - toolset: clang-17
             install: clang-17
             container: ubuntu:24.04
@@ -255,7 +233,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install dependencies
         run: |
@@ -313,7 +291,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Boost
         run: python3 tools/ci.py setup-boost --source-dir=$(pwd)
@@ -346,7 +324,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Boost
         run: python3 tools/ci.py setup-boost --source-dir=$(pwd)
@@ -371,7 +349,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Boost
         run: python3 ./tools/ci.py setup-boost --source-dir=$(pwd)
