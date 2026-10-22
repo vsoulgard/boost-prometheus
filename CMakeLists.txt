@@ -36,3 +36,9 @@ option(BOOST_PROMETHEUS_BENCH "Build performance benchmarks" OFF)
 if (BOOST_PROMETHEUS_BENCH)
     add_subdirectory(bench)
 endif()
+
+option(BOOST_PROMETHEUS_EXAMPLES "Build examples" OFF)
+
+if (BOOST_PROMETHEUS_EXAMPLES)
+    add_subdirectory(example)
+endif()

@@ -470,7 +470,7 @@ struct format
             if (metric_vec.size() == 0) return;
             // Header first, then all metrics in family
             append(metric_vec.prometheus_header_sv_, out_buffer);
-            // TODO: Refactor and remove this independent buffers
+            // TODO: Refactor and remove these independent buffers
             std::string counts;
             std::string sums;
             counts.reserve(1024);
