@@ -54,26 +54,25 @@ int main(int argc, char* argv[])
         prometheus::labels<"build_type", "compiler", "boost_version">>;
     build_info::create<
         "example_with_static_registry", BOOST_COMPILER, boost_version_str()>();
+    using requests = prometheus::static_counter<
+        "requests", prometheus::help<"Number of received requests">,
+        prometheus::labels<"method">>;
+    requests::inc<"GET">(5.0);
+    requests::inc<"POST">(2.0);
     using req_duration = prometheus::static_histogram<
         "request_duration_seconds", prometheus::unit<"seconds">>; // Default buckets
     req_duration::observe(0.1);
 
     static_reg::register_metric<build_info>();
+    static_reg::register_metric<requests>();
     static_reg::register_metric<req_duration>();
 
     prometheus::registry reg;
-    prometheus::counter_vec requests(
-        "requests",
-        {.help = "Number of received requests", .unit = ""},
-        {"method"});
-    requests.with_labels({"GET"}).inc(5.0);
-    requests.with_labels({"POST"}).inc(2.0);
     prometheus::gaugehistogram temperature(
         "cpu_temperature_celsius",
         {.help = "", .unit = "celsius", .buckets = {25.0, 50.0, 75.0, 90.0}});
     temperature.observe(33.0);
 
-    reg.register_metric(requests);
     reg.register_metric(temperature);
 
     // Expose static registry via expose_static_registry<> policy
