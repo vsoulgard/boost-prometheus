@@ -27,7 +27,7 @@ BOOST_AUTO_TEST_CASE(construction_default_options)
 
 BOOST_AUTO_TEST_CASE(construction_custom_options)
 {
-    gaugehistogram_vec h("temperature_dist_celsius", {.help = "help string", .unit = "celsius"}, {"first", "second"});
+    gaugehistogram_vec h("temperature_dist_celsius", {.help = "help string", .unit = "celsius", .buckets = {}}, {"first", "second"});
 }
 
 BOOST_AUTO_TEST_SUITE_END()

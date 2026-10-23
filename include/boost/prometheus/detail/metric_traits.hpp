@@ -14,18 +14,22 @@
 namespace boost::prometheus::detail {
 
 template <typename T, template <auto, typename...> class Template>
-concept static_metric_specialization = requires {
-    []<auto V, typename... Opts>(Template<V, Opts...>*) { return true; }(
-        static_cast<std::remove_cvref_t<T>*>(nullptr)
-    );
-};
+struct static_metric_specialization_impl : std::false_type {};
+
+template <template <auto, typename...> class Template, auto V, typename... Opts>
+struct static_metric_specialization_impl <Template<V, Opts...>, Template> : std::true_type {};
+
+template <typename T, template <auto, typename...> class Template>
+concept static_metric_specialization = static_metric_specialization_impl<T, Template>::value;
 
 template <typename T, template <typename> class Template>
-concept metric_specialization = requires {
-    []<typename U>(Template<U>*) { return true; }(
-        static_cast<std::remove_cvref_t<T>*>(nullptr)
-    );
-};
+struct metric_specialization_impl : std::false_type {};
+
+template <template <typename> class Template, typename U>
+struct metric_specialization_impl<Template<U>, Template> : std::true_type {};
+
+template <typename T, template <typename> class Template>
+concept metric_specialization = metric_specialization_impl<T, Template>::value;
 
 template <typename T>
 concept static_counter_specialization = static_metric_specialization<T, static_counter>;
