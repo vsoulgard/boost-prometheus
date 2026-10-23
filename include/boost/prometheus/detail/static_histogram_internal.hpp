@@ -19,6 +19,7 @@
 
 namespace boost::prometheus::detail {
 
+BOOST_PROMETHEUS_MSVC_DISABLE_ALIGN_WARNING
 template <typename AtomicPolicyType>
 struct static_histogram_internal
 {
@@ -155,6 +156,7 @@ struct static_histogram_internal
         return entries_[index];
     }
 };
+BOOST_PROMETHEUS_MSVC_RESTORE_WARNING
 
 } // namespace boost::prometheus::detail
 

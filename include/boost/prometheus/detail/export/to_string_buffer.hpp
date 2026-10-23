@@ -277,7 +277,7 @@ consteval auto to_string_buffer()
             buffer[idx++] = temp[i - 1];
         }
 
-        if (Precision > 0)
+        if constexpr (Precision > 0)
         {
             std::size_t frac_start = Precision;
             for (std::size_t i = 0; i < Precision; i++)

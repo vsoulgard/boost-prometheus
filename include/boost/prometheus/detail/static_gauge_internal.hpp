@@ -18,6 +18,7 @@
 
 namespace boost::prometheus::detail {
 
+BOOST_PROMETHEUS_MSVC_DISABLE_ALIGN_WARNING
 template <typename AtomicPolicyType>
 struct static_gauge_internal
 {
@@ -72,6 +73,7 @@ struct static_gauge_internal
         return entries_[index].value;
     }
 };
+BOOST_PROMETHEUS_MSVC_RESTORE_WARNING
 
 } // namespace boost::prometheus::detail
 

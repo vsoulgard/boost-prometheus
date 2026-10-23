@@ -9,6 +9,7 @@
 #define BOOST_PROMETHEUS_DETAIL_GAUGEHISTOGRAM_INTERNAL_HPP
 
 #include <boost/prometheus/detail/basic_metric_internal.hpp>
+#include <boost/prometheus/detail/config.hpp>
 #include <boost/prometheus/detail/histogram_bucket_value.hpp>
 #include <boost/prometheus/detail/string_buffer.hpp>
 #include <boost/prometheus/detail/types_fwd.hpp>
@@ -24,6 +25,7 @@
 
 namespace boost::prometheus::detail {
 
+BOOST_PROMETHEUS_MSVC_DISABLE_ALIGN_WARNING
 template <typename AtomicPolicyType, bool HasBaseString = true, bool HasPrefixSVs = true>
 struct gaugehistogram_internal : public basic_metric_internal<AtomicPolicyType, HasBaseString, HasPrefixSVs>
 {
@@ -118,7 +120,7 @@ struct gaugehistogram_internal : public basic_metric_internal<AtomicPolicyType, 
     }
 
     std::vector<std::string_view> init_bucket_names(
-        const std::string& base_histogram_string_,
+        const std::string& base_histogram_string,
         const std::vector<std::size_t>& bucket_offsets,
         std::size_t sum_offset)
     {
@@ -127,14 +129,14 @@ struct gaugehistogram_internal : public basic_metric_internal<AtomicPolicyType, 
         result.reserve(bucket_offsets.size() + 1);
         // Put +Inf in the end
         std::string_view inf_bucket(
-            std::string_view(base_histogram_string_).substr(
+            std::string_view(base_histogram_string).substr(
                 0, bucket_offsets[0]));
         for (std::size_t i = 0; i < bucket_offsets.size() - 1; i++)
         {
             std::size_t off_start = bucket_offsets[i];
             std::size_t off_end = bucket_offsets[i + 1];
             result.push_back(
-            std::string_view(base_histogram_string_).substr(
+            std::string_view(base_histogram_string).substr(
                 off_start, off_end - off_start));
         }
         // Last bucket
@@ -142,7 +144,7 @@ struct gaugehistogram_internal : public basic_metric_internal<AtomicPolicyType, 
             std::size_t off_start = bucket_offsets.back();
             std::size_t off_end = sum_offset;
             result.push_back(
-            std::string_view(base_histogram_string_).substr(
+            std::string_view(base_histogram_string).substr(
                 off_start, off_end - off_start));
         }
         result.push_back(inf_bucket);
@@ -248,6 +250,7 @@ struct gaugehistogram_internal : public basic_metric_internal<AtomicPolicyType, 
         }
     }
 };
+BOOST_PROMETHEUS_MSVC_RESTORE_WARNING
 
 } // namespace boost::prometheus::detail
 

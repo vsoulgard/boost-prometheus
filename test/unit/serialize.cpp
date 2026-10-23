@@ -39,6 +39,7 @@ double extract_double_from_string(std::string_view text, std::string_view prefix
             auto result = std::from_chars(
                 value.data(), value.data() + value.size(), out);
             BOOST_ASSERT(result.ec == std::errc());
+            (void)result;
             return out;
         }
         pos = eol + 1u;

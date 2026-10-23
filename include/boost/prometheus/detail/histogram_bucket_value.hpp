@@ -8,12 +8,15 @@
 #ifndef BOOST_PROMETHEUS_DETAIL_HISTOGRAM_BUCKET_VALUE_HPP
 #define BOOST_PROMETHEUS_DETAIL_HISTOGRAM_BUCKET_VALUE_HPP
 
+#include <boost/prometheus/detail/config.hpp>
+
 #include <atomic>
 #include <cstdint>
 #include <type_traits>
 
 namespace boost::prometheus::detail {
 
+BOOST_PROMETHEUS_MSVC_DISABLE_ALIGN_WARNING
 template <typename AtomicPolicyType, std::size_t Alignment, typename IntType = std::uint64_t>
 struct histogram_bucket_value
 {
@@ -24,6 +27,7 @@ struct histogram_bucket_value
     >;
     alignas(Alignment) count_type value;
 };
+BOOST_PROMETHEUS_MSVC_RESTORE_WARNING
 
 } // namespace boost::prometheus::detail
 

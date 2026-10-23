@@ -14,6 +14,16 @@
 #define BOOST_PROMETHEUS_CACHE_LINE_SIZE 64
 #endif
 
+#if defined(_MSC_VER)
+    #define BOOST_PROMETHEUS_MSVC_DISABLE_ALIGN_WARNING \
+        __pragma(warning(push)) __pragma(warning(disable: 4324))
+    #define BOOST_PROMETHEUS_MSVC_RESTORE_WARNING \
+        __pragma(warning(pop))
+#else
+    #define BOOST_PROMETHEUS_MSVC_DISABLE_ALIGN_WARNING
+    #define BOOST_PROMETHEUS_MSVC_RESTORE_WARNING
+#endif
+
 namespace boost::prometheus::detail {
 
 constexpr std::size_t cache_line_size = BOOST_PROMETHEUS_CACHE_LINE_SIZE;
