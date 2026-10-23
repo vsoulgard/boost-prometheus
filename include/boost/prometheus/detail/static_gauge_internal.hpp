@@ -18,23 +18,25 @@
 
 namespace boost::prometheus::detail {
 
+BOOST_PROMETHEUS_MSVC_DISABLE_ALIGN_WARNING
 template <typename AtomicPolicyType>
 struct static_gauge_internal
 {
-    static constexpr std::size_t alignment = AtomicPolicyType::enabled ? detail::cache_line_size : 1;
+    template <typename T>
+    static constexpr std::size_t alignment = AtomicPolicyType::enabled ? cache_line_size : alignof(T);
 
     struct gauge_entry
     {
         // Metric name in text format
         std::string_view formatted_name;
-        alignas(alignment)
-        double value;
+        alignas(alignment<double>)
+        mutable double value;
 
         double get_value() const noexcept
         {
             if constexpr (AtomicPolicyType::enabled)
             {
-                std::atomic_ref<const double> atomic_value(value);
+                std::atomic_ref<double> atomic_value(value);
                 return atomic_value.load(std::memory_order_relaxed);
             }
             else
@@ -71,6 +73,7 @@ struct static_gauge_internal
         return entries_[index].value;
     }
 };
+BOOST_PROMETHEUS_MSVC_RESTORE_WARNING
 
 } // namespace boost::prometheus::detail
 

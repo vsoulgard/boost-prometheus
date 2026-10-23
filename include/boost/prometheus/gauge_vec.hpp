@@ -34,7 +34,7 @@ class gauge_vec : public detail::basic_metric_vec<
     friend base_type;
 
     // Serialization
-    friend class boost::prometheus::format;
+    friend struct boost::prometheus::format;
 
     // Called in base_type::with_labels_impl
     template <typename LabelsType, typename LabelValuesType>

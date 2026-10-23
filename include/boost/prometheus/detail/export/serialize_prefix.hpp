@@ -14,6 +14,7 @@
 
 #include <cstring>
 #include <string>
+#include <utility>
 
 namespace boost::prometheus::detail {
 
@@ -33,9 +34,9 @@ struct serialize_prefix_with_name_result : public serialize_prefix_result
 };
 
 template <typename OptionsType>
-consteval bool has_unit_member(const OptionsType& options)
+consteval bool has_unit_member()
 {
-    if constexpr (requires { options.unit.empty(); })
+    if constexpr (requires { std::declval<OptionsType>().unit.empty(); })
         return true;
     else
         return false;
@@ -74,7 +75,7 @@ auto serialize_prefix(std::string_view name, const OptionsType& options)
     constexpr bool is_info =
         (std::string_view(OpenMetricsTypeStr) == std::string_view("info"));
 
-    constexpr bool has_unit_m = has_unit_member(options);
+    constexpr bool has_unit_m = has_unit_member<OptionsType>();
     const bool has_unit = [&](){
         if constexpr (has_unit_m)
             return !options.unit.empty();
@@ -90,7 +91,7 @@ auto serialize_prefix(std::string_view name, const OptionsType& options)
         if constexpr (has_unit_m)
             return options.unit.size();
         else
-            return 0;
+            return 0u;
     }();
     const std::string_view prom_type_view(PrometheusTypeStr);
     const std::string_view om_type_view(OpenMetricsTypeStr);

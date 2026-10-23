@@ -23,8 +23,6 @@ run
 : target-name boost_prometheus_unittests
 ;
 
-explicit boost_prometheus_unittests ;
-
 using openssl ;
 
 # OpenSSL required for SSL integration tests
@@ -40,5 +38,3 @@ run
 : requirements $(integration-requirements)
 : target-name boost_prometheus_integrationtests
 ;
-
-explicit boost_prometheus_integrationtests ;

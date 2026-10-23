@@ -15,6 +15,7 @@
 
 #include <boost/test/unit_test.hpp>
 
+#include <charconv>
 #include <string>
 #include <thread>
 
@@ -35,12 +36,13 @@ double extract_double_from_string(std::string_view text, std::string_view prefix
             while (!value.empty() && value.front() == ' ') value.remove_prefix(1);
 
             double out = 0.0;
-            auto [ptr, ec] = std::from_chars(
+            auto result = std::from_chars(
                 value.data(), value.data() + value.size(), out);
-            BOOST_ASSERT(ec == std::errc());
+            BOOST_ASSERT(result.ec == std::errc());
+            (void)result;
             return out;
         }
-        pos = eol + 1;
+        pos = eol + 1u;
     }
     return std::nan("");
 }
@@ -82,8 +84,8 @@ void test_counter_prometheus_0_0_4()
         "# TYPE http_requests_total counter\n"
         "http_requests_total 8\n"));
     // Multiple counters
-    counter<AtomicPolicyType> c2("http_requests2", {.help = "help text"});
-    counter<AtomicPolicyType> c3("test_c_seconds", {.unit = "seconds"});
+    counter<AtomicPolicyType> c2("http_requests2", {.help = "help text", .unit = ""});
+    counter<AtomicPolicyType> c3("test_c_seconds", {.help = "", .unit = "seconds"});
     c3.inc();
     reg.register_metric(c2);
     reg.register_metric(c3);
@@ -100,7 +102,7 @@ void test_counter_prometheus_0_0_4()
     BOOST_TEST(result.find(
         "# TYPE test_c_seconds_total counter\n"
         "test_c_seconds_total 1\n") != std::string::npos);
-    BOOST_TEST(result.size() == 57 + 97 + 59);
+    BOOST_TEST(result.size() == 57u + 97u + 59u);
 }
 
 template <typename AtomicPolicyType>
@@ -145,8 +147,8 @@ void test_counter_openmetrics_1_0()
         "http_requests_total 8\n"
         "# EOF\n"));
     // Multiple counters
-    counter<AtomicPolicyType> c2("http_requests2", {.help = "help text"});
-    counter<AtomicPolicyType> c3("test_c_seconds", {.unit = "seconds"});
+    counter<AtomicPolicyType> c2("http_requests2", {.help = "help text", .unit = ""});
+    counter<AtomicPolicyType> c3("test_c_seconds", {.help = "", .unit = "seconds"});
     c3.inc();
     reg.register_metric(c2);
     reg.register_metric(c3);
@@ -164,10 +166,10 @@ void test_counter_openmetrics_1_0()
         "# TYPE test_c_seconds counter\n"
         "# UNIT test_c_seconds seconds\n"
         "test_c_seconds_total 1\n") != std::string::npos);
-    BOOST_TEST(result.substr(result.size() - 6, 6) == std::string_view(
+    BOOST_TEST(result.substr(result.size() - 6u, 6u) == std::string_view(
         "# EOF\n"
     ));
-    BOOST_TEST(result.size() == 51 + 85 + 83 + 6);
+    BOOST_TEST(result.size() == 51u + 85u + 83u + 6u);
 }
 
 template <typename AtomicPolicyType>
@@ -201,7 +203,7 @@ void test_counter_vec_prometheus_0_0_4()
         "http_requests_total{first=\"1\",second=\"2\"} 2\n") != std::string::npos);
     BOOST_TEST(result.find(
         "http_requests_total{first=\"3\",second=\"4\"} 1\n") != std::string::npos);
-    BOOST_TEST(result.size() == 35 + 44 + 44);
+    BOOST_TEST(result.size() == 35u + 44u + 44u);
     result.clear();
     c.with_labels({"3", "4"}).inc();
     c.with_labels({"1", "3"}).inc();
@@ -218,10 +220,10 @@ void test_counter_vec_prometheus_0_0_4()
     metric_pos = result.find("http_requests_total{first=\"1\",second=\"3\"} 1\n");
     BOOST_TEST(metric_pos != std::string::npos);
     BOOST_TEST(metric_pos > header_pos);
-    BOOST_TEST(result.size() == 35 + 44 + 44 + 44);
+    BOOST_TEST(result.size() == 35u + 44u + 44u + 44u);
     // Multiple counter_vecs
-    counter_vec<AtomicPolicyType> c2("http_requests2", {.help = "help text"}, {"third", "fourth"});
-    counter_vec<AtomicPolicyType> c3("test_c_seconds", {.unit = "seconds"}, {"first", "fifth"});
+    counter_vec<AtomicPolicyType> c2("http_requests2", {.help = "help text", .unit = ""}, {"third", "fourth"});
+    counter_vec<AtomicPolicyType> c3("test_c_seconds", {.help = "", .unit = "seconds"}, {"first", "fifth"});
     c2.with_labels({"3", "4"}).inc();
     c3.with_labels({"1", "5"}).inc();
     reg.register_metric(c2);
@@ -252,7 +254,7 @@ void test_counter_vec_prometheus_0_0_4()
     metric_pos = result.find("test_c_seconds_total{fifth=\"5\",first=\"1\"} 1\n");
     BOOST_TEST(metric_pos != std::string::npos);
     BOOST_TEST(metric_pos > header_pos);
-    BOOST_TEST(result.size() == 35 + 44 + 44 + 44 + 74 + 45 + 36 + 44);
+    BOOST_TEST(result.size() == 35u + 44u + 44u + 44u + 74u + 45u + 36u + 44u);
 }
 
 template <typename AtomicPolicyType>
@@ -289,10 +291,10 @@ void test_counter_vec_openmetrics_1_0()
         "http_requests_total{first=\"1\",second=\"2\"} 2\n") != std::string::npos);
     BOOST_TEST(result.find(
         "http_requests_total{first=\"3\",second=\"4\"} 1\n") != std::string::npos);
-    BOOST_TEST(result.substr(result.size() - 6, 6) == std::string_view(
+    BOOST_TEST(result.substr(result.size() - 6u, 6u) == std::string_view(
         "# EOF\n"
     ));
-    BOOST_TEST(result.size() == 29 + 44 + 44 + 6);
+    BOOST_TEST(result.size() == 29u + 44u + 44u + 6u);
     result.clear();
     c.with_labels({"3", "4"}).inc();
     c.with_labels({"1", "3"}).inc();
@@ -309,13 +311,13 @@ void test_counter_vec_openmetrics_1_0()
     metric_pos = result.find("http_requests_total{first=\"1\",second=\"3\"} 1\n");
     BOOST_TEST(metric_pos != std::string::npos);
     BOOST_TEST(metric_pos > header_pos);
-    BOOST_TEST(result.substr(result.size() - 6, 6) == std::string_view(
+    BOOST_TEST(result.substr(result.size() - 6u, 6u) == std::string_view(
         "# EOF\n"
     ));
-    BOOST_TEST(result.size() == 29 + 44 + 44 + 44 + 6);
+    BOOST_TEST(result.size() == 29u + 44u + 44u + 44u + 6u);
     // Multiple counter_vecs
-    counter_vec<AtomicPolicyType> c2("http_requests2", {.help = "help text"}, {"third", "fourth"});
-    counter_vec<AtomicPolicyType> c3("test_c_seconds", {.unit = "seconds"}, {"first", "fifth"});
+    counter_vec<AtomicPolicyType> c2("http_requests2", {.help = "help text", .unit = ""}, {"third", "fourth"});
+    counter_vec<AtomicPolicyType> c3("test_c_seconds", {.help = "", .unit = "seconds"}, {"first", "fifth"});
     c2.with_labels({"3", "4"}).inc();
     c3.with_labels({"1", "5"}).inc();
     reg.register_metric(c2);
@@ -348,10 +350,10 @@ void test_counter_vec_openmetrics_1_0()
     metric_pos = result.find("test_c_seconds_total{fifth=\"5\",first=\"1\"} 1\n");
     BOOST_TEST(metric_pos != std::string::npos);
     BOOST_TEST(metric_pos > header_pos);
-    BOOST_TEST(result.substr(result.size() - 6, 6) == std::string_view(
+    BOOST_TEST(result.substr(result.size() - 6u, 6u) == std::string_view(
         "# EOF\n"
     ));
-    BOOST_TEST(result.size() == 29 + 44 + 44 + 44 + 62 + 45 + 60 + 44 + 6);
+    BOOST_TEST(result.size() == 29u + 44u + 44u + 44u + 62u + 45u + 60u + 44u + 6u);
 }
 
 template <typename AtomicPolicyType>
@@ -391,8 +393,8 @@ void test_gauge_prometheus_0_0_4()
         "# TYPE test_gauge gauge\n"
         "test_gauge -3\n"));
     // Multiple gauges
-    gauge<AtomicPolicyType> g2("test_gauge2", {.help = "help text"});
-    gauge<AtomicPolicyType> g3("test_gauge_bytes", {.unit = "bytes"});
+    gauge<AtomicPolicyType> g2("test_gauge2", {.help = "help text", .unit = ""});
+    gauge<AtomicPolicyType> g3("test_gauge_bytes", {.help = "", .unit = "bytes"});
     g3.inc();
     reg.register_metric(g2);
     reg.register_metric(g3);
@@ -409,7 +411,7 @@ void test_gauge_prometheus_0_0_4()
     BOOST_TEST(result.find(
         "# TYPE test_gauge_bytes gauge\n"
         "test_gauge_bytes 1\n") != std::string::npos);
-    BOOST_TEST(result.size() == 38 + 68 + 49);
+    BOOST_TEST(result.size() == 38u + 68u + 49u);
 }
 
 template <typename AtomicPolicyType>
@@ -454,8 +456,8 @@ void test_gauge_openmetrics_1_0()
         "test_gauge -3\n"
         "# EOF\n"));
     // Multiple gauges
-    gauge<AtomicPolicyType> g2("test_gauge2", {.help = "help text"});
-    gauge<AtomicPolicyType> g3("test_gauge_bytes", {.unit = "bytes"});
+    gauge<AtomicPolicyType> g2("test_gauge2", {.help = "help text", .unit = ""});
+    gauge<AtomicPolicyType> g3("test_gauge_bytes", {.help = "", .unit = "bytes"});
     g3.inc();
     reg.register_metric(g2);
     reg.register_metric(g3);
@@ -473,10 +475,10 @@ void test_gauge_openmetrics_1_0()
         "# TYPE test_gauge_bytes gauge\n"
         "# UNIT test_gauge_bytes bytes\n"
         "test_gauge_bytes 1\n") != std::string::npos);
-    BOOST_TEST(result.substr(result.size() - 6, 6) == std::string_view(
+    BOOST_TEST(result.substr(result.size() - 6u, 6u) == std::string_view(
         "# EOF\n"
     ));
-    BOOST_TEST(result.size() == 38 + 68 + 79 + 6);
+    BOOST_TEST(result.size() == 38u + 68u + 79u + 6u);
 }
 
 template <typename AtomicPolicyType>
@@ -510,7 +512,7 @@ void test_gauge_vec_prometheus_0_0_4()
         "test_gauge{first=\"1\",second=\"2\"} -1\n") != std::string::npos);
     BOOST_TEST(result.find(
         "test_gauge{first=\"3\",second=\"4\"} 1\n") != std::string::npos);
-    BOOST_TEST(result.size() == 24 + 35 + 36);
+    BOOST_TEST(result.size() == 24u + 35u + 36u);
     result.clear();
     g.with_labels({"3", "4"}).inc();
     g.with_labels({"1", "3"}).inc();
@@ -527,10 +529,10 @@ void test_gauge_vec_prometheus_0_0_4()
     metric_pos = result.find("test_gauge{first=\"1\",second=\"3\"} 1\n");
     BOOST_TEST(metric_pos != std::string::npos);
     BOOST_TEST(metric_pos > header_pos);
-    BOOST_TEST(result.size() == 24 + 35 + 35 + 36);
+    BOOST_TEST(result.size() == 24u + 35u + 35u + 36u);
     // Multiple gauge_vecs
-    gauge_vec<AtomicPolicyType> g2("test_gauge2", {.help = "help text"}, {"third", "fourth"});
-    gauge_vec<AtomicPolicyType> g3("test_gauge_bytes", {.unit = "bytes"}, {"first", "fifth"});
+    gauge_vec<AtomicPolicyType> g2("test_gauge2", {.help = "help text", .unit = ""}, {"third", "fourth"});
+    gauge_vec<AtomicPolicyType> g3("test_gauge_bytes", {.help = "", .unit = "bytes"}, {"first", "fifth"});
     g2.with_labels({"3", "4"}).inc();
     g3.with_labels({"1", "5"}).inc();
     reg.register_metric(g2);
@@ -562,7 +564,7 @@ void test_gauge_vec_prometheus_0_0_4()
     metric_pos = result.find("test_gauge_bytes{fifth=\"5\",first=\"1\"} 1\n");
     BOOST_TEST(metric_pos != std::string::npos);
     BOOST_TEST(metric_pos > header_pos);
-    BOOST_TEST(result.size() == 24 + 35 + 35 + 36 + 54 + 36 + 30 + 40);
+    BOOST_TEST(result.size() == 24u + 35u + 35u + 36u + 54u + 36u + 30u + 40u);
 }
 
 template <typename AtomicPolicyType>
@@ -599,10 +601,10 @@ void test_gauge_vec_openmetrics_1_0()
         "test_gauge{first=\"1\",second=\"2\"} -1\n") != std::string::npos);
     BOOST_TEST(result.find(
         "test_gauge{first=\"3\",second=\"4\"} 1\n") != std::string::npos);
-    BOOST_TEST(result.substr(result.size() - 6, 6) == std::string_view(
+    BOOST_TEST(result.substr(result.size() - 6u, 6u) == std::string_view(
         "# EOF\n"
     ));
-    BOOST_TEST(result.size() == 24 + 35 + 36 + 6);
+    BOOST_TEST(result.size() == 24u + 35u + 36u + 6u);
     result.clear();
     g.with_labels({"3", "4"}).inc();
     g.with_labels({"1", "3"}).inc();
@@ -619,13 +621,13 @@ void test_gauge_vec_openmetrics_1_0()
     metric_pos = result.find("test_gauge{first=\"1\",second=\"3\"} 1\n");
     BOOST_TEST(metric_pos != std::string::npos);
     BOOST_TEST(metric_pos > header_pos);
-    BOOST_TEST(result.substr(result.size() - 6, 6) == std::string_view(
+    BOOST_TEST(result.substr(result.size() - 6u, 6u) == std::string_view(
         "# EOF\n"
     ));
-    BOOST_TEST(result.size() == 24 + 35 + 35 + 36 + 6);
+    BOOST_TEST(result.size() == 24u + 35u + 35u + 36u + 6u);
     // Multiple gauge_vecs
-    gauge_vec<AtomicPolicyType> g2("test_gauge2", {.help = "help text"}, {"third", "fourth"});
-    gauge_vec<AtomicPolicyType> g3("test_gauge_bytes", {.unit = "bytes"}, {"first", "fifth"});
+    gauge_vec<AtomicPolicyType> g2("test_gauge2", {.help = "help text", .unit = ""}, {"third", "fourth"});
+    gauge_vec<AtomicPolicyType> g3("test_gauge_bytes", {.help = "", .unit = "bytes"}, {"first", "fifth"});
     g2.with_labels({"3", "4"}).inc();
     g3.with_labels({"1", "5"}).inc();
     reg.register_metric(g2);
@@ -658,10 +660,10 @@ void test_gauge_vec_openmetrics_1_0()
     metric_pos = result.find("test_gauge_bytes{fifth=\"5\",first=\"1\"} 1\n");
     BOOST_TEST(metric_pos != std::string::npos);
     BOOST_TEST(metric_pos > header_pos);
-    BOOST_TEST(result.substr(result.size() - 6, 6) == std::string_view(
+    BOOST_TEST(result.substr(result.size() - 6u, 6u) == std::string_view(
         "# EOF\n"
     ));
-    BOOST_TEST(result.size() == 24 + 35 + 35 + 36 + 54 + 36 + 60 + 40 + 6);
+    BOOST_TEST(result.size() == 24u + 35u + 35u + 36u + 54u + 36u + 60u + 40u + 6u);
 }
 
 template <typename AtomicPolicyType>
@@ -732,8 +734,8 @@ void test_histogram_prometheus_0_0_4()
         "test_histogram_count 3\n"));
     result.clear();
     // Multiple histograms
-    histogram<AtomicPolicyType> h2("test_histogram2", {.help = "help text", .buckets = {0.1, 0.2, 0.3}});
-    histogram<AtomicPolicyType> h3("request_duration_seconds", {.unit = "seconds"});
+    histogram<AtomicPolicyType> h2("test_histogram2", {.help = "help text", .unit = "", .buckets = {0.1, 0.2, 0.3}});
+    histogram<AtomicPolicyType> h3("request_duration_seconds", {.help = "", .unit = "seconds", .buckets = {}});
     reg.register_metric(h2);
     reg.register_metric(h3);
     h2.observe(0.02);
@@ -780,7 +782,7 @@ void test_histogram_prometheus_0_0_4()
         "request_duration_seconds_bucket{le=\"+Inf\"} 0\n"
         "request_duration_seconds_sum 0\n"
         "request_duration_seconds_count 0\n") != std::string::npos);
-    BOOST_TEST(result.size() == 490 + 256 + 637);
+    BOOST_TEST(result.size() == 490u + 256u + 637u);
     result.clear();
     reg.unregister_metric(h);
     reg.unregister_metric(h2);
@@ -874,8 +876,8 @@ void test_histogram_openmetrics_1_0()
         "# EOF\n"));
     result.clear();
     // Multiple histograms
-    histogram<AtomicPolicyType> h2("test_histogram2", {.help = "help text", .buckets = {0.1, 0.2, 0.3}});
-    histogram<AtomicPolicyType> h3("request_duration_seconds", {.unit = "seconds"});
+    histogram<AtomicPolicyType> h2("test_histogram2", {.help = "help text", .unit = "", .buckets = {0.1, 0.2, 0.3}});
+    histogram<AtomicPolicyType> h3("request_duration_seconds", {.help = "", .unit = "seconds", .buckets = {}});
     reg.register_metric(h2);
     reg.register_metric(h3);
     h2.observe(0.02);
@@ -923,10 +925,10 @@ void test_histogram_openmetrics_1_0()
         "request_duration_seconds_bucket{le=\"+Inf\"} 0\n"
         "request_duration_seconds_sum 0\n"
         "request_duration_seconds_count 0\n") != std::string::npos);
-    BOOST_TEST(result.substr(result.size() - 6, 6) == std::string_view(
+    BOOST_TEST(result.substr(result.size() - 6u, 6u) == std::string_view(
         "# EOF\n"
     ));
-    BOOST_TEST(result.size() == 490 + 256 + 677 + 6);
+    BOOST_TEST(result.size() == 490u + 256u + 677u + 6u);
     result.clear();
     reg.unregister_metric(h);
     reg.unregister_metric(h2);
@@ -1021,11 +1023,13 @@ void test_histogram_vec_prometheus_0_0_4()
         "test_histogram_count{first=\"3\",second=\"4\"} 1\n");
     BOOST_TEST(metric_pos != std::string::npos);
     BOOST_TEST(metric_pos > header_pos);
-    BOOST_TEST(result.size() == 32 + 753 + 751);
+    BOOST_TEST(result.size() == 32u + 753u + 751u);
     result.clear();
     // Multiple histogram_vecs
-    histogram_vec<AtomicPolicyType> h2("test_histogram2", {.help = "help text", .buckets = {0.1, 0.2, 0.3}}, {"third", "fourth"});
-    histogram_vec<AtomicPolicyType> h3("request_duration_seconds", {.unit = "seconds"}, {"method"});
+    histogram_vec<AtomicPolicyType> h2("test_histogram2",
+        {.help = "help text", .unit = "", .buckets = {0.1, 0.2, 0.3}},
+        {"third", "fourth"});
+    histogram_vec<AtomicPolicyType> h3("request_duration_seconds", {.help = "", .unit = "seconds", .buckets = {}}, {"method"});
     h2.with_labels({"3", "4"}).observe(0.01);
     h3.with_labels({"GET"}).observe(0.5);
     reg.register_metric(h2);
@@ -1092,7 +1096,7 @@ void test_histogram_vec_prometheus_0_0_4()
         "request_duration_seconds_bucket{le=\"+Inf\",method=\"GET\"} 1\n"
         "request_duration_seconds_sum{method=\"GET\"} 0.5\n"
         "request_duration_seconds_count{method=\"GET\"} 1\n") != std::string::npos);
-    BOOST_TEST(result.size() == 32 + 753 + 751 + 384 + 823);
+    BOOST_TEST(result.size() == 32u + 753u + 751u + 384u + 823u);
 }
 
 template <typename AtomicPolicyType>
@@ -1167,14 +1171,17 @@ void test_histogram_vec_openmetrics_1_0()
         "test_histogram_count{first=\"3\",second=\"4\"} 1\n");
     BOOST_TEST(metric_pos != std::string::npos);
     BOOST_TEST(metric_pos > header_pos);
-    BOOST_TEST(result.substr(result.size() - 6, 6) == std::string_view(
+    BOOST_TEST(result.substr(result.size() - 6u, 6u) == std::string_view(
         "# EOF\n"
     ));
-    BOOST_TEST(result.size() == 32 + 753 + 751 + 6);
+    BOOST_TEST(result.size() == 32u + 753u + 751u + 6u);
     result.clear();
     // Multiple histogram_vecs
-    histogram_vec<AtomicPolicyType> h2("test_histogram2", {.help = "help text", .buckets = {0.1, 0.2, 0.3}}, {"third", "fourth"});
-    histogram_vec<AtomicPolicyType> h3("request_duration_seconds", {.unit = "seconds"}, {"method"});
+    histogram_vec<AtomicPolicyType> h2("test_histogram2",
+        {.help = "help text", .unit = "", .buckets = {0.1, 0.2, 0.3}},
+        {"third", "fourth"});
+    histogram_vec<AtomicPolicyType> h3("request_duration_seconds",
+        {.help = "", .unit = "seconds", .buckets = {}}, {"method"});
     h2.with_labels({"3", "4"}).observe(0.01);
     h3.with_labels({"GET"}).observe(0.5);
     reg.register_metric(h2);
@@ -1242,10 +1249,10 @@ void test_histogram_vec_openmetrics_1_0()
         "request_duration_seconds_bucket{le=\"+Inf\",method=\"GET\"} 1\n"
         "request_duration_seconds_sum{method=\"GET\"} 0.5\n"
         "request_duration_seconds_count{method=\"GET\"} 1\n") != std::string::npos);
-    BOOST_TEST(result.substr(result.size() - 6, 6) == std::string_view(
+    BOOST_TEST(result.substr(result.size() - 6u, 6u) == std::string_view(
         "# EOF\n"
     ));
-    BOOST_TEST(result.size() == 32 + 753 + 751 + 384 + 863 + 6);
+    BOOST_TEST(result.size() == 32u + 753u + 751u + 384u + 863u + 6u);
 }
 
 template <typename AtomicPolicyType>
@@ -1322,8 +1329,10 @@ void test_gaugehistogram_prometheus_0_0_4()
         "test_ghist_gcount 1\n"));
     result.clear();
     // Multiple gaugehistograms
-    gaugehistogram<AtomicPolicyType> h2("test_ghist2", {.help = "help text", .buckets = {0.1, 0.2, 0.3}});
-    gaugehistogram<AtomicPolicyType> h3("temperature_dist_celsius", {.unit = "celsius"});
+    gaugehistogram<AtomicPolicyType> h2("test_ghist2",
+        {.help = "help text", .unit = "", .buckets = {0.1, 0.2, 0.3}});
+    gaugehistogram<AtomicPolicyType> h3("temperature_dist_celsius",
+        {.help = "", .unit = "celsius", .buckets = {}});
     reg.register_metric(h2);
     reg.register_metric(h3);
     h2.observe(0.02);
@@ -1376,7 +1385,7 @@ void test_gaugehistogram_prometheus_0_0_4()
         "temperature_dist_celsius_gsum 0\n"
         "# TYPE temperature_dist_celsius_gcount gauge\n"
         "temperature_dist_celsius_gcount 0\n") != std::string::npos);
-    BOOST_TEST(result.size() == 492 + 288 + 727);
+    BOOST_TEST(result.size() == 492u + 288u + 727u);
     result.clear();
     reg.unregister_metric(h);
     reg.unregister_metric(h2);
@@ -1472,8 +1481,10 @@ void test_gaugehistogram_openmetrics_1_0()
         "# EOF\n"));
     result.clear();
     // Multiple gaugehistograms
-    gaugehistogram<AtomicPolicyType> h2("test_ghist2", {.help = "help text", .buckets = {0.1, 0.2, 0.3}});
-    gaugehistogram<AtomicPolicyType> h3("temperature_dist_celsius", {.unit = "celsius"});
+    gaugehistogram<AtomicPolicyType> h2("test_ghist2",
+        {.help = "help text", .unit = "", .buckets = {0.1, 0.2, 0.3}});
+    gaugehistogram<AtomicPolicyType> h3("temperature_dist_celsius",
+        {.help = "", .unit = "celsius", .buckets = {}});
     reg.register_metric(h2);
     reg.register_metric(h3);
     h2.observe(0.02);
@@ -1521,10 +1532,10 @@ void test_gaugehistogram_openmetrics_1_0()
         "temperature_dist_celsius_bucket{le=\"+Inf\"} 0\n"
         "temperature_dist_celsius_gsum 0\n"
         "temperature_dist_celsius_gcount 0\n") != std::string::npos);
-    BOOST_TEST(result.substr(result.size() - 6, 6) == std::string_view(
+    BOOST_TEST(result.substr(result.size() - 6u, 6u) == std::string_view(
         "# EOF\n"
     ));
-    BOOST_TEST(result.size() == 437 + 231 + 684 + 6);
+    BOOST_TEST(result.size() == 437u + 231u + 684u + 6u);
     result.clear();
     reg.unregister_metric(h);
     reg.unregister_metric(h2);
@@ -1627,11 +1638,15 @@ void test_gaugehistogram_vec_prometheus_0_0_4()
     BOOST_TEST(metric_pos > header_pos);
     metric_pos = result.find("test_ghist_gcount{first=\"3\",second=\"4\"} 1\n");
     BOOST_TEST(metric_pos > header_pos);
-    BOOST_TEST(result.size() == 28 + 615 + 615 + 29 + 42 + 40 + 31 + 42 + 42);
+    BOOST_TEST(result.size() == 28u + 615u + 615u + 29u + 42u + 40u + 31u + 42u + 42u);
     result.clear();
     // Multiple gaugehistogram_vecs
-    gaugehistogram_vec<AtomicPolicyType> h2("test_ghist2", {.help = "help text", .buckets = {0.1, 0.2, 0.3}}, {"third", "fourth"});
-    gaugehistogram_vec<AtomicPolicyType> h3("temperature_dist_celsius", {.unit = "celsius"}, {"region"});
+    gaugehistogram_vec<AtomicPolicyType> h2("test_ghist2",
+        {.help = "help text", .unit = "", .buckets = {0.1, 0.2, 0.3}},
+        {"third", "fourth"});
+    gaugehistogram_vec<AtomicPolicyType> h3("temperature_dist_celsius",
+        {.help = "", .unit = "celsius", .buckets = {}},
+        {"region"});
     h2.with_labels({"3", "4"}).observe(0.01);
     h3.with_labels({"42"}).observe(0.5);
     reg.register_metric(h2);
@@ -1709,7 +1724,7 @@ void test_gaugehistogram_vec_prometheus_0_0_4()
         "temperature_dist_celsius_gsum{region=\"42\"} 0.5\n"
         "# TYPE temperature_dist_celsius_gcount gauge\n"
         "temperature_dist_celsius_gcount{region=\"42\"} 1\n") != std::string::npos);
-    BOOST_TEST(result.size() == 28 + 615 + 615 + 29 + 42 + 40 + 31 + 42 + 42 + 416 + 899);
+    BOOST_TEST(result.size() == 28u + 615u + 615u + 29u + 42u + 40u + 31u + 42u + 42u + 416u + 899u);
 }
 
 template <typename AtomicPolicyType>
@@ -1782,14 +1797,18 @@ void test_gaugehistogram_vec_openmetrics_1_0()
         "test_ghist_gsum{first=\"3\",second=\"4\"} 1\n"
         "test_ghist_gcount{first=\"3\",second=\"4\"} 1\n");
     BOOST_TEST(metric_pos > header_pos);
-    BOOST_TEST(result.substr(result.size() - 6, 6) == std::string_view(
+    BOOST_TEST(result.substr(result.size() - 6u, 6u) == std::string_view(
         "# EOF\n"
     ));
-    BOOST_TEST(result.size() == 33 + 699 + 697 + 6);
+    BOOST_TEST(result.size() == 33u + 699u + 697u + 6u);
     result.clear();
     // Multiple gaugehistogram_vecs
-    gaugehistogram_vec<AtomicPolicyType> h2("test_ghist2", {.help = "help text", .buckets = {0.1, 0.2, 0.3}}, {"third", "fourth"});
-    gaugehistogram_vec<AtomicPolicyType> h3("temperature_dist_celsius", {.unit = "celsius"}, {"region"});
+    gaugehistogram_vec<AtomicPolicyType> h2("test_ghist2",
+        {.help = "help text", .unit = "", .buckets = {0.1, 0.2, 0.3}},
+        {"third", "fourth"});
+    gaugehistogram_vec<AtomicPolicyType> h3("temperature_dist_celsius",
+        {.help = "", .unit = "celsius", .buckets = {}},
+        {"region"});
     h2.with_labels({"3", "4"}).observe(0.01);
     h3.with_labels({"42"}).observe(0.5);
     reg.register_metric(h2);
@@ -1856,10 +1875,10 @@ void test_gaugehistogram_vec_openmetrics_1_0()
         "temperature_dist_celsius_bucket{le=\"+Inf\",region=\"42\"} 1\n"
         "temperature_dist_celsius_gsum{region=\"42\"} 0.5\n"
         "temperature_dist_celsius_gcount{region=\"42\"} 1\n") != std::string::npos);
-    BOOST_TEST(result.substr(result.size() - 6, 6) == std::string_view(
+    BOOST_TEST(result.substr(result.size() - 6u, 6u) == std::string_view(
         "# EOF\n"
     ));
-    BOOST_TEST(result.size() == 33 + 699 + 697 + 359 + 856 + 6);
+    BOOST_TEST(result.size() == 33u + 699u + 697u + 359u + 856u + 6u);
 }
 
 template <typename AtomicPolicyType>
@@ -1891,7 +1910,7 @@ void test_info_vec_prometheus_0_0_4()
     BOOST_TEST(metric_pos > header_pos);
     metric_pos = result.find("build_info{component=\"profile\",version=\"0.3\"} 1\n");
     BOOST_TEST(metric_pos > header_pos);
-    BOOST_TEST(result.size() == 24 + 45 + 48 + 48);
+    BOOST_TEST(result.size() == 24u + 45u + 48u + 48u);
 }
 
 template <typename AtomicPolicyType>
@@ -1924,10 +1943,10 @@ void test_info_vec_openmetrics_1_0()
     BOOST_TEST(metric_pos > header_pos);
     metric_pos = result.find("build_info{component=\"profile\",version=\"0.3\"} 1\n");
     BOOST_TEST(metric_pos > header_pos);
-    BOOST_TEST(result.substr(result.size() - 6, 6) == std::string_view(
+    BOOST_TEST(result.substr(result.size() - 6u, 6u) == std::string_view(
         "# EOF\n"
     ));
-    BOOST_TEST(result.size() == 18 + 45 + 48 + 48 + 6);
+    BOOST_TEST(result.size() == 18u + 45u + 48u + 48u + 6u);
 }
 
 template <typename AtomicPolicyType, detail::string_buffer Suffix>
@@ -2622,27 +2641,27 @@ BOOST_AUTO_TEST_CASE(concurrent_histogram_openmetrics_1_0, * boost::unit_test::t
     histogram h("test_histogram");
     reg.register_metric(h);
 
-    constexpr std::size_t num_threads = 4;
-    constexpr std::size_t iterations_per_thread = 1000;
+    constexpr std::size_t num_threads = 4u;
+    constexpr std::size_t iterations_per_thread = 1000u;
 
-    std::atomic<std::size_t> ready_count{0};
+    std::atomic<std::size_t> ready_count{0u};
     std::atomic<bool> start_flag{false};
 
     std::vector<std::thread> threads;
     threads.reserve(num_threads);
 
-    for (std::size_t i = 0; i < num_threads; i++)
+    for (std::size_t i = 0u; i < num_threads; i++)
     {
-        threads.emplace_back([&, i]()
+        threads.emplace_back([&]()
         {
-            ready_count.fetch_add(1, std::memory_order_release);
+            ready_count.fetch_add(1u, std::memory_order_release);
             
             while (!start_flag.load(std::memory_order_acquire))
             {
                 std::this_thread::yield();
             }
 
-            for (std::size_t j = 0; j < iterations_per_thread; j++)
+            for (std::size_t j = 0u; j < iterations_per_thread; j++)
             {
                 h.observe(0.1);
             }
@@ -2656,7 +2675,7 @@ BOOST_AUTO_TEST_CASE(concurrent_histogram_openmetrics_1_0, * boost::unit_test::t
 
     start_flag.store(true, std::memory_order_release);
     // Serialize while other threads are observing
-    for (std::size_t i = 0; i < iterations_per_thread; i++)
+    for (std::size_t i = 0u; i < iterations_per_thread; i++)
     {
         std::string result;
         serialize<format::openmetrics_1_0>(reg, result);
@@ -2738,36 +2757,36 @@ BOOST_AUTO_TEST_CASE(concurrent_gaugehistogram_openmetrics_1_0, * boost::unit_te
     gaugehistogram h("temperature_dist_celsius");
     reg.register_metric(h);
 
-    constexpr std::size_t num_observe_threads = 2;
-    constexpr std::size_t num_sub_threads = 2;
-    constexpr std::size_t iterations_per_thread = 1000;
+    constexpr std::size_t num_observe_threads = 2u;
+    constexpr std::size_t num_sub_threads = 2u;
+    constexpr std::size_t iterations_per_thread = 1000u;
 
-    std::atomic<std::size_t> ready_count{0};
+    std::atomic<std::size_t> ready_count{0u};
     std::atomic<bool> start_flag{false};
 
     std::vector<std::thread> threads;
     threads.reserve(num_observe_threads + num_sub_threads);
 
-    for (std::size_t i = 0; i < num_observe_threads; i++)
+    for (std::size_t i = 0u; i < num_observe_threads; i++)
     {
-        threads.emplace_back([&, i]()
+        threads.emplace_back([&]()
         {
-            ready_count.fetch_add(1, std::memory_order_release);
+            ready_count.fetch_add(1u, std::memory_order_release);
             
             while (!start_flag.load(std::memory_order_acquire))
             {
                 std::this_thread::yield();
             }
 
-            for (std::size_t j = 0; j < iterations_per_thread; j++)
+            for (std::size_t j = 0u; j < iterations_per_thread; j++)
             {
                 h.observe(0.2);
             }
         });
     }
-    for (std::size_t i = 0; i < num_sub_threads; i++)
+    for (std::size_t i = 0u; i < num_sub_threads; i++)
     {
-        threads.emplace_back([&, i]()
+        threads.emplace_back([&]()
         {
             ready_count.fetch_add(1, std::memory_order_release);
             
@@ -2776,7 +2795,7 @@ BOOST_AUTO_TEST_CASE(concurrent_gaugehistogram_openmetrics_1_0, * boost::unit_te
                 std::this_thread::yield();
             }
 
-            for (std::size_t j = 0; j < iterations_per_thread; j++)
+            for (std::size_t j = 0u; j < iterations_per_thread; j++)
             {
                 h.sub(0.2);
             }
@@ -2790,7 +2809,7 @@ BOOST_AUTO_TEST_CASE(concurrent_gaugehistogram_openmetrics_1_0, * boost::unit_te
 
     start_flag.store(true, std::memory_order_release);
     // Serialize while other threads are observing
-    for (std::size_t i = 0; i < iterations_per_thread; i++)
+    for (std::size_t i = 0u; i < iterations_per_thread; i++)
     {
         std::string result;
         serialize<format::openmetrics_1_0>(reg, result);
@@ -2912,27 +2931,27 @@ BOOST_AUTO_TEST_CASE(concurrent_static_histogram_openmetrics_1_0, * boost::unit_
     using h = static_histogram<"test_h_concurrent">;
     static_reg::template register_metric<h>();
 
-    constexpr std::size_t num_threads = 4;
-    constexpr std::size_t iterations_per_thread = 1000;
+    constexpr std::size_t num_threads = 4u;
+    constexpr std::size_t iterations_per_thread = 1000u;
 
-    std::atomic<std::size_t> ready_count{0};
+    std::atomic<std::size_t> ready_count{0u};
     std::atomic<bool> start_flag{false};
 
     std::vector<std::thread> threads;
     threads.reserve(num_threads);
 
-    for (std::size_t i = 0; i < num_threads; i++)
+    for (std::size_t i = 0u; i < num_threads; i++)
     {
-        threads.emplace_back([&, i]()
+        threads.emplace_back([&]()
         {
-            ready_count.fetch_add(1, std::memory_order_release);
+            ready_count.fetch_add(1u, std::memory_order_release);
             
             while (!start_flag.load(std::memory_order_acquire))
             {
                 std::this_thread::yield();
             }
 
-            for (std::size_t j = 0; j < iterations_per_thread; j++)
+            for (std::size_t j = 0u; j < iterations_per_thread; j++)
             {
                 h::observe(0.1);
             }
@@ -2946,7 +2965,7 @@ BOOST_AUTO_TEST_CASE(concurrent_static_histogram_openmetrics_1_0, * boost::unit_
 
     start_flag.store(true, std::memory_order_release);
     // Serialize while other threads are observing
-    for (std::size_t i = 0; i < iterations_per_thread; i++)
+    for (std::size_t i = 0u; i < iterations_per_thread; i++)
     {
         std::string result;
         serialize<format::openmetrics_1_0, static_reg>(result);

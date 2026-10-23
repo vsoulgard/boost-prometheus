@@ -32,8 +32,8 @@ template <
 >
 class basic_static_metric
 {
-protected:
-    
+public:
+
     using labels_type = extract_option<labels, Options...>::type;
     using help_type = extract_option<help, Options...>::type;
     using unit_type = extract_option<unit, Options...>::type;
@@ -77,7 +77,6 @@ protected:
             static_assert(sizeof...(LabelValues) == labels_type::size(), "Incorrect label values count");
 
             std::size_t index = static_labels_registrator<derived_type, LabelValues...>::index;
-            BOOST_ASSERT(&impl_.value_ref(index) != nullptr);
             return impl_.value_ref(index);
         }
         else
@@ -86,7 +85,6 @@ protected:
 
             (void)static_labels_registrator<derived_type>::index;
             BOOST_ASSERT((static_labels_registrator<derived_type>::index == 0));
-            BOOST_ASSERT(&impl_.value_ref(0) != nullptr);
             return impl_.value_ref(0);
         }
     }

@@ -26,9 +26,6 @@ class static_gauge : public detail::basic_static_metric<
     Options...
 >
 {
-    static constexpr detail::string_buffer prometheus_type = "gauge";
-    static constexpr detail::string_buffer openmetrics_type = "gauge";
-
     using base_type = detail::basic_static_metric<
         static_gauge,
         detail::static_gauge_internal,

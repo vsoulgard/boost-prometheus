@@ -13,15 +13,18 @@
 
 #include <boost/container/small_vector.hpp>
 
+#include <array>
 #include <memory>
 #include <mutex>
 
 namespace boost::prometheus::detail {
 
+BOOST_PROMETHEUS_MSVC_DISABLE_ALIGN_WARNING
 template <typename AtomicPolicyType>
 struct static_histogram_internal
 {
-    static constexpr std::size_t alignment = AtomicPolicyType::enabled ? cache_line_size : 1;
+    template <typename T>
+    static constexpr std::size_t alignment = AtomicPolicyType::enabled ? cache_line_size : alignof(T);
 
     using mutex_ptr_type = std::conditional_t<AtomicPolicyType::enabled, std::unique_ptr<std::mutex>, std::tuple<>>;
 
@@ -35,7 +38,7 @@ struct static_histogram_internal
     {
         struct histogram_buffer
         {
-            using bucket_value_type = histogram_bucket_value<AtomicPolicyType, alignment>;
+            using bucket_value_type = histogram_bucket_value<AtomicPolicyType, alignment<std::uint64_t>>;
             using buffer_count_type = std::conditional_t<
                 AtomicPolicyType::enabled,
                 std::uint64_t,
@@ -43,12 +46,12 @@ struct static_histogram_internal
             >;
 
             std::vector<bucket_value_type> buckets;
-            alignas(alignment)
+            alignas(alignment<double>)
             double sum;
             // Instead of summing the values for each bucket, we use a single counter for the buffer,
             // as this is a compromise solution for case involving hundreds of buckets.
             // With disabled atomic policy, we don't need this.
-            [[no_unique_address]] alignas(alignment)
+            [[no_unique_address]] alignas(alignment<buffer_count_type>)
             buffer_count_type count;
 
             histogram_buffer() = delete;
@@ -61,10 +64,10 @@ struct static_histogram_internal
         // Active and passive buffers for bucket values
         std::array<histogram_buffer, buffers_count> buffers_;
 
-        [[no_unique_address]] alignas(alignment)
+        [[no_unique_address]] alignas(alignment<count_type>)
         count_type count_and_idx_;
 
-        [[no_unique_address]] alignas(alignment)
+        [[no_unique_address]] alignas(alignment<mutex_ptr_type>)
         mutex_ptr_type mtx_;
 
         // Serialized names
@@ -153,6 +156,7 @@ struct static_histogram_internal
         return entries_[index];
     }
 };
+BOOST_PROMETHEUS_MSVC_RESTORE_WARNING
 
 } // namespace boost::prometheus::detail
 

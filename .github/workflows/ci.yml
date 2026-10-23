@@ -1,0 +1,368 @@
+#
+# Copyright (c) 2026 Vladislav Soulgard (vsoulgard at gmail dot com)
+#
+# Distributed under the Boost Software License, Version 1.0. (See accompanying
+# file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+#
+
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  linux-cmake:
+    name: "Linux CMake ${{ matrix.toolset }} C++${{ matrix.cxxstd }} ${{ matrix.build-type }} ${{ matrix.cxxflags }}"
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # GCC builds
+          - toolset: gcc-12
+            install: g++-12
+            container: ubuntu:22.04
+            cxxstd: '20'
+            build-type: 'Debug'
+
+          - toolset: gcc-12
+            install: g++-12
+            container: ubuntu:22.04
+            cxxstd: '20'
+            build-type: 'Release'
+
+          - toolset: gcc-13
+            install: g++-13
+            container: ubuntu:24.04
+            cxxstd: '20'
+            build-type: 'Debug'
+
+          - toolset: gcc-14
+            install: g++-14
+            container: ubuntu:24.04
+            cxxstd: '23'
+            build-type: 'Release'
+
+          - toolset: gcc-15
+            install: g++-15
+            container: ubuntu:26.04
+            cxxstd: '20'
+            build-type: 'Debug'
+
+          - toolset: gcc-16
+            install: g++-16
+            container: ubuntu:26.04
+            cxxstd: '23'
+            build-type: 'Release'
+
+          # Clang builds
+          - toolset: clang-18
+            install: clang-18
+            container: ubuntu:24.04
+            cxxstd: '20'
+            build-type: 'Debug'
+
+          - toolset: clang-18
+            install: clang-18
+            container: ubuntu:24.04
+            cxxstd: '20'
+            build-type: 'Release'
+
+          - toolset: clang-19
+            install: clang-19
+            container: ubuntu:24.04
+            cxxstd: '23'
+            build-type: 'Debug'
+
+          - toolset: clang-20
+            install: clang-20
+            container: ubuntu:24.04
+            cxxstd: '23'
+            build-type: 'Release'
+
+          # Clang with libc++
+          - toolset: clang-20
+            install: 'clang-20 libc++-20-dev libc++abi-20-dev'
+            container: ubuntu:24.04
+            cxxstd: '20'
+            build-type: 'Debug'
+            cxxflags: '-stdlib=libc++'
+            ldflags: '-lc++'
+
+          - toolset: clang-21
+            install: 'clang-21 libc++-21-dev libc++abi-21-dev'
+            container: ubuntu:26.04
+            cxxstd: '23'
+            build-type: 'Release'
+            cxxflags: '-stdlib=libc++'
+            ldflags: '-lc++'
+
+          # Sanitizers - ASan+UBSan
+          - toolset: gcc-16
+            install: g++-16
+            container: ubuntu:26.04
+            cxxstd: '20'
+            build-type: 'Debug'
+            cxxflags: '-fsanitize=address,undefined -fno-sanitize-recover=all'
+            ldflags: '-fsanitize=address,undefined'
+
+          - toolset: clang-22
+            install: 'clang-22 libclang-rt-22-dev'
+            container: ubuntu:26.04
+            cxxstd: '20'
+            build-type: 'Debug'
+            cxxflags: '-fsanitize=address,undefined -fno-sanitize-recover=all'
+            ldflags: '-fsanitize=address,undefined'
+
+          # Sanitizers - TSan
+          - toolset: gcc-16
+            install: g++-16
+            container: ubuntu:26.04
+            cxxstd: '20'
+            build-type: 'Debug'
+            cxxflags: '-fsanitize=thread'
+            ldflags: '-fsanitize=thread'
+
+          - toolset: clang-22
+            install: 'clang-22 libclang-rt-22-dev'
+            container: ubuntu:26.04
+            cxxstd: '23'
+            build-type: 'Debug'
+            cxxflags: '-fsanitize=thread'
+            ldflags: '-fsanitize=thread'
+
+    container: ${{matrix.container}}
+
+    env:
+      DEBIAN_FRONTEND: noninteractive
+      CMAKE_BUILD_PARALLEL_LEVEL: 4
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            sudo \
+            git \
+            g++ \
+            ca-certificates \
+            openssl \
+            libssl-dev \
+            cmake \
+            make \
+            python3 \
+            ${{ matrix.install }}
+
+      - name: Setup Boost
+        run: python3 tools/ci.py setup-boost --source-dir=$(pwd)
+
+      - name: Build B2 distribution
+        run: python3 tools/ci.py build-b2-distro --toolset ${{ matrix.toolset }}
+
+      - name: Build and run the tests using CMake
+        run: |
+          python3 tools/ci.py build-cmake-distro \
+            --build-type ${{ matrix.build-type }} \
+            --cxxstd ${{ matrix.cxxstd }} \
+            --toolset ${{ matrix.toolset }} \
+            --integration-tests 1 \
+            "--cxxflags=${{ matrix.cxxflags }} -Werror" \
+            "--ldflags=${{ matrix.ldflags }}"
+
+    #   - name: Build examples
+    #     if: matrix.cxxflags == ''
+    #     run: |
+    #       python3 tools/ci.py run-cmake-examples \
+    #         --build-type ${{ matrix.build-type }} \
+    #         --toolset ${{ matrix.toolset }} \
+    #         --cxxstd ${{ matrix.cxxstd }}
+
+  linux-b2:
+    name: "Linux B2 ${{ matrix.toolset }}"
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - toolset: gcc-12
+            install: g++-12
+            container: ubuntu:22.04
+            cxxstd: "20"
+
+          - toolset: gcc-13
+            install: g++-13
+            container: ubuntu:24.04
+            cxxstd: '20,23'
+
+          - toolset: gcc-16
+            install: g++-16
+            container: ubuntu:26.04
+            cxxstd: '20,23'
+
+          - toolset: clang-18
+            install: clang-18
+            container: ubuntu:24.04
+            cxxstd: '20,23'
+
+          - toolset: clang-19
+            install: clang-19
+            container: ubuntu:24.04
+            cxxstd: '20,23'
+
+          - toolset: clang-21
+            install: clang-21
+            container: ubuntu:26.04
+            cxxstd: '23'
+
+    container:
+      image: ${{ matrix.container }}
+
+    env:
+      DEBIAN_FRONTEND: noninteractive
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            git \
+            g++ \
+            python3 \
+            openssl \
+            libssl-dev \
+            ca-certificates \
+            ${{ matrix.install }}
+
+      - name: Setup Boost
+        run: python3 tools/ci.py setup-boost --source-dir=$(pwd)
+
+      - name: Run B2 tests
+        run: |
+          python3 tools/ci.py run-b2-tests \
+            --toolset ${{ matrix.toolset }} \
+            --cxxstd ${{ matrix.cxxstd }} \
+            --variant debug,release
+
+  windows-cmake:
+    name: "Windows CMake ${{ matrix.toolset }} ${{ matrix.build-type }}"
+    runs-on: windows-2022
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - toolset: msvc-14.3
+            generator: "Visual Studio 17 2022"
+            cxxstd: '20'
+            build-type: 'Debug'
+            build-shared-libs: 0
+
+          - toolset: msvc-14.3
+            generator: "Visual Studio 17 2022"
+            cxxstd: '20'
+            build-type: 'Release'
+            build-shared-libs: 1
+
+          - toolset: msvc-14.4
+            generator: "Visual Studio 17 2022"
+            cxxstd: '20'
+            build-type: 'Debug'
+            build-shared-libs: 0
+
+          - toolset: msvc-14.4
+            generator: "Visual Studio 17 2022"
+            cxxstd: '20'
+            build-type: 'Release'
+            build-shared-libs: 1
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Boost
+        run: python3 tools/ci.py setup-boost --source-dir=$(pwd)
+        shell: bash
+
+      - name: Build B2 distribution
+        run: python3 tools/ci.py build-b2-distro --toolset ${{ matrix.toolset }}
+        shell: bash
+
+      - name: Build and run the tests using CMake
+        run: |
+          python3 tools/ci.py build-cmake-distro \
+            --build-type ${{ matrix.build-type }} \
+            --cxxstd ${{ matrix.cxxstd }} \
+            --toolset ${{ matrix.toolset }} \
+            --generator "${{ matrix.generator }}" \
+            --build-shared-libs ${{ matrix.build-shared-libs }} \
+            "--cxxflags=//WX"
+        shell: bash
+
+  windows-b2:
+    name: "Windows B2 ${{ matrix.toolset }}"
+    runs-on: windows-2022
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - toolset: msvc-14.3
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Boost
+        run: python3 tools/ci.py setup-boost --source-dir=$(pwd)
+        shell: bash
+
+      - name: Run B2 tests
+        run: |
+          python3 tools/ci.py run-b2-tests \
+            --toolset ${{ matrix.toolset }} \
+            --cxxstd 20 \
+            --variant debug,release
+        shell: bash
+
+  osx:
+    name: "OS X ${{ matrix.build-system }}"
+    runs-on: macos-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        build-system: [CMake, B2]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Boost
+        run: python3 ./tools/ci.py setup-boost --source-dir=$(pwd)
+
+      - name: Build B2 distribution
+        run: python3 ./tools/ci.py build-b2-distro --toolset clang
+
+      - name: Build and run the tests using CMake
+        if: matrix.build-system == 'CMake'
+        run: |
+          python3 ./tools/ci.py build-cmake-distro \
+            --build-type Debug \
+            --cxxstd 20 \
+            --toolset clang \
+            "--cxxflags=-Werror"
+
+      - name: Run B2 tests
+        if: matrix.build-system == 'B2'
+        run: |
+          python3 ./tools/ci.py run-b2-tests \
+            --toolset clang \
+            --cxxstd 20 \
+            --variant debug,release

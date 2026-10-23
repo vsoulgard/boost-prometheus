@@ -9,17 +9,15 @@
 #define BOOST_PROMETHEUS_DETAIL_GAUGE_INTERNAL_HPP
 
 #include <boost/prometheus/detail/basic_metric_internal.hpp>
+#include <boost/prometheus/detail/config.hpp>
 #include <boost/prometheus/detail/string_buffer.hpp>
+#include <boost/prometheus/detail/types_fwd.hpp>
 
 #include <atomic>
 
-namespace boost::prometheus {
+namespace boost::prometheus::detail {
 
-template <typename>
-class gauge;
-
-namespace detail {
-
+BOOST_PROMETHEUS_MSVC_DISABLE_ALIGN_WARNING
 template <typename AtomicPolicyType, bool HasPrefixSVs = true>
 struct gauge_internal : public basic_metric_internal<AtomicPolicyType, true, HasPrefixSVs>
 {
@@ -34,7 +32,7 @@ struct gauge_internal : public basic_metric_internal<AtomicPolicyType, true, Has
         double
     >;
 
-    alignas(base_type::alignment)
+    alignas(base_type::template alignment<value_type>)
     value_type value_;
 
     gauge_internal(std::string&& base_string)
@@ -98,8 +96,8 @@ struct gauge_internal : public basic_metric_internal<AtomicPolicyType, true, Has
         }
     }
 };
+BOOST_PROMETHEUS_MSVC_RESTORE_WARNING
 
-} // namespace detail
-} // namespace boost::prometheus
+} // namespace boost::prometheus::detail
 
 #endif

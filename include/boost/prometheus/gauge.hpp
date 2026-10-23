@@ -24,7 +24,7 @@ class gauge
     internal_type internal_;
 
     // Serialization
-    friend class boost::prometheus::format;
+    friend struct boost::prometheus::format;
 
     static internal_type init_internal(std::string_view name, const metric_opts& options)
     {

@@ -10,6 +10,7 @@
 
 #include <boost/assert.hpp>
 
+#include <array>
 #include <charconv>
 #include <cstring>
 #include <limits>

@@ -10,15 +10,13 @@
 
 // Friend all registration types
 #define BOOST_PROMETHEUS_FRIEND_REGISTRATION()                              \
-    template <typename, ::boost::prometheus::detail::string_buffer...>      \
-    friend struct ::boost::prometheus::detail::static_labels_registrator;          \
+    template <typename, auto...>                                            \
+    friend struct ::boost::prometheus::detail::static_labels_registrator;   \
     template <typename, typename>                                           \
     friend struct ::boost::prometheus::detail::static_metric_registrator;   \
-    template <typename, ::boost::prometheus::detail::string_buffer...>      \
+    template <typename, auto...>                                            \
     friend struct ::boost::prometheus::detail::static_serialize_name;       \
-    template <typename,                                                     \
-        ::boost::prometheus::detail::string_buffer,                         \
-        ::boost::prometheus::detail::string_buffer...>                      \
+    template <typename, auto, auto...>                                      \
     friend struct ::boost::prometheus::detail::static_serialize_bucket_name;\
     template <typename,                                                     \
         ::boost::prometheus::detail::string_buffer,                         \

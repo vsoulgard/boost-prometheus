@@ -34,6 +34,7 @@ struct types_element_index
         "Type T is not present in the template parameter pack Ts...");
 };
 
+BOOST_PROMETHEUS_MSVC_DISABLE_ALIGN_WARNING
 template <typename AtomicPolicyType, typename... Ts>
 class tuple_unordered_flat_sets
 {
@@ -139,6 +140,7 @@ public:
         });
     }
 };
+BOOST_PROMETHEUS_MSVC_RESTORE_WARNING
 
 } // namespace boost::prometheus::detail
 

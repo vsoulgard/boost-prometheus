@@ -15,14 +15,14 @@
 
 namespace boost::prometheus::detail {
 
-template <string_buffer MetricName, typename PairsValueTuple>
+template <auto MetricName, typename PairsValueTuple>
 struct format_labels_impl
 {
+    using sorted_pairs_vt = typename sort_values_impl<PairsValueTuple>::type;
+    static constexpr auto sorted_pairs = to_std_tuple<sorted_pairs_vt>::make();
+
     static constexpr string_buffer value = []() consteval
     {
-        using sorted_pairs_vt = typename sort_values_impl<PairsValueTuple>::type;
-        constexpr auto sorted_pairs = to_std_tuple<sorted_pairs_vt>::make();
-
         // Serialize metric string in compile-time
         return [&]<std::size_t... Is>(std::index_sequence<Is...>) consteval
         {
@@ -37,7 +37,7 @@ struct format_labels_impl
     }();
 };
 
-template <string_buffer MetricName, typename LabelsType, string_buffer... LabelValues>
+template <auto MetricName, typename LabelsType, auto... LabelValues>
 struct static_serialize_name_impl
 {
     static constexpr string_buffer value = []() consteval
@@ -67,7 +67,7 @@ struct static_serialize_name_impl
 };
 
 // Formats metric name with all labels
-template <typename MetricType, string_buffer... LabelValues>
+template <typename MetricType, auto... LabelValues>
 struct static_serialize_name
 {
     static constexpr string_buffer value = []() consteval

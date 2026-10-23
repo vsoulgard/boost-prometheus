@@ -9,19 +9,23 @@
 #define BOOST_PROMETHEUS_DETAIL_GAUGEHISTOGRAM_INTERNAL_HPP
 
 #include <boost/prometheus/detail/basic_metric_internal.hpp>
+#include <boost/prometheus/detail/config.hpp>
 #include <boost/prometheus/detail/histogram_bucket_value.hpp>
 #include <boost/prometheus/detail/string_buffer.hpp>
 #include <boost/prometheus/detail/types_fwd.hpp>
 
 #include <boost/assert.hpp>
 
+#include <array>
 #include <atomic>
+#include <mutex>
 #include <vector>
 #include <string>
 #include <span>
 
 namespace boost::prometheus::detail {
 
+BOOST_PROMETHEUS_MSVC_DISABLE_ALIGN_WARNING
 template <typename AtomicPolicyType, bool HasBaseString = true, bool HasPrefixSVs = true>
 struct gaugehistogram_internal : public basic_metric_internal<AtomicPolicyType, HasBaseString, HasPrefixSVs>
 {
@@ -52,7 +56,7 @@ struct gaugehistogram_internal : public basic_metric_internal<AtomicPolicyType, 
     {
         using bucket_value_type = histogram_bucket_value<
             AtomicPolicyType,
-            base_type::alignment,
+            base_type::template alignment<std::uint64_t>,
             // Use signed integer for for clear 
             // visibility of sub() logic errors
             std::int64_t>;
@@ -63,10 +67,10 @@ struct gaugehistogram_internal : public basic_metric_internal<AtomicPolicyType, 
         >;
 
         std::vector<bucket_value_type> buckets;
-        alignas(base_type::alignment)
+        alignas(base_type::template alignment<sum_type>)
         sum_type sum;
         // count is used for synchronization as a counter with release semantics
-        [[no_unique_address]] alignas(base_type::alignment)
+        [[no_unique_address]] alignas(base_type::template alignment<buffer_count_type>)
         buffer_count_type count;
 
         gaugehistogram_buffer() = delete;
@@ -80,11 +84,11 @@ struct gaugehistogram_internal : public basic_metric_internal<AtomicPolicyType, 
     static constexpr std::size_t buffers_count = AtomicPolicyType::enabled ? 2 : 1;
     // Active and passive buffers for bucket values
     std::array<gaugehistogram_buffer, buffers_count> buffers_;
-    [[no_unique_address]] alignas(base_type::alignment)
+    [[no_unique_address]] alignas(base_type::template alignment<count_type>)
     count_type count_and_idx_;
 
     // Used in serialization
-    [[no_unique_address]] alignas(base_type::alignment)
+    [[no_unique_address]] alignas(base_type::template alignment<mutex_type>)
     mutex_type mtx_;
 
     // Serialized names
@@ -116,7 +120,7 @@ struct gaugehistogram_internal : public basic_metric_internal<AtomicPolicyType, 
     }
 
     std::vector<std::string_view> init_bucket_names(
-        const std::string& base_histogram_string_,
+        const std::string& base_histogram_string,
         const std::vector<std::size_t>& bucket_offsets,
         std::size_t sum_offset)
     {
@@ -125,14 +129,14 @@ struct gaugehistogram_internal : public basic_metric_internal<AtomicPolicyType, 
         result.reserve(bucket_offsets.size() + 1);
         // Put +Inf in the end
         std::string_view inf_bucket(
-            std::string_view(base_histogram_string_).substr(
+            std::string_view(base_histogram_string).substr(
                 0, bucket_offsets[0]));
         for (std::size_t i = 0; i < bucket_offsets.size() - 1; i++)
         {
             std::size_t off_start = bucket_offsets[i];
             std::size_t off_end = bucket_offsets[i + 1];
             result.push_back(
-            std::string_view(base_histogram_string_).substr(
+            std::string_view(base_histogram_string).substr(
                 off_start, off_end - off_start));
         }
         // Last bucket
@@ -140,7 +144,7 @@ struct gaugehistogram_internal : public basic_metric_internal<AtomicPolicyType, 
             std::size_t off_start = bucket_offsets.back();
             std::size_t off_end = sum_offset;
             result.push_back(
-            std::string_view(base_histogram_string_).substr(
+            std::string_view(base_histogram_string).substr(
                 off_start, off_end - off_start));
         }
         result.push_back(inf_bucket);
@@ -246,6 +250,7 @@ struct gaugehistogram_internal : public basic_metric_internal<AtomicPolicyType, 
         }
     }
 };
+BOOST_PROMETHEUS_MSVC_RESTORE_WARNING
 
 } // namespace boost::prometheus::detail
 

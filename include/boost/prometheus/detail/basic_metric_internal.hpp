@@ -21,7 +21,8 @@ namespace boost::prometheus::detail {
 template <typename AtomicPolicyType, bool HasBaseString, bool HasPrefixSVs>
 struct basic_metric_internal
 {
-    static constexpr std::size_t alignment = AtomicPolicyType::enabled ? cache_line_size : 1;
+    template <typename T>
+    static constexpr std::size_t alignment = AtomicPolicyType::enabled ? cache_line_size : alignof(T);
 
     using base_string_type = std::conditional_t<HasBaseString, std::string, std::tuple<>>;
     using prometheus_prefix_type = std::conditional_t<

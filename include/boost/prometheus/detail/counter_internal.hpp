@@ -9,6 +9,7 @@
 #define BOOST_PROMETHEUS_DETAIL_COUNTER_INTERNAL_HPP
 
 #include <boost/prometheus/detail/basic_metric_internal.hpp>
+#include <boost/prometheus/detail/config.hpp>
 #include <boost/prometheus/detail/string_buffer.hpp>
 #include <boost/prometheus/detail/types_fwd.hpp>
 
@@ -19,6 +20,7 @@
 
 namespace boost::prometheus::detail {
 
+BOOST_PROMETHEUS_MSVC_DISABLE_ALIGN_WARNING
 template <typename AtomicPolicyType, bool HasPrefixSVs = true>
 struct counter_internal : public basic_metric_internal<AtomicPolicyType, true, HasPrefixSVs>
 {
@@ -33,7 +35,7 @@ struct counter_internal : public basic_metric_internal<AtomicPolicyType, true, H
         double
     >;
 
-    alignas(base_type::alignment)
+    alignas(base_type::template alignment<value_type>)
     value_type value_;
 
     counter_internal(std::string&& base_string)
@@ -74,6 +76,7 @@ struct counter_internal : public basic_metric_internal<AtomicPolicyType, true, H
         }
     }
 };
+BOOST_PROMETHEUS_MSVC_RESTORE_WARNING
 
 } // namespace boost::prometheus::detail
 

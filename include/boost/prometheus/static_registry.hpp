@@ -41,7 +41,7 @@ class static_registry
     friend struct detail::static_metric_registrator;
 
     // Serialization
-    friend class boost::prometheus::format;
+    friend struct boost::prometheus::format;
 
 public:
 

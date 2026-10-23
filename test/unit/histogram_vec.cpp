@@ -27,7 +27,7 @@ BOOST_AUTO_TEST_CASE(construction_default_options)
 
 BOOST_AUTO_TEST_CASE(construction_custom_options)
 {
-    histogram_vec h("request_duration_seconds", {.help = "help string", .unit = "seconds"}, {"first", "second"});
+    histogram_vec h("request_duration_seconds", {.help = "help string", .unit = "seconds", .buckets = {}}, {"first", "second"});
 }
 
 BOOST_AUTO_TEST_SUITE_END()
