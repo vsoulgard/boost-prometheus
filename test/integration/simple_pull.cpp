@@ -114,7 +114,7 @@ BOOST_AUTO_TEST_CASE(prometheus_0_0_4)
         "test_seconds_total 0.56\n"
     ));
     // Add different metrics
-    histogram h("request_duration_seconds", {.unit = "seconds"});
+    histogram h("request_duration_seconds", {.help = "", .unit = "seconds"});
     gauge g("test_g");
     counter_vec cv("http_requests", {"method"});
     cv.with_labels({"GET"}).inc();
@@ -213,7 +213,7 @@ BOOST_AUTO_TEST_CASE(openmetrics_1_0)
         "# EOF\n"
     ));
     // Add different metrics
-    histogram h("request_duration_seconds", {.unit = "seconds"});
+    histogram h("request_duration_seconds", {.help = "", .unit = "seconds"});
     gauge g("test_g");
     counter_vec cv("http_requests", {"method"});
     cv.with_labels({"GET"}).inc();
@@ -293,7 +293,7 @@ BOOST_AUTO_TEST_CASE(registry_swap)
     reg_1.register_metric(c);
     c.inc(0.56);
     reg_1.register_metric(c);
-    histogram h("request_duration_seconds", {.unit = "seconds"});
+    histogram h("request_duration_seconds", {.help = "", .unit = "seconds"});
     gauge g("test_g");
     counter_vec cv("http_requests", {"method"});
     cv.with_labels({"GET"}).inc();
@@ -419,7 +419,7 @@ BOOST_AUTO_TEST_CASE(concurrent_scraping)
     c.inc(0.56);
     gauge g("test_g");
     g.set(900.0);
-    histogram h("request_duration_seconds", {.unit = "seconds"});
+    histogram h("request_duration_seconds", {.help = "", .unit = "seconds"});
     reg.register_metric(c);
     reg.register_metric(g);
     reg.register_metric(h);
@@ -433,7 +433,7 @@ BOOST_AUTO_TEST_CASE(concurrent_scraping)
 
     for (std::size_t i = 0u; i < num_scrapers; i++)
     {
-        scrapers.emplace_back([&, i]() {
+        scrapers.emplace_back([&]() {
             io_context local_ioc;
             beast::tcp_stream stream(local_ioc);
 
@@ -1087,7 +1087,7 @@ BOOST_AUTO_TEST_CASE(gzip_encoding)
     reg.register_metric(c);
     c.inc(0.56);
     reg.register_metric(c);
-    histogram h("request_duration_seconds", {.unit = "seconds"});
+    histogram h("request_duration_seconds", {.help = "", .unit = "seconds"});
     gauge g("test_g");
     counter_vec cv("http_requests", {"method"});
     cv.with_labels({"GET"}).inc();
@@ -1149,7 +1149,7 @@ BOOST_AUTO_TEST_CASE(gzip_encoding)
         BOOST_TEST(res.body().size() == 94u + 637u + 31u + 71u);
     }
     // Add more metrics to force the exposer to encode
-    histogram h2("some_distribution", {.help = "another hist"});
+    histogram h2("some_distribution", {.help = "another hist", .unit = ""});
     reg.register_metric(h2);
     // Expect gzip encoded
     {
@@ -1263,7 +1263,7 @@ BOOST_AUTO_TEST_CASE(gzip_encoding_disabled)
     reg.register_metric(c);
     c.inc(0.56);
     reg.register_metric(c);
-    histogram h("request_duration_seconds", {.unit = "seconds"});
+    histogram h("request_duration_seconds", {.help = "", .unit = "seconds"});
     gauge g("test_g");
     counter_vec cv("http_requests", {"method"});
     cv.with_labels({"GET"}).inc();
@@ -1325,7 +1325,7 @@ BOOST_AUTO_TEST_CASE(gzip_encoding_disabled)
         BOOST_TEST(res.body().size() == 94u + 637u + 31u + 71u);
     }
     // Add more metrics to force the exposer to compress
-    gaugehistogram h2("temperature_dist_celsius", {.help = "another hist"});
+    gaugehistogram h2("temperature_dist_celsius", {.help = "another hist", .unit = ""});
     reg.register_metric(h2);
     // Big response (>1024)
     {
@@ -1429,7 +1429,7 @@ BOOST_AUTO_TEST_CASE(ssl_mode)
     counter c("test_seconds", {.help = "help text", .unit = "seconds"});
     reg.register_metric(c);
     c.inc(0.56);
-    histogram h("request_duration_seconds", {.unit = "seconds"});
+    histogram h("request_duration_seconds", {.help = "", .unit = "seconds"});
     gauge g("test_g");
     counter_vec cv("http_requests", {"method"});
     cv.with_labels({"GET"}).inc();

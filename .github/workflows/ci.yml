@@ -19,12 +19,6 @@ jobs:
       matrix:
         include:
           # GCC builds
-          - toolset: gcc-11
-            install: g++-11
-            container: ubuntu:22.04
-            cxxstd: '20'
-            build-type: 'Debug'
-
           - toolset: gcc-12
             install: g++-12
             container: ubuntu:22.04
@@ -62,13 +56,6 @@ jobs:
             build-type: 'Release'
 
           # Clang builds
-
-          - toolset: clang-17
-            install: clang-17
-            container: ubuntu:24.04
-            cxxstd: '23'
-            build-type: 'Release'
-
           - toolset: clang-18
             install: clang-18
             container: ubuntu:24.04
@@ -83,6 +70,12 @@ jobs:
 
           - toolset: clang-19
             install: clang-19
+            container: ubuntu:24.04
+            cxxstd: '23'
+            build-type: 'Release'
+
+          - toolset: clang-20
+            install: clang-20
             container: ubuntu:24.04
             cxxstd: '23'
             build-type: 'Release'
@@ -195,8 +188,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - toolset: gcc-11
-            install: g++-11
+          - toolset: gcc-12
+            install: g++-12
             container: ubuntu:22.04
             cxxstd: "20"
 
@@ -210,8 +203,8 @@ jobs:
             container: ubuntu:26.04
             cxxstd: '20,23'
 
-          - toolset: clang-17
-            install: clang-17
+          - toolset: clang-18
+            install: clang-18
             container: ubuntu:24.04
             cxxstd: '20,23'
 

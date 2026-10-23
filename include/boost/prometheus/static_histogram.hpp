@@ -27,9 +27,6 @@ class static_histogram : public detail::basic_static_metric<
     Options...
 >
 {
-    static constexpr detail::string_buffer prometheus_type = "histogram";
-    static constexpr detail::string_buffer openmetrics_type = "histogram";
-
     using base_type = detail::basic_static_metric<
         static_histogram,
         detail::static_histogram_internal,

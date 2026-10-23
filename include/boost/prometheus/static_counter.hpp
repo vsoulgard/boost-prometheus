@@ -33,9 +33,6 @@ class static_counter : public detail::basic_static_metric<
         !detail::const_find_substr<MetricName, "_total">(),
         "Counter name shouldn't contain \"_total\" suffix; it will be appended automatically");
 
-    static constexpr detail::string_buffer prometheus_type = "counter";
-    static constexpr detail::string_buffer openmetrics_type = "counter";
-
     using base_type = detail::basic_static_metric<
         static_counter,
         detail::static_gauge_internal,
