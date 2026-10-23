@@ -36,9 +36,9 @@ double extract_double_from_string(std::string_view text, std::string_view prefix
             while (!value.empty() && value.front() == ' ') value.remove_prefix(1);
 
             double out = 0.0;
-            auto [ptr, ec] = std::from_chars(
+            auto result = std::from_chars(
                 value.data(), value.data() + value.size(), out);
-            BOOST_ASSERT(ec == std::errc());
+            BOOST_ASSERT(result.ec == std::errc());
             return out;
         }
         pos = eol + 1u;
