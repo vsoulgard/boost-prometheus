@@ -15,6 +15,7 @@
 
 #include <boost/assert.hpp>
 
+#include <array>
 #include <atomic>
 #include <mutex>
 #include <vector>

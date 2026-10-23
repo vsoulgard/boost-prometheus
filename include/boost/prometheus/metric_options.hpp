@@ -11,6 +11,7 @@
 #include <boost/prometheus/detail/string_buffer.hpp>
 
 #include <algorithm>
+#include <array>
 #include <functional>
 
 namespace boost::prometheus {

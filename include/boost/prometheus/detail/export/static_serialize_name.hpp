@@ -18,11 +18,11 @@ namespace boost::prometheus::detail {
 template <auto MetricName, typename PairsValueTuple>
 struct format_labels_impl
 {
+    using sorted_pairs_vt = typename sort_values_impl<PairsValueTuple>::type;
+    static constexpr auto sorted_pairs = to_std_tuple<sorted_pairs_vt>::make();
+
     static constexpr string_buffer value = []() consteval
     {
-        using sorted_pairs_vt = typename sort_values_impl<PairsValueTuple>::type;
-        constexpr auto sorted_pairs = to_std_tuple<sorted_pairs_vt>::make();
-
         // Serialize metric string in compile-time
         return [&]<std::size_t... Is>(std::index_sequence<Is...>) consteval
         {

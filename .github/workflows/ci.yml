@@ -72,7 +72,7 @@ jobs:
             install: clang-19
             container: ubuntu:24.04
             cxxstd: '23'
-            build-type: 'Release'
+            build-type: 'Debug'
 
           - toolset: clang-20
             install: clang-20
@@ -103,7 +103,7 @@ jobs:
             container: ubuntu:26.04
             cxxstd: '20'
             build-type: 'Debug'
-            cxxflags: '-fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer'
+            cxxflags: '-fsanitize=address,undefined -fno-sanitize-recover=all'
             ldflags: '-fsanitize=address,undefined'
 
           - toolset: clang-22
@@ -111,7 +111,7 @@ jobs:
             container: ubuntu:26.04
             cxxstd: '20'
             build-type: 'Debug'
-            cxxflags: '-fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer'
+            cxxflags: '-fsanitize=address,undefined -fno-sanitize-recover=all'
             ldflags: '-fsanitize=address,undefined'
 
           # Sanitizers - TSan

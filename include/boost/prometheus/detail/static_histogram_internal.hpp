@@ -13,6 +13,7 @@
 
 #include <boost/container/small_vector.hpp>
 
+#include <array>
 #include <memory>
 #include <mutex>
 
