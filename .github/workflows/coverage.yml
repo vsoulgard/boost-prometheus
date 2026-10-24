@@ -64,8 +64,8 @@ jobs:
             --cxxstd ${{ matrix.cxxstd }} \
             --toolset ${{ matrix.toolset }} \
             --integration-tests 1 \
-            --cxxflags=${{ matrix.cxxflags }} \
-            --ldflags=${{ matrix.ldflags }}
+            "--cxxflags=${{ matrix.cxxflags }}" \
+            "--ldflags=${{ matrix.ldflags }}"
 
       - name: Generate Coverage Report
         run: |
