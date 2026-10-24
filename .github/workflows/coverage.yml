@@ -70,6 +70,7 @@ jobs:
       - name: Generate Coverage Report
         run: |
           lcov --capture --output-file coverage.info \
+            --ignore-errors inconsistent \
             --directory ~/boost-root/__build_cmake_test__/libs/prometheus/test
           lcov --extract coverage.info '**/boost/prometheus/*' --output-file coverage.info
 
