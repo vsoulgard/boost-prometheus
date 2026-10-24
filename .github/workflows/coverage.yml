@@ -11,6 +11,7 @@ on: [push, pull_request]
 
 jobs:
   coverage:
+    name: "coverage ${{ matrix.toolset }} C++${{ matrix.cxxstd }} ${{ matrix.container }}"
     runs-on: ubuntu-latest
 
     strategy:
