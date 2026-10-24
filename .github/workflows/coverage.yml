@@ -11,7 +11,6 @@ on: [push, pull_request]
 
 jobs:
   coverage:
-    name: "coverage ${{ matrix.toolset }} -std=c++${{ matrix.cxxstd }} ${{ matrix.container }}"
     runs-on: ubuntu-latest
 
     strategy:
@@ -24,7 +23,7 @@ jobs:
             container: ubuntu:26.04
             build-type: 'Coverage'
             cxxstd: 20
-            cxxflags: '-g -O0 -std=c++20 --coverage -fkeep-inline-functions -fkeep-static-functions'
+            cxxflags: '-g -O0 -std=c++20 --coverage -fkeep-inline-functions -fkeep-static-functions -fprofile-update=atomic'
             ldflags: '--coverage'
 
     container:
