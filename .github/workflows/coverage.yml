@@ -11,7 +11,7 @@ on: [push, pull_request]
 
 jobs:
   coverage:
-    name: "coverage ${{ matrix.toolset }} C++${{ matrix.cxxstd }} ${{ matrix.container }}"
+    name: "Linux CMake ${{ matrix.toolset }} C++${{ matrix.cxxstd }} ${{ matrix.build-type }} ${{ matrix.cxxflags }}"
     runs-on: ubuntu-latest
 
     strategy:
