@@ -1,0 +1,89 @@
+#
+# Copyright (c) 2026 Vladislav Soulgard (vsoulgard at gmail dot com)
+#
+# Distributed under the Boost Software License, Version 1.0. (See accompanying
+# file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+#
+
+name: coverage
+
+on: [push, pull_request]
+
+jobs:
+  coverage:
+    name: "Linux CMake ${{ matrix.toolset }} C++${{ matrix.cxxstd }} ${{ matrix.build-type }} ${{ matrix.cxxflags }}"
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - toolset: gcc-15
+            install: g++-15
+            os: ubuntu-latest
+            container: ubuntu:26.04
+            build-type: 'Coverage'
+            cxxstd: 20
+            cxxflags: '-g -O0 --coverage -fkeep-inline-functions -fkeep-static-functions -fprofile-update=atomic'
+            ldflags: '--coverage'
+
+    container:
+        image: ${{ matrix.container }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            git \
+            g++ \
+            ca-certificates \
+            openssl \
+            libssl-dev \
+            cmake \
+            make \
+            python3 \
+            lcov \
+            gpg \
+            gpg-agent \
+            curl \
+            ${{ matrix.install }}
+
+      - name: Setup Boost
+        run: |
+          python3 tools/ci.py setup-boost \
+            --source-dir=$(pwd)
+
+      - name: Build and run the tests using CMake
+        run: |
+          python3 tools/ci.py build-cmake-distro \
+            --build-type ${{ matrix.build-type }} \
+            --cxxstd ${{ matrix.cxxstd }} \
+            --toolset ${{ matrix.toolset }} \
+            --integration-tests 1 \
+            "--cxxflags=${{ matrix.cxxflags }}" \
+            "--ldflags=${{ matrix.ldflags }}"
+
+      - name: Generate Coverage Report
+        run: |
+          lcov --capture --output-file coverage.info \
+            --ignore-errors inconsistent \
+            --directory ~/boost-root/__build_cmake_test__/libs/prometheus/test
+          lcov --extract coverage.info '**/boost/prometheus/*' --output-file coverage.info
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v7
+        with:
+          verbose: true
+          files: coverage.info
+          disable_search: true
+          fail_ci_if_error: true
+          plugins: noop
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+    env:
+      CMAKE_BUILD_PARALLEL_LEVEL: 4
+      DEBIAN_FRONTEND: noninteractive
