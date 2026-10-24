@@ -145,7 +145,6 @@ jobs:
         run: |
           apt-get update
           apt-get install -y --no-install-recommends \
-            sudo \
             git \
             g++ \
             ca-certificates \
@@ -169,8 +168,8 @@ jobs:
             --cxxstd ${{ matrix.cxxstd }} \
             --toolset ${{ matrix.toolset }} \
             --integration-tests 1 \
-            "--cxxflags=${{ matrix.cxxflags }} -Werror" \
-            "--ldflags=${{ matrix.ldflags }}"
+            --cxxflags=${{ matrix.cxxflags }} -Werror \
+            --ldflags=${{ matrix.ldflags }}
 
     #   - name: Build examples
     #     if: matrix.cxxflags == ''
@@ -302,7 +301,7 @@ jobs:
             --toolset ${{ matrix.toolset }} \
             --generator "${{ matrix.generator }}" \
             --build-shared-libs ${{ matrix.build-shared-libs }} \
-            "--cxxflags=//WX"
+            --cxxflags=//WX
         shell: bash
 
   windows-b2:
@@ -357,7 +356,7 @@ jobs:
             --build-type Debug \
             --cxxstd 20 \
             --toolset clang \
-            "--cxxflags=-Werror"
+            --cxxflags=-Werror
 
       - name: Run B2 tests
         if: matrix.build-system == 'B2'
