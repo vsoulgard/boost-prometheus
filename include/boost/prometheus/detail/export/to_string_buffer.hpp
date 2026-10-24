@@ -19,6 +19,7 @@
 
 namespace boost::prometheus::detail {
 
+// LCOV_EXCL_START
 template <std::floating_point T>
 [[nodiscard]] consteval bool constexpr_signbit(T value) noexcept
 {
@@ -310,6 +311,7 @@ consteval auto to_string_buffer()
     }
     return result;
 }
+// LCOV_EXCL_STOP
 
 } // namespace boost::prometheus::detail
 

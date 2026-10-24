@@ -24,7 +24,7 @@ jobs:
             container: ubuntu:26.04
             build-type: 'Coverage'
             cxxstd: 20
-            cxxflags: '-g -O0 -std=c++20 --coverage -fkeep-inline-functions -fkeep-static-functions -fprofile-update=atomic'
+            cxxflags: '-g -O0 --coverage -fkeep-inline-functions -fkeep-static-functions -fprofile-update=atomic'
             ldflags: '--coverage'
 
     container:

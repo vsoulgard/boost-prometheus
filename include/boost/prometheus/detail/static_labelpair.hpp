@@ -20,11 +20,13 @@ struct static_labelpair
     constexpr static_labelpair(T1 f, T2 s) : first(f), second(s) {}
 };
 
+// LCOV_EXCL_START
 template <typename A1, typename A2, typename B1, typename B2>
 consteval bool operator<(const static_labelpair<A1, A2>& a, const static_labelpair<B1, B2>& b)
 {
     return a.first < b.first;
 }
+// LCOV_EXCL_STOP
 
 } // namespace boost::prometheus::detail
 
