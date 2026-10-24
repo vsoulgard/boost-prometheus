@@ -10,6 +10,7 @@
 
 namespace boost::prometheus::detail {
 
+// LCOV_EXCL_START
 // Wrapper for labelpairs sorting,
 // which support operator< for different types.
 template <typename T1, typename T2>
@@ -17,10 +18,9 @@ struct static_labelpair
 {
     T1 first;
     T2 second;
-    constexpr static_labelpair(T1 f, T2 s) : first(f), second(s) {}
+    consteval static_labelpair(T1 f, T2 s) : first(f), second(s) {}
 };
 
-// LCOV_EXCL_START
 template <typename A1, typename A2, typename B1, typename B2>
 consteval bool operator<(const static_labelpair<A1, A2>& a, const static_labelpair<B1, B2>& b)
 {
