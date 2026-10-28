@@ -40,7 +40,7 @@ jobs:
       - name: Upload pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ~/boost-root/libs/prometheus/doc/html
+          path: doc/html
 
   deploy-docs:
     name: "Deploy to GitHub Pages"
