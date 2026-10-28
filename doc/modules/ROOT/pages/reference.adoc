@@ -12,12 +12,14 @@
 | *Metrics* | *Vectors and items* | *Static metrics* | *Options* | *Exposer and serialization*
 
 // Metrics
+|
 xref:reference:boost/prometheus/counter.adoc[`counter`]
 xref:reference:boost/prometheus/gauge.adoc[`gauge`]
 xref:reference:boost/prometheus/histogram.adoc[`histogram`]
 xref:reference:boost/prometheus/gaugehistogram.adoc[`gaugehistogram`]
 
 // Vectors and items
+|
 xref:reference:boost/prometheus/counter_vec.adoc[`counter_vec`]
 xref:reference:boost/prometheus/gauge_vec.adoc[`gauge_vec`]
 xref:reference:boost/prometheus/histogram_vec.adoc[`histogram_vec`]
@@ -30,6 +32,7 @@ xref:reference:boost/prometheus/gaugehistogram_item.adoc[`gaugehistogram_item`]
 xref:reference:boost/prometheus/info_item.adoc[`info_item`]
 
 // Static metrics
+|
 xref:reference:boost/prometheus/static_counter.adoc[`static_counter`]
 xref:reference:boost/prometheus/static_gauge.adoc[`static_gauge`]
 xref:reference:boost/prometheus/static_histogram.adoc[`static_histogram`]
@@ -37,6 +40,7 @@ xref:reference:boost/prometheus/static_info.adoc[`static_info`]
 xref:reference:boost/prometheus/static_registry.adoc[`static_registry`]
 
 // Options
+|
 xref:reference:boost/prometheus/metric_opts.adoc[`metric_opts`]
 xref:reference:boost/prometheus/histogram_opts.adoc[`histogram_opts`]
 xref:reference:boost/prometheus/info_opts.adoc[`info_opts`]
@@ -50,6 +54,7 @@ xref:reference:boost/prometheus/default_atomic_policy.adoc[`default_atomic_polic
 xref:reference:boost/prometheus/default_static_registry_name.adoc[`default_static_registry_name`]
 
 // Exposer and serialization
+|
 xref:reference:boost/prometheus/exposer.adoc[`exposer`]
 xref:reference:boost/prometheus/gzip_policy.adoc[`gzip_policy`]
 xref:reference:boost/prometheus/default_gzip_policy.adoc[`default_gzip_policy`]

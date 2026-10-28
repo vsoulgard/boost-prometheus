@@ -6,6 +6,7 @@
 #
 
 source-root: ../include
+compilation-database: ./CMakeLists.txt
 include-symbols:
   - 'boost::prometheus::**'
 implementation-defined:
