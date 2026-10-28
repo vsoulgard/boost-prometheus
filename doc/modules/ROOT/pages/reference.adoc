@@ -67,7 +67,6 @@ xref:reference:boost/prometheus/default_header_limit_size.adoc[`default_header_l
 xref:reference:boost/prometheus/expose_static_registry.adoc[`expose_static_registry`]
 xref:reference:boost/prometheus/authorization_policy.adoc[`authorization_policy`]
 xref:reference:boost/prometheus/registry.adoc[`registry`]
-xref:reference:boost/prometheus/serialize.adoc[`serialize`]
+xref:reference:boost/prometheus/serialize-0a.adoc[`serialize`]
 xref:reference:boost/prometheus/gzip_encode.adoc[`gzip_encode`]
-xref:reference:boost/prometheus/string_buffer.adoc[`string_buffer`]
 |===

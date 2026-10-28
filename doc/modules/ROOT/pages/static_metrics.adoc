@@ -9,7 +9,10 @@
 :toc: left
 
 Static metrics are compile-time counterparts of the runtime metric types:
-`static_counter`, `static_gauge`, `static_histogram`, and `static_info`.
+xref:reference:boost/prometheus/static_counter.adoc[`static_counter`],
+xref:reference:boost/prometheus/static_counter.adoc[`static_gauge`],
+xref:reference:boost/prometheus/static_counter.adoc[`static_histogram`] and
+xref:reference:boost/prometheus/static_counter.adoc[`static_info`].
 Their names, label names, and bucket boundaries are fixed at compile time,
 and label values are validated by the compiler at each call site.
 

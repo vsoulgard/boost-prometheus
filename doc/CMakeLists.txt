@@ -18,10 +18,10 @@ project(boost_prometheus_mrdocs LANGUAGES CXX)
 # only to our target of interest
 set(CMAKE_EXPORT_COMPILE_COMMANDS OFF)
 
-# Add Boost
-add_subdirectory($ENV{BOOST_SRC_DIR} deps/boost)
-
 # Add the target for mrdocs to analyze
 add_executable(mrdocs mrdocs.cpp)
-target_link_libraries(mrdocs PRIVATE Boost::prometheus)
+target_include_directories(mrdocs PRIVATE
+    $ENV{BOOST_SRC_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include
+)
 set_target_properties(mrdocs PROPERTIES EXPORT_COMPILE_COMMANDS ON)

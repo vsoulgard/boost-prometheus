@@ -1,0 +1,56 @@
+#
+# Copyright (c) 2026 Vladislav Soulgard (vsoulgard at gmail dot com)
+#
+# Distributed under the Boost Software License, Version 1.0. (See accompanying
+# file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+#
+
+name: docs
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+on: [push, pull_request]
+
+jobs:
+  check-docs:
+    name: "Check docs build"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Boost
+        run: ./tools/ci.py setup-boost --source-dir=$(pwd)
+
+      - name: Build docs
+        run: |
+          cd ~/boost-root
+          ./b2 libs/prometheus/doc
+
+      - name: Upload pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ~/boost-root/libs/prometheus/doc/html
+
+  deploy-docs:
+    name: "Deploy to GitHub Pages"
+    needs: check-docs
+    if: github.event_name == 'push' && github.ref_name == 'develop'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -9,7 +9,11 @@
 :toc: left
 
 Boost.Prometheus provides five metric types:
-`counter`, `gauge`, `histogram`, `gaugehistogram`, `info`.
+xref:reference:boost/prometheus/counter.adoc[`counter`],
+xref:reference:boost/prometheus/gauge.adoc[`gauge`],
+xref:reference:boost/prometheus/histogram.adoc[`histogram`],
+xref:reference:boost/prometheus/gaugehistogram.adoc[`gaugehistogram`],
+`info`.
 
 == Counter
 

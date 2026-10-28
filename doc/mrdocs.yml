@@ -11,6 +11,4 @@ include-symbols:
   - 'boost::prometheus::**'
 implementation-defined:
   - 'boost::prometheus::detail'
-inaccessible-members: never
-inaccessible-bases: never
-warn-as-error: true
+extract-private: false
