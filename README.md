@@ -1,7 +1,7 @@
-| Branch | GitHub Actions | Coverage |
-|:---|:---|:---|
-| [`master`](https://github.com/vsoulgard/boost-prometheus/tree/master) | [![CI](https://github.com/vsoulgard/boost-prometheus/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/vsoulgard/boost-prometheus/actions/workflows/ci.yml?query=branch%3Amaster) | [![codecov](https://codecov.io/gh/vsoulgard/boost-prometheus/branch/master/graph/badge.svg)](https://codecov.io/gh/vsoulgard/boost-prometheus/tree/master) |
-| [`develop`](https://github.com/vsoulgard/boost-prometheus/tree/develop) | [![CI](https://github.com/vsoulgard/boost-prometheus/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/vsoulgard/boost-prometheus/actions/workflows/ci.yml?query=branch%3Adevelop) | [![codecov](https://codecov.io/gh/vsoulgard/boost-prometheus/branch/develop/graph/badge.svg)](https://codecov.io/gh/vsoulgard/boost-prometheus/tree/develop) |
+| Branch | GitHub Actions | Coverage | Docs |
+|:---|:---|:---|:---|
+| [`master`](https://github.com/vsoulgard/boost-prometheus/tree/master) | [![CI](https://github.com/vsoulgard/boost-prometheus/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/vsoulgard/boost-prometheus/actions/workflows/ci.yml?query=branch%3Amaster) | [![codecov](https://codecov.io/gh/vsoulgard/boost-prometheus/branch/master/graph/badge.svg)](https://codecov.io/gh/vsoulgard/boost-prometheus/tree/master) | [![Documentation](https://img.shields.io/badge/docs-master-brightgreen.svg)](https://vsoulgard.github.io/boost-prometheus/prometheus/index.html) |
+| [`develop`](https://github.com/vsoulgard/boost-prometheus/tree/develop) | [![CI](https://github.com/vsoulgard/boost-prometheus/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/vsoulgard/boost-prometheus/actions/workflows/ci.yml?query=branch%3Adevelop) | [![codecov](https://codecov.io/gh/vsoulgard/boost-prometheus/branch/develop/graph/badge.svg)](https://codecov.io/gh/vsoulgard/boost-prometheus/tree/develop) | [![Documentation](https://img.shields.io/badge/docs-develop-brightgreen.svg)](https://vsoulgard.github.io/boost-prometheus/prometheus/index.html) |
 
 # Boost.Prometheus
 
