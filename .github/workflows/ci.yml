@@ -131,7 +131,9 @@ jobs:
             cxxflags: '-fsanitize=thread'
             ldflags: '-fsanitize=thread'
 
-    container: ${{matrix.container}}
+    container:
+      image: ${{ matrix.container }}
+      options: --security-opt seccomp=unconfined
 
     env:
       DEBIAN_FRONTEND: noninteractive

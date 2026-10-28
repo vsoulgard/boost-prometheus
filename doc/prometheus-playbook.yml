@@ -1,0 +1,42 @@
+#
+# Copyright (c) 2026 Vladislav Soulgard (vsoulgard at gmail dot com)
+#
+# Distributed under the Boost Software License, Version 1.0. (See accompanying
+# file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+#
+
+site:
+  url: https://github.com/vsoulgard/boost-prometheus/tree/master
+  title: Boost.Prometheus
+  robots: allow
+  start_page: prometheus::index.adoc
+
+antora:
+  extensions:
+    - require: '@cppalliance/antora-cpp-reference-extension'
+      config: doc/modules/ROOT/mrdocs.yml
+      dependencies:
+        - name: 'boost'
+          repo: 'https://github.com/boostorg/boost.git'
+          tag: 'develop'
+          variable: 'BOOST_SRC_DIR'
+          system-env: 'BOOST_SRC_DIR'
+    - require: '@cppalliance/antora-downloads-extension'
+
+content:
+  sources:
+    - url: ..
+      start_path: doc
+      edit_url: 'https://github.com/vsoulgard/boost-prometheus/edit/develop/{path}'
+
+ui: 
+  bundle:
+    url: https://github.com/boostorg/website-v2-docs/releases/download/ui-master/ui-bundle.zip
+    snapshot: true
+
+output:
+  dir: html
+
+asciidoc:
+  attributes:
+    page-pagination: ''

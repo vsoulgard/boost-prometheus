@@ -1,0 +1,149 @@
+//
+// Copyright (c) 2026 Vladislav Soulgard (vsoulgard at gmail dot com)
+//
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+
+= Static metrics
+:toc: left
+
+Static metrics are compile-time counterparts of the runtime metric types:
+xref:reference:boost/prometheus/static_counter.adoc[`static_counter`],
+xref:reference:boost/prometheus/static_counter.adoc[`static_gauge`],
+xref:reference:boost/prometheus/static_counter.adoc[`static_histogram`] and
+xref:reference:boost/prometheus/static_counter.adoc[`static_info`].
+Their names, label names, and bucket boundaries are fixed at compile time,
+and label values are validated by the compiler at each call site.
+
+Because everything is known at compile time, the exposition text — metric
+name, `# TYPE`, `# UNIT`, `# HELP`, label formatting, bucket names — is
+serialized during compilation. There is no runtime lookup of labels, no
+hashing, and no allocation on the hot path: a single `inc()` compiles down
+to a direct atomic update on pre-resolved storage.
+
+Static metrics live in a static registry and are exposed
+alongside dynamic metrics via
+`expose_static_registry` (see
+xref:exposer_options.adoc#static-registry-exposure[Exposer options]).
+
+== Quick example
+
+[source,cpp]
+----
+using namespace boost::prometheus;
+
+using requests_total = static_counter<
+    "requests",
+    help<"Number of received requests">,
+    labels<"method", "status">>;
+static_registry<>::register_metric<requests_total>();
+
+requests_total::inc<"GET", "200">();
+requests_total::inc<"GET", "200">(5.0);
+requests_total::inc<"POST", "500">();
+
+double v = requests_total::get_value<"GET", "200">();  // 6.0
+----
+
+To expose it, add the static registry to the exposer:
+
+[source,cpp]
+----
+prometheus::exposer<
+    decltype(ioc.get_executor()),
+    prometheus::expose_static_registry<prometheus::static_registry<>>>
+exp(ioc.get_executor(), endpoint);
+----
+
+== Options
+
+Options are passed as template parameters after the metric name. Order
+does not matter; options that are omitted take their default:
+
+[cols="1,1,2", options="header"]
+|===
+| Option | Applies to | Description
+
+| `help<"...">`
+| all
+| Human-readable description emitted in `# HELP`.
+
+| `unit<"...">`
+| all except `static_info`
+| Unit of measurement. By convention, a suffix of the metric name.
+
+| `labels<"...", ...>`
+| all
+| Label names. The order defines the order of label values at call sites.
+
+| `buckets<0.005, 0.01, ...>`
+| `static_histogram`
+| Bucket boundaries. Defaults to `default_buckets` when omitted.
+
+| `atomic_policy<bool>`
+| all
+| Atomicity policy. Defaults to `default_atomic_policy` (thread-safe).
+|===
+
+== Static registry
+
+Every static metric belongs to a `static_registry<Name>`. The default
+registry is `static_registry<>` — an empty name designates the unnamed
+default. Use the template parameter to group metrics by subsystem or
+module:
+
+[source,cpp]
+----
+using http_registry = static_registry<"http">;
+using db_registry   = static_registry<"db">;
+----
+
+Each registry is a separate global collection. To register a metric with a
+non-default registry, call `register_metric<...>()` explicitly:
+
+[source,cpp]
+----
+using db_queries = static_counter<
+    "queries",
+    help<"Number of DB queries">,
+    labels<"kind">>;
+db_registry::register_metric<db_queries>();
+
+using request_duration = static_histogram<
+    "request_duration_seconds",
+    help<"Latency of HTTP requests">,
+    unit<"seconds">,
+    labels<"method">>;
+    // No buckets<...> → default_buckets is used.
+http_registry::register_metric<request_duration>();
+----
+
+== Comparison with metric vectors
+
+[cols="1,1,1", options="header"]
+|===
+| Criterion | Static metrics | Metric vectors
+
+| Label values
+| Compile-time only
+| Runtime
+
+| Validation
+| Compile-time
+| Runtime (label names checked at construction)
+
+| Serialization
+| Compile-time
+| Runtime
+
+| Cardinality
+| Fixed at compile time
+| Dynamic
+
+| When to use
+| Bounded, known label values
+| Unbounded or dynamic label values
+|===
+
+For dynamic label values, see xref:metric_vectors.adoc[Metric vectors].

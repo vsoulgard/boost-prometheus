@@ -28,7 +28,7 @@ BOOST_AUTO_TEST_CASE(construction_default_options)
 
 BOOST_AUTO_TEST_CASE(construction_custom_options)
 {
-    gauge g("request_duration_seconds_total", {.help = "help string", .unit = "seconds"});
+    gauge g("request_duration_seconds", {.help = "help string", .unit = "seconds"});
     BOOST_TEST(g.get_value() == 0.0);
 }
 

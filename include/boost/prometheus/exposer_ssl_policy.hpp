@@ -17,6 +17,14 @@
 
 namespace boost::prometheus {
 
+/**
+ * \brief Enables or disables SSL/TLS mode for the exposer.
+ *
+ * Enabling this policy requires including
+ * `<boost/prometheus/exposer_ssl_policy.hpp>` and linking against OpenSSL.
+ *
+ * \tparam Enabled `true` for TLS mode, `false` for plain HTTP.
+ */
 template <>
 struct ssl_policy<true>
 {

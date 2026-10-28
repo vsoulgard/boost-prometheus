@@ -9,7 +9,8 @@
 
 int main()
 {
-    using namespace boost;
+    namespace prometheus = boost::prometheus;
+    namespace asio = boost::asio;
 
     asio::io_context ioc;
     // Start exposer on http://localhost:8080/metrics.

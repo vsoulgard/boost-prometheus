@@ -1,0 +1,43 @@
+//
+// Copyright (c) 2026 Vladislav Soulgard (vsoulgard at gmail dot com)
+//
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+
+= Examples
+
+Each example is a complete, compilable program. They progress from trivial
+usage through advanced configurations (authorization, SSL/TLS, static
+registries).
+
+== Basics
+
+* {site-url}/example/simple.cpp[simple.cpp]: Minimal usage example.
+
+== Security
+
+* {site-url}/example/with_authorization.cpp[with_authorization.cpp]: Bearer token authorization.
+* {site-url}/example/with_ssl.cpp[with_ssl.cpp]: With self-signed TLS certificate.
+
+== Performance
+
+* {site-url}/example/with_non_atomic_policy.cpp[with_non_atomic_policy.cpp]: Non-atomic metrics (thread-safety disabled).
+
+== Advanced
+
+* {site-url}/example/with_static_registry.cpp[with_static_registry.cpp]: Static and dynamic registries combined.
+
+== Building examples
+
+To build and run examples (requires OpenSSL):
+
+[source,bash]
+----
+cmake -B build -DBOOST_PROMETHEUS_EXAMPLES=ON
+cmake --build build --target boost_prometheus_examples
+# Minimal example: no arguments, serves on localhost:8080/metrics.
+./build/bin/simple
+# Authorization example: <address> <port> <route> <expected_auth_header>.
+./build/bin/with_authorization 0.0.0.0 8080 /metrics "Bearer secret-key"
+----

@@ -258,6 +258,38 @@ bool gzip_encode_impl(const BufferInType& in_buffer, BufferOutType& out_buffer)
 
 } // namespace detail
 
+/**
+ * \brief Gzip-compresses \p in_buffer and appends the result to \p out_buffer.
+ *
+ * The compressed stream is written to the **end** of \p out_buffer, so the
+ * caller must clear or otherwise prepare \p out_buffer before calling. This
+ * allows reusing a single output buffer across multiple calls without
+ * reallocating. The function does **not** clear \p out_buffer itself.
+ *
+ * Both the input and output buffers may be any contiguous byte container
+ * with `data()` and `size()` — typically `std::vector<std::uint8_t>`,
+ * `std::vector<char>`, or `std::string`. The types need not match:
+ * for example, the input may be a `std::string` and the output a
+ * `std::vector<std::uint8_t>`.
+ *
+ * \param in_buffer  Buffer to compress. Its contents are not modified.
+ * \param out_buffer Buffer to append the compressed stream to. Must be
+ *                   cleared by the caller beforehand if a fresh compressed
+ *                   stream is desired.
+ *
+ * \return `true` on success; `false` if \p in_buffer contains malformed
+ *         data that cannot be compressed.
+ *
+ * \par Example
+ * \code
+ * std::string body = "hello, world";
+ * std::vector<std::uint8_t> gzipped;
+ * if (prometheus::gzip_encode(body, gzipped))
+ * {
+ *     // gzipped now holds the compressed stream, ready to send.
+ * }
+ * \endcode
+ */
 template <typename BufferInType, typename BufferOutType>
 bool gzip_encode(const BufferInType& in_buffer, BufferOutType& out_buffer)
 {

@@ -1,0 +1,120 @@
+//
+// Copyright (c) 2026 Vladislav Soulgard (vsoulgard at gmail dot com)
+//
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+
+= Metric types
+:toc: left
+
+Boost.Prometheus provides five metric types:
+xref:reference:boost/prometheus/counter.adoc[`counter`],
+xref:reference:boost/prometheus/gauge.adoc[`gauge`],
+xref:reference:boost/prometheus/histogram.adoc[`histogram`],
+xref:reference:boost/prometheus/gaugehistogram.adoc[`gaugehistogram`],
+`info`.
+
+== Counter
+
+A counter is a monotonically increasing value. It is only allowed to go up, and
+is reset to zero on process restart. Typical uses: requests served, tasks
+completed, errors total.
+
+[source,cpp]
+----
+prometheus::counter processed_applications("applications_processed");
+processed_applications.inc();      // +1
+processed_applications.inc(2.0);   // +2
+processed_applications.inc(10.0);  // +10
+----
+
+[NOTE]
+====
+Do not use a counter for values that can decrease — use a xref:reference:boost/prometheus/gauge.adoc[gauge] instead.
+The `_total` suffix is appended automatically to counter names in the exposition.
+====
+
+== Gauge
+
+A gauge represents a single value that can go up and down. Typical uses: current
+temperature, memory usage, number of in-flight requests, queue size.
+
+[source,cpp]
+----
+prometheus::gauge active_applications("applications_active");
+active_applications.inc();        // +1
+active_applications.dec();        // -1
+active_applications.set(100.0);   // set to 100
+----
+
+== Histogram
+
+A histogram samples observations and counts them in configurable buckets. Each
+observation increments the matching `_bucket` counter, and the total count and
+sum are tracked as `_count` and `_sum`. Typical uses: request latency, response
+size.
+
+[source,cpp]
+----
+prometheus::histogram req_duration(
+    "request_duration_seconds",
+    {.help = "Duration of HTTP requests in seconds",
+     .unit = "seconds",
+     .buckets = {0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0}});
+
+req_duration.observe(0.01);  // → bucket le="0.025" and above
+req_duration.observe(0.5);   // → bucket le="0.5" and above
+----
+
+[NOTE]
+====
+If `.buckets` is empty, the default bucket set is used:
+0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0.
+====
+
+== Gauge histogram
+
+A gauge histogram behaves like a histogram, but its bucket values can decrease:
+`observe()` increments a bucket, `sub()` decrements it. It is suitable for
+tracking values that change over time, where both increases and decreases must
+be recorded.
+
+[source,cpp]
+----
+prometheus::gaugehistogram temperature(
+    "cpu_temperature_celsius",
+    {.help = "CPU core temperature",
+     .unit = "celsius",
+     .buckets = {25.0, 50.0, 75.0, 90.0}});
+
+temperature.observe(33.0);  // record entering bucket (25, 50]
+temperature.sub(33.0);      // remove it
+temperature.observe(55.0);  // record entering bucket (50, 75]
+temperature.sub(55.0);      // remove it
+----
+
+[NOTE]
+====
+The number of `sub()` calls for a given bucket must not exceed the number of
+`observe()` calls — bucket values MUST NOT become negative. The `_gsum` value
+may be negative when buckets with negative thresholds are used.
+====
+
+== Info
+
+An info metric is a constant `1` with a set of labels, used to expose static
+metadata such as build information, version, or configuration details. It is not
+meant to change frequently.
+
+[source,cpp]
+----
+prometheus::info_vec build_info("build", {"build_type", "version"});
+build_info.with_labels({"Release", "1.0"});
+----
+
+[NOTE]
+====
+The `_info` suffix is appended
+automatically in the exposition.
+====
