@@ -1,0 +1,143 @@
+//
+// Copyright (c) 2026 Vladislav Soulgard (vsoulgard at gmail dot com)
+//
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+
+= Exposer options
+:toc: left
+
+The exposer is configured through template parameters. All policies are
+zero-cost: they are resolved at compile time and add no runtime overhead
+beyond what their feature requires.
+
+[source,cpp]
+----
+template <typename Executor, typename... Options>
+class exposer;
+----
+
+The first template parameter is the executor type, usually obtained via
+`decltype(ioc.get_executor())`. The remaining parameters are policies,
+described below. When no policies are given, the exposer behaves as if
+`gzip_policy<true>` was passed.
+
+== Authorization
+
+`authorization_policy` enables validation of the `Authorization` header.
+Disabled by default.
+
+[source,cpp]
+----
+template <
+    detail::string_buffer AuthType,
+    auto ValidateFunc,
+    detail::string_buffer Realm = "",
+    bool ReturnNotFound = false>
+struct authorization_policy;
+----
+
+On every request, the value of the `Authorization` header is passed to
+`ValidateFunc`, which must be a function with the
+signature:
+
+[source,cpp]
+----
+bool validate_func(std::string_view auth);
+----
+
+If `ValidateFunc` returns `false`, the exposer responds with `401 Unauthorized`
+(or `404 Not Found` when `ReturnNotFound` is `true`). `AuthType` and `Realm`
+only affect the `WWW-Authenticate` response header:
+
+----
+WWW-Authenticate: AuthType realm="Realm"
+----
+
+[source,cpp]
+----
+using executor_type = decltype(ioc.get_executor());
+
+prometheus::exposer<
+    executor_type,
+    prometheus::authorization_policy<"Bearer", validate_func, "", true>>
+exp(ioc.get_executor(), endpoint, "/metrics");
+----
+
+* {site-url}/example/with_authorization.cpp[with_authorization.cpp]: Bearer token example.
+
+== SSL/TLS
+
+`ssl_policy` switches the exposer to TLS mode. Disabled by default; requires
+OpenSSL.
+
+Enable it by including the SSL policy header:
+
+[source,cpp]
+----
+#include <boost/prometheus/exposer_ssl_policy.hpp>
+----
+
+and passing an `asio::ssl::context` as the second constructor argument:
+
+[source,cpp]
+----
+using executor_type = decltype(ioc.get_executor());
+
+prometheus::exposer<
+    executor_type,
+    prometheus::ssl_policy<true>>
+exp(
+    ioc.get_executor(),
+    ssl_ctx,                                  // <1>
+    asio::ip::tcp::endpoint(address, port),
+    "/metrics");
+----
+<1> `asio::ssl::context` configured SSL context.
+
+* {site-url}/example/with_ssl.cpp[with_ssl.cpp]: Self-signed certificate example.
+
+[#static-registry-exposure]
+== Static registry exposure
+
+`expose_static_registry` exposes a
+xref:static_metrics.adoc[`prometheus::static_registry`] alongside the dynamic
+`prometheus::registry`. Disabled by default.
+
+[source,cpp]
+----
+template <typename StaticRegistry>
+struct expose_static_registry;
+----
+
+== Compression
+
+`gzip_policy` enables gzip compression for responses larger than 1024 bytes.
+Enabled by default.
+
+[source,cpp]
+----
+template <bool Enabled>
+struct gzip_policy;
+----
+
+== Combining policies
+
+Policies can be combined in any order:
+
+[source,cpp]
+----
+using executor_type = decltype(ioc.get_executor());
+
+prometheus::exposer<
+    executor_type,
+    prometheus::ssl_policy<true>,
+    prometheus::expose_static_registry<static_reg>,
+    prometheus::authorization_policy<"Bearer", validate_func, "", true>>
+exp(
+    ioc.get_executor(),
+    ssl_ctx,
+    asio::ip::tcp::endpoint(address, port),
+    "/metrics");
+----

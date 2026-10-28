@@ -1,0 +1,144 @@
+//
+// Copyright (c) 2026 Vladislav Soulgard (vsoulgard at gmail dot com)
+//
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+
+= Comparison with prometheus-cpp
+:toc: left
+
+
+https://github.com/jupp0r/prometheus-cpp[prometheus-cpp] is the most widely
+used C++ client library for Prometheus. Boost.Prometheus targets the same
+problem space but makes different trade-offs. This page summarizes the
+differences so you can choose the right tool for your project.
+
+== OpenMetrics 1.0 support
+
+prometheus-cpp emits only the Prometheus 0.0.4 text format with a fixed
+`Content-Type: text/plain`. Boost.Prometheus supports both Prometheus 0.0.4
+and https://prometheus.io/docs/specs/om/open_metrics_spec/[OpenMetrics 1.0],
+and negotiates the format per request via the `Accept` header. A single
+endpoint serves both ecosystems simultaneously.
+
+If your scrapers or downstream tooling expect OpenMetrics — for example,
+systems that rely on `# EOF`, `# UNIT`, or the OpenMetrics representation of
+info and gauge-histogram metrics — Boost.Prometheus provides this out of the
+box, without a separate endpoint or a second library.
+
+== Performance
+
+prometheus-cpp resolves labels through runtime `std::unordered_map`
+lookups and builds exposition strings dynamically, with a mutex guarding
+metric updates. This is a flexible design, but it costs cycles and
+allocations that Boost.Prometheus avoids — most visibly when many threads
+update metrics concurrently.
+
+The full benchmark suite — comparing histogram
+observations, labels lookups, and serialization throughput against prometheus-cpp — is
+available in
+{site-url}/bench/bench.ipynb[`bench/bench.ipynb`].
+
+== Boost.Asio integration
+
+prometheus-cpp ships an HTTP server based on
+https://github.com/civetweb/civetweb[civetweb]. This works for standalone
+services, but introduces a second event loop and a second socket layer
+alongside your existing networking code.
+
+Boost.Prometheus is built on Boost.Asio. The exposer plugs into your
+existing `io_context` and shares its executor — no second event loop, no
+separate threading model. For services already built on Asio (including
+Boost.Beast applications), this avoids an extra network stack.
+
+== Header-only
+
+Boost.Prometheus is header-only. There is
+no library to build, link, or package. prometheus-cpp must be built and
+linked.
+
+== Compile-time static metrics
+
+Boost.Prometheus offers two ways to define a metric:
+
+* **Runtime** (`counter`, `gauge`, `histogram`, `info`, and their `_vec`
+  variants) — dynamic label values, mirroring prometheus-cpp's model.
+* **Compile-time** (`static_counter`, `static_gauge`, `static_histogram`,
+  `static_info`) — label values are template arguments, validated by the
+  compiler, and the exposition text is generated at compile time.
+
+prometheus-cpp has no equivalent of the compile-time variant. For services
+with a bounded, known set of label values, the static API eliminates runtime
+lookups entirely and turns label typos into compile errors. For unbounded or
+user-supplied label values, use the runtime variant.
+
+== Feature comparison
+
+[cols="2,2,2", options="header"]
+|===
+| Feature | Boost.Prometheus | prometheus-cpp
+
+| Exposition formats
+| Prometheus 0.0.4 and OpenMetrics 1.0, negotiated per request
+| Prometheus 0.0.4 only
+
+| HTTP layer
+| Boost.Asio (integrates with your `io_context`)
+| Built-in civetweb server
+
+| Distribution
+| Header-only
+| Build and link (CMake, Bazel, package managers)
+
+| C++ standard
+| C++20
+| C++17
+
+| Runtime metrics with dynamic labels
+| Yes (`counter_vec`, etc.)
+| Yes (families and `Add()`)
+
+| Compile-time metrics with validated labels
+| Yes (`static_*`)
+| No
+
+| Compile-time serialization
+| Yes (for `static_*`)
+| No
+
+| gzip compression
+| Built-in (`gzip_policy`)
+| Optional (requires zlib)
+
+| SSL/TLS
+| Built-in (`ssl_policy<true>`, requires OpenSSL)
+| Not provided by the library
+
+| Basic authentication
+| User-defined via `authorization_policy` — any scheme (Bearer, Basic, custom), validated by a callback you provide
+| Basic only (Base64 `user:password` in the `Authorization` header)
+
+| Push gateway support
+| No (pull exposition only)
+| Yes
+|===
+
+== When prometheus-cpp may fit better
+
+* Your project cannot move to C++20 yet.
+* You need push-gateway support (Boost.Prometheus currently provides pull
+  exposition only).
+* You depend on prometheus-cpp's specific integrations or have an existing
+  deployment built around it.
+
+== When Boost.Prometheus may fit better
+
+* Your service is already built on Boost.Asio and you want a metrics
+  exposer that shares its event loop.
+* You need OpenMetrics 1.0 output.
+* Label cardinality is bounded and known at compile time, and you want
+  compile-time validation and compile-time serialization.
+* You want a header-only dependency with no separate library to build and
+  link.
+* You can use C++20.

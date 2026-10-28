@@ -7,7 +7,7 @@
 
 *(Not yet part of Boost.)*
 
-Modern C++20 library for instrumenting applications with Prometheus and OpenMetrics metrics.
+Modern C++20 library for instrumenting applications with Prometheus and [OpenMetrics](https://prometheus.io/docs/specs/om/open_metrics_spec/) metrics.
 Header-only, optimized for production, and designed to integrate naturally with Boost.Asio.
 
 ## Why Boost.Prometheus?
@@ -17,9 +17,10 @@ Header-only, optimized for production, and designed to integrate naturally with 
 - **Boost.Asio exposer** — HTTP exposition with gzip compression, authentication, and SSL/TLS.
 - **Header-only** — just include and go.
 - **Thread-Safe** — Metric updates (`inc()`, `observe()`), label lookup/creation (`with_labels()`), and metric registration (`register_metric()`) are fully thread-safe and can be called concurrently from multiple threads.
+- **Static metrics** — labels are validated by the compiler, and the exposition text is serialized at compile time — minimal overhead.
 
 ## Requirements
-- **Boost 1.90.0** and later.
+- **Boost 1.90.0** (header-only libraries) and later.
 - **C++20 compiler**: GCC 12+, Clang 18+, MSVC 14.3+ (Visual Studio 2022).
 - **OpenSSL** — optional, only required for SSL/TLS support in the exposer.
 

@@ -1,0 +1,17 @@
+//
+// Copyright (c) 2026 Vladislav Soulgard (vsoulgard at gmail dot com)
+//
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+
+* xref:index.adoc[]
+* xref:metric_types.adoc[]
+* xref:metric_options.adoc[]
+* xref:metric_vectors.adoc[]
+* xref:static_metrics.adoc[]
+* xref:exposer_options.adoc[]
+* xref:serialization.adoc[]
+* xref:comparison.adoc[]
+* xref:examples.adoc[]
+* xref:reference.adoc[]

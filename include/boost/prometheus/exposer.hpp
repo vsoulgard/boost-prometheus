@@ -26,14 +26,60 @@
 
 namespace boost::prometheus {
 
-// Lifetime contract:
-//   The caller must guarantee that both the registry and the exposer
-//   outlive every connection created through them.
-//   Typical usage: create exposer and registry before io_context.run(),
-//   destroy them after io_context.run() returns and all connections are closed.
-// Responses larger than 1024 bytes are transparently compressed with gzip
-// when the client sends a compatible Accept-Encoding header. Smaller
-// responses are sent uncompressed
+/**
+ * \brief HTTP exposition endpoint for Prometheus and OpenMetrics metrics.
+ *
+ * The exposer listens on a TCP endpoint and serves a `registry` in either
+ * the Prometheus 0.0.4 or OpenMetrics 1.0 text format, depending on the
+ * request's `Accept` header. Behaviour is configured through policy types
+ * in `Options...`; all policies are resolved at compile time and add no
+ * runtime overhead when unused.
+ *
+ * Responses larger than 1024 bytes are transparently gzip-compressed when
+ * the client sends a compatible `Accept-Encoding` header; smaller responses
+ * are sent uncompressed.
+ *
+ * The exposer starts accepting connections immediately after construction,
+ * using coroutines spawned on the provided executor. It does not own the
+ * executor: the caller is responsible for running the associated
+ * `io_context` (via `run()`, `poll()`, etc.).
+ *
+ * \tparam Executor The Asio executor type, typically obtained via
+ *         `decltype(ioc.get_executor())`.
+ * \tparam Options  Zero or more policy types: `atomic_policy`,
+ *         `gzip_policy`, `ssl_policy`, `parse_buffer_size`,
+ *         `header_limit_size`, `expose_static_registry`,
+ *         `authorization_policy`. Policies may appear in any order; when a
+ *         policy is omitted, its default is used.
+ *
+ * \note **Lifetime contract.** The caller must guarantee that both the
+ *       exposed registry and the exposer itself outlive every connection
+ *       created through them. Typical usage: construct the exposer and
+ *       registry before `io_context.run()`, and destroy them after
+ *       `io_context.run()` returns with all connections closed.
+ *
+ * \note **Non-copyable, non-movable.** The exposer owns an acceptor and
+ *       background coroutines; it cannot be copied or moved. Construct it
+ *       in place.
+ *
+ * \note **Registry ownership.** The exposer does not own the registry
+ *       passed to `expose()`. The registry must outlive the exposer, or at
+ *       least every connection served by it.
+ *
+ * \par Example
+ * \code
+ * asio::io_context ioc;
+ * prometheus::registry reg;
+ * reg.register_metric(requests);
+ *
+ * prometheus::exposer exp(
+ *     ioc.get_executor(),
+ *     asio::ip::tcp::endpoint(asio::ip::address_v4::loopback(), 8080));
+ * exp.expose(reg);
+ *
+ * ioc.run();
+ * \endcode
+ */
 template <typename Executor, typename... Options>
 class exposer
 {
@@ -70,8 +116,17 @@ class exposer
 
 public:
 
+    /**
+     * \brief Socket type accepted by the exposer.
+     */
     using socket_type = boost::asio::basic_stream_socket<boost::asio::ip::tcp, Executor>;
+    /**
+     * \brief Acceptor type used by the exposer.
+     */
     using acceptor_type = boost::asio::basic_socket_acceptor<boost::asio::ip::tcp, Executor>;
+    /**
+     * \brief Registry type accepted by this exposer.
+     */
     using registry_type = registry<atomic_policy_type>;
 
 private:
@@ -184,6 +239,23 @@ private:
 
 public:
 
+    /**
+     * \brief Constructs a plain-HTTP exposer.
+     *
+     * Available only when SSL is disabled (the default, i.e. when no
+     * `ssl_policy<true>` is present in `Options...`).
+     *
+     * The exposer binds and listens on \p endpoint immediately; it does not
+     * wait for `io_context.run()` to be called.
+     *
+     * \param ex       Executor used for all I/O and for spawning sessions.
+     * \param endpoint Local endpoint to bind.
+     * \param route    URL path served by the exposer. Must start with `/`.
+     *                 Defaults to `/metrics`.
+     *
+     * \throws boost::system::system_error if the socket cannot be opened,
+     *         bound, or put into listening state.
+     */
     explicit exposer(
         Executor ex,
         boost::asio::ip::tcp::endpoint endpoint,
@@ -197,6 +269,22 @@ public:
         init(endpoint);
     }
 
+     /**
+     * \brief Constructs an SSL/TLS exposer.
+     *
+     * Available only when `ssl_policy<true>` is present in `Options...`.
+     * The caller must keep \p ssl_ctx alive for the lifetime of the exposer
+     * and all connections it serves.
+     *
+     * \param ex       Executor used for all I/O and for spawning sessions.
+     * \param ssl_ctx  SSL context with the certificate and private key.
+     * \param endpoint Local endpoint to bind.
+     * \param route    URL path served by the exposer. Must start with `/`.
+     *                 Defaults to `/metrics`.
+     *
+     * \throws boost::system::system_error if the socket cannot be opened,
+     *         bound, or put into listening state.
+     */
     explicit exposer(
         Executor ex,
         boost::asio::ssl::context& ssl_ctx,
@@ -217,13 +305,29 @@ public:
     exposer(exposer&&)                 = delete;
     exposer& operator=(exposer&&)      = delete;
 
+    /**
+     * \brief Whether this exposer was instantiated with an atomic policy.
+     *
+     * `true` when updates to the exposed registry use atomic operations
+     * (the default), `false` when a non-atomic policy was requested.
+     */
     static consteval bool is_atomic()
     {
         return atomic_policy_type::enabled;
     }
 
-    // Note: rebinds previous registry
-    template <typename registry_type>
+    /**
+     * \brief Sets the registry served by the exposer.
+     *
+     * Replaces any previously exposed registry. The caller must ensure
+     * \p registry outlives every subsequent connection. Calling `expose()`
+     * while requests are in flight is safe in atomic mode (the pointer is
+     * swapped with release semantics); in non-atomic mode, concurrent
+     * `expose()` calls with request processing are not synchronized.
+     *
+     * \param registry Registry to serve. Must match `registry_type` of this
+     *                 exposer (i.e. use the same `atomic_policy`).
+     */
     void expose(registry_type& registry)
     {
         if constexpr (atomic_policy_type::enabled)
@@ -236,12 +340,23 @@ public:
         }
     }
 
-    std::string_view route()
+    /**
+     * \brief Returns the URL path served by this exposer.
+     */
+    std::string_view route() const noexcept
     {
         return route_;
     }
 
-    // Shutdown
+    /**
+     * \brief Stops accepting new connections and closes the acceptor.
+     *
+     * Idempotent and thread-safe with respect to repeated calls. Existing
+     * connections are not forcibly closed; they finish independently and
+     * are torn down by the executor when their coroutines complete.
+     *
+     * The destructor calls `stop()` automatically.
+     */
     void stop() noexcept
     {
         stop_source_.request_stop();
@@ -251,11 +366,23 @@ public:
         acceptor_.cancel(ec);
     }
 
+    /**
+     * \brief Stops the exposer.
+     *
+     * \sa stop()
+     */
     ~exposer()
     {
         stop();
     }
 
+    /**
+     * \brief Returns the local port the exposer is bound to.
+     *
+     * Useful when the endpoint was constructed with port `0` and the
+     * operating system assigned a free port. Returns `0` if the acceptor is
+     * not bound or the query fails.
+     */
     unsigned short port() const noexcept
     {
         boost::beast::error_code ec;

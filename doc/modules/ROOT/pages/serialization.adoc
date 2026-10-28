@@ -1,0 +1,187 @@
+//
+// Copyright (c) 2026 Vladislav Soulgard (vsoulgard at gmail dot com)
+//
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+
+= Serialization
+
+The library can serialize a registry to a byte buffer without an exposer.
+This is useful for:
+
+* generating exposition snapshots to a file or log;
+* serving metrics through an HTTP framework other than the built-in
+  exposer;
+* writing metrics to a storage backend, message queue, or monitoring
+  sidecar;
+* testing serialization output directly.
+
+== Formats
+
+Two exposition formats are supported, selected by the `FormatType`
+template parameter:
+
+[cols="1,3", options="header"]
+|===
+| Format | Description
+
+| `format::prometheus_0_0_4`
+| Prometheus text exposition format, version 0.0.4.
+
+| `format::openmetrics_1_0`
+| OpenMetrics text exposition format, version 1.0.
+|===
+
+The two formats differ in the set of metadata lines emitted (`# UNIT`,
+`# EOF`), in how gauge histograms and info metrics are represented, and
+in a few serialization details. See the
+https://prometheus.io/docs/specs/om/open_metrics_spec/[OpenMetrics
+specification] and the
+https://prometheus.io/docs/instrumenting/exposition_formats/[Prometheus
+exposition formats] documentation for the full set of differences.
+
+== Dynamic registry
+
+To serialize a dynamic registry, pass it
+together with an output buffer:
+
+[source,cpp]
+----
+prometheus::registry reg;
+// ... register metrics ...
+
+std::string result;
+prometheus::serialize<prometheus::format::openmetrics_1_0>(reg, result);
+// `result` now contains the OpenMetrics 1.0 exposition.
+----
+
+The same registry can be serialized in both formats, one after the
+other:
+
+[source,cpp]
+----
+std::string prom_body;
+prometheus::serialize<prometheus::format::prometheus_0_0_4>(reg, prom_body);
+
+std::string om_body;
+prometheus::serialize<prometheus::format::openmetrics_1_0>(reg, om_body);
+----
+
+== Static registry
+
+A xref:static_metrics.adoc[`static_registry`] is serialized through an
+overload that takes the registry as a template parameter and only the
+output buffer as a function argument:
+
+[source,cpp]
+----
+using http_registry = prometheus::static_registry<"http">;
+
+std::string result;
+prometheus::serialize<
+    prometheus::format::prometheus_0_0_4,
+    http_registry>(result);
+----
+
+=== EOF marker
+
+The static-registry overload has an additional `AppendEOF` template
+parameter, defaulting to `true`. When `true` and the selected format
+defines an EOF marker — as OpenMetrics 1.0 does with `# EOF` — the marker
+is appended to the buffer. For formats without an EOF marker (Prometheus
+0.0.4), the parameter is ignored.
+
+[source,cpp]
+----
+std::string with_eof;
+prometheus::serialize<
+    prometheus::format::openmetrics_1_0,
+    http_registry, /* AppendEOF = */ true>(with_eof);
+
+std::string without_eof;
+prometheus::serialize<
+    prometheus::format::openmetrics_1_0,
+    /* AppendEOF = */ false>(reg, without_eof);
+----
+
+Use `AppendEOF = false` when you are streaming a continuous exposition
+and want to emit a single `# EOF` at the very end, rather than after
+every registry.
+
+== Buffer requirements
+
+`BufferType` must provide:
+
+[cols="1,2", options="header"]
+|===
+| Method | Purpose
+
+| `size()`
+| Current size of the buffer, in bytes.
+
+| `capacity()`
+| Current capacity, used to decide whether to grow.
+
+| `data()`
+| Pointer to the first byte. Both `char*` and `const char*` may be
+  used by the implementation.
+
+| `reserve(n)`
+| Ensure capacity for at least `n` bytes.
+
+| `resize(n)`
+| Resize the buffer to `n` bytes.
+|===
+
+Both `std::string` and `std::vector<char>` satisfy these requirements.
+`std::vector<std::uint8_t>` also works, though `std::vector<char>` is
+the most direct match.
+
+[NOTE]
+====
+The serialized data is appended to the **end** of the buffer: existing
+contents are preserved.
+====
+
+== Thread safety
+
+`serialize()` reads the registry. For a dynamic `registry` with the
+default atomic policy, concurrent metric updates and serialization are
+safe. For a `static_registry`, the registry is immutable after `main()`
+begins, so serialization is safe from any number of threads without
+synchronization.
+
+With `atomic_policy<false>`, all accesses to the registry — including
+reads through `serialize()` — must be externally serialized.
+
+== Complete example
+
+[source,cpp]
+----
+#include <boost/prometheus.hpp>
+
+int main()
+{
+    using namespace boost::prometheus;
+
+    registry reg;
+    counter requests("requests", {.help = "Number of requests"});
+    requests.inc(42.0);
+    reg.register_metric(requests);
+
+    std::string body;
+    serialize<format::openmetrics_1_0>(reg, body);
+    std::puts(body.c_str());
+}
+----
+
+Output:
+
+[source]
+----
+# TYPE requests counter
+# HELP requests Number of requests
+requests_total 42
+# EOF
+----

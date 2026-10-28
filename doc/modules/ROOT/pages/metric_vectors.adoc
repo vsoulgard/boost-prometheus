@@ -1,0 +1,237 @@
+//
+// Copyright (c) 2026 Vladislav Soulgard (vsoulgard at gmail dot com)
+//
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+
+= Metric vectors
+:toc: left
+
+A metric vector is a family of metrics that share one name and one set of
+label names. Individual series are obtained by calling `with_labels(...)`
+with a set of label values:
+
+[source,cpp]
+----
+prometheus::counter_vec requests(
+    "requests",                                  // base name
+    {.help = "Number of received requests"},     // options
+    {"method", "status"});                       // label names
+
+requests.with_labels({"GET", "200"}).inc();
+requests.with_labels({"GET", "500"}).inc();
+requests.with_labels({"POST", "200"}).inc(5);
+----
+
+Exposed as:
+
+[source]
+----
+# TYPE requests_total counter
+# HELP requests_total Number of received requests
+requests_total{method="GET",status="200"} 1
+requests_total{method="GET",status="500"} 1
+requests_total{method="POST",status="200"} 5
+----
+
+The values passed to `with_labels(...)` are checked against the label
+names at **runtime**. If you need compile-time validation of label
+values, use xref:static_metrics.adoc[static metrics] instead — they
+validate at compile time and serialize at compile time.
+
+== Returned items
+
+`with_labels(...)` returns a **reference** to an item — a lightweight
+handle that writes into the shared storage of the vector. The item type
+mirrors the metric type: `counter_item`, `gauge_item`,
+`histogram_item`, `gaugehistogram_item`, `info_item`. Each item exposes
+the same mutating operations as its standalone counterpart:
+
+[cols="1,1,3", options="header"]
+|===
+| Vector | Item operations | Notes
+
+| `counter_vec`
+| `inc()`, `get_value()`
+| `_total` suffix appended in the exposition.
+
+| `gauge_vec`
+| `inc()`, `dec()`, `set()`, `get_value()`
+| No suffix appended.
+
+| `histogram_vec`
+| `observe()`
+| Shared buckets across all series.
+
+| `gaugehistogram_vec`
+| `observe()`, `sub()`
+| Shared buckets; bucket values may decrease.
+
+| `info_vec`
+| (none)
+| Value is always `1`; labels carry the payload.
+|===
+
+Items are **not** constructed directly. Obtain them only through
+`with_labels(...)`. A reference returned for a given set of label values
+remains valid for the lifetime of the parent vector.
+
+== Caching
+
+Resolved label combinations are cached. The first call to
+`with_labels()` with a given set of values creates the series; subsequent
+calls with the same values return the **same reference**. This makes
+`with_labels()` cheap enough to call from a hot path:
+
+[source,cpp]
+----
+// First call: creates the series (map lookup + allocation).
+requests.with_labels({"GET", "200"}).inc();
+
+// Subsequent calls: cached lookup, no allocation.
+for (std::size_t i = 0; i < 1000u; i++)
+    requests.with_labels({"GET", "200"}).inc();
+
+// For maximal throughput, cache the reference yourself:
+auto& get_200 = requests.with_labels({"GET", "200"});
+for (std::size_t i = 0; i < 1000u; i++)
+    get_200.inc();
+----
+
+[NOTE]
+====
+The cache is a property of the vector, not of the item. It grows as new
+label combinations are resolved and is never shrunk.
+====
+
+== Thread safety
+
+With the default atomic policy, both `with_labels()` and the mutating
+operations on resolved items are thread-safe and may be called
+concurrently from any number of threads:
+
+[source,cpp]
+----
+// Safe with default policy: each thread may create or reuse series
+// without external synchronization.
+void handle_request(std::string_view method)
+{
+    requests.with_labels({method, "200"}).inc();
+}
+----
+
+With `atomic_policy<false>`, **neither** `with_labels()` nor the mutating
+operations are synchronized — the caller must serialize all access to
+the vector:
+
+[source,cpp]
+----
+prometheus::counter_vec<prometheus::atomic_policy<false>> requests(
+    "requests", {.help = "Number of received requests"}, {"method"});
+
+// Not thread-safe: caller must synchronize access to `requests`
+// and to its items.
+----
+
+[WARNING]
+====
+`with_labels()` mutates the internal cache on the first call for any
+given label combination. Even if item updates are externally
+synchronized, the first `with_labels()` call for a new combination must
+also be serialized when using a non-atomic policy.
+====
+
+== Histograms and shared buckets
+
+All series produced by one `histogram_vec` or `gaugehistogram_vec` share
+the same bucket boundaries. Buckets are configured on the vector, not on
+individual series:
+
+[source,cpp]
+----
+prometheus::histogram_vec req_duration(
+    "request_duration_seconds",
+    {.help = "Request latency",
+     .unit = "seconds",
+     .buckets = {0.005, 0.01, 0.05, 0.1, 0.5}},   // shared
+    {"method"});
+
+req_duration.with_labels({"GET"}).observe(0.02);
+req_duration.with_labels({"POST"}).observe(0.3);
+----
+
+Exposed as (only two `GET` buckets shown for brevity):
+
+[source]
+----
+# TYPE request_duration_seconds histogram
+# HELP request_duration_seconds Request latency
+request_duration_seconds_bucket{le="0.005",method="GET"} 0
+request_duration_seconds_bucket{le="0.01",method="GET"} 1
+request_duration_seconds_bucket{le="0.05",method="GET"} 1
+request_duration_seconds_bucket{le="+Inf",method="GET"} 1
+request_duration_seconds_count{method="GET"} 1
+request_duration_seconds_sum{method="GET"} 0.02
+----
+
+[WARNING]
+====
+The label name `"le"` is reserved for histogram bucket boundaries and
+cannot be used as a user-defined label.
+====
+
+== Info
+
+An `info_vec` is a family of immutable series. Each series has the value
+`1`; the label values carry the information. There is no mutating API on
+`info_item` — the series is fully determined when `with_labels(...)`
+resolves it:
+
+[source,cpp]
+----
+prometheus::info_vec build_info(
+    "build",
+    {.help = "Build information"},
+    {"build_type", "version", "commit"});
+
+build_info.with_labels({"Release", "1.0", "abc123"});
+----
+
+Exposed as:
+
+[source]
+----
+# HELP build Build information
+# TYPE build info
+build_info{build_type="Release",commit="abc123",version="1.0"} 1
+----
+
+The `_info` suffix is appended automatically in the exposition.
+
+== Label ordering in the exposition
+
+Labels are emitted in lexicographic order, as required by Prometheus. In
+the examples above, `le` appears before `method` and
+`build_type` before `commit` before `version`. This is independent of
+the order in which label names and values are passed to the
+constructor and to `with_labels(...)` — the serialization layer sorts
+them.
+
+== Available types
+
+[cols="1,1", options="header"]
+|===
+| Basic | Vector
+
+| `counter` | `counter_vec`
+| `gauge` | `gauge_vec`
+| `histogram` | `histogram_vec`
+| `gaugehistogram` | `gaugehistogram_vec`
+| `info` | `info_vec`
+|===
+
+The `_vec` variant accepts the same xref:metric_options.adoc[options]
+as its standalone counterpart, plus a list of label names. All `_vec`
+classes are templated on `AtomicPolicyType` with the same default as
+their non-vector form.

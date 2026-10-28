@@ -16,6 +16,9 @@ namespace boost::prometheus {
  *
  * \tparam FormatType Export format.
  * Supported: `format::prometheus_0_0_4`, `format::openmetrics_1_0`.
+ * \tparam AppendEOF If `true` (default), append `"# EOF\n"` for
+ * formats that define it (e.g. OpenMetrics 1.0);
+ * ignored by formats without an EOF marker.
  * \tparam BufferType Output buffer.
  * Must provide `size()`, `capacity()`, `data()`, 
  * `reserve()` and `resize()` methods.
@@ -25,15 +28,15 @@ namespace boost::prometheus {
  * Existing contents are preserved.
  * \throws std::bad_alloc if the buffer needs to grow.
  */
-template <typename FormatType, typename RegistryType, typename BufferType>
+template <typename FormatType, bool AppendEOF = true, typename RegistryType, typename BufferType>
 void serialize(RegistryType& registry, BufferType& out_buffer)
 {
-    format::serialize<FormatType>(registry, out_buffer);
+    format::serialize<FormatType, RegistryType, BufferType, AppendEOF>(registry, out_buffer);
 }
 
 /** \brief Serialize static registry and append the result to a buffer.
  *
- * \tparam FormatType Type of export format.
+ * \tparam FormatType Export format.
  * Current supported format types are `format::prometheus_0_0_4`
  * and `format::openmetrics_1_0`.
  * \tparam StaticRegistryType Type of static registry to

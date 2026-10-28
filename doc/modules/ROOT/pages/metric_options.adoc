@@ -1,0 +1,75 @@
+//
+// Copyright (c) 2026 Vladislav Soulgard (vsoulgard at gmail dot com)
+//
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+
+= Metric options
+:toc: left
+
+Every metric type supports a `help` option — a short, human-readable description
+emitted in the `# HELP` line of the exposition.
+
+Every metric type except `info` supports a `unit` option — the unit of measurement
+(for example `"seconds"`, `"bytes"`, `"celsius"`).
+
+[NOTE]
+====
+By Prometheus convention, a non-empty `unit` should be a suffix of the metric
+name, separated by an underscore — e.g. `cpu_temperature_celsius`, not
+`cpu_temperature` with `unit = "celsius"`.
+
+`info` metrics MUST have an empty `unit`.
+====
+
+[source,cpp]
+----
+prometheus::gauge cpu_temp("cpu_temperature_celsius",
+    {.help = "The current temperature of the CPU core", .unit = "celsius"});
+----
+
+== Histogram options
+
+Histograms and gaugehistograms additionally support a `buckets` option that
+configures bucket thresholds.
+
+[NOTE]
+====
+If `buckets` is empty, the default bucket set is used:
+0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0.
+====
+
+[source,cpp]
+----
+prometheus::histogram req_duration(
+    "request_duration_seconds",
+    {.help = "Request latency",
+     .unit = "seconds",
+     .buckets = {0.1, 0.2, 0.3, 0.4, 0.5}});
+----
+
+[#atomic-policy]
+== Atomic policy
+
+By default, metric updates are thread-safe.
+To opt out for additional performance, pass `atomic_policy<false>` as a
+template parameter.
+
+[NOTE]
+====
+Non-atomic metrics are not thread-safe. Calling `inc()` or `observe()` from
+multiple threads without external synchronization is undefined behavior.
+====
+
+[source,cpp]
+----
+// Non-atomic counters skip the atomic RMW on each increment.
+prometheus::counter<prometheus::atomic_policy<false>> requests("requests",
+    {.help = "Number of received requests"});
+----
+
+`atomic_policy<true>` is equivalent to the default — passing it explicitly is
+allowed but has no effect on generated code.
+
+* {site-url}/example/with_non_atomic_policy.cpp[with_non_atomic_policy.cpp]: Exposing non-atomic metrics example.

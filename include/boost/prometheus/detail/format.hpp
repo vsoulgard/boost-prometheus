@@ -499,7 +499,7 @@ struct format
             });
         }
 
-        template <typename RegistryType, typename BufferType>
+        template <typename RegistryType, typename BufferType, bool>
         static void serialize(RegistryType& registry, BufferType& out_buffer)
         {
             registry.for_each([&](auto& metric)
@@ -621,16 +621,15 @@ struct format
             });
         }
 
-        template <typename RegistryType, typename BufferType>
+        template <typename RegistryType, typename BufferType, bool AppendEOF>
         static void serialize(RegistryType& registry, BufferType& out_buffer)
         {
             registry.for_each([&](auto& metric)
             {
                 serialize(metric, out_buffer);
             });
-
-            // Append # EOF
-            append("# EOF\n", out_buffer);
+            if constexpr (AppendEOF)
+                append("# EOF\n", out_buffer);
         }
 
         template <typename StaticMetricType, typename BufferType> requires(
@@ -683,10 +682,10 @@ struct format
         }
     };
 
-    template <typename FormatType, typename RegistryType, typename BufferType>
+    template <typename FormatType, typename RegistryType, typename BufferType, bool AppendEOF>
     static void serialize(RegistryType& registry, BufferType& out_buffer)
     {
-        FormatType::serialize(registry, out_buffer);
+        FormatType::template serialize<RegistryType, BufferType, AppendEOF>(registry, out_buffer);
     }
 
     template <typename FormatType, typename StaticRegistryType, typename BufferType, bool AppendEOF>

@@ -1,0 +1,136 @@
+//
+// Copyright (c) 2026 Vladislav Soulgard (vsoulgard at gmail dot com)
+//
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+
+= Boost.Prometheus
+:toc: left
+
+*Not yet part of an official Boost release.*
+
+== Overview
+
+C++20 library for instrumenting applications with
+https://prometheus.io/docs/specs/om/open_metrics_spec/[OpenMetrics] and
+Prometheus metrics. Header-only, optimized for production, and designed to
+integrate naturally with Boost.Asio.
+
+[cols="1,3", options="header"]
+|===
+| Feature | Description
+
+| Both text formats
+| OpenMetrics 1.0 and Prometheus 0.0.4.
+
+| Asio-native
+| Integrates with your existing `io_context`.
+
+| Compile-time static metrics
+| labels are validated by the compiler, and the exposition text is serialized at compile time — minimal overhead.
+
+| Header-only
+| Just include and go.
+|===
+
+== Requirements
+
+* Boost 1.90.0 (header-only libraries) and later.
+* C++20 compiler: GCC 12+, Clang 18+, MSVC 14.3+ (Visual Studio 2022).
+* OpenSSL — optional, only required for SSL/TLS support in the exposer.
+
+== Installation
+
+Boost.Prometheus is header-only. Add the `boost/prometheus` include directory
+to your compiler's include path, or consume it via CMake `FetchContent`.
+
+== Tutorial
+
+The example below shows a minimal usage of the library:
+
+[source,cpp]
+----
+#include <boost/prometheus.hpp>
+
+int main()
+{
+    namespace prometheus = boost::prometheus;
+    namespace asio = boost::asio;
+
+    asio::io_context ioc;
+
+    // Start exposer on http://localhost:8080/metrics.
+    prometheus::exposer exp(ioc.get_executor(),
+        asio::ip::tcp::endpoint(asio::ip::address_v4::loopback(), 8080));
+
+    // Create a registry and a counter.
+    prometheus::registry reg;
+    prometheus::counter requests("requests", {.help = "Number of received requests"});
+    requests.inc();
+
+    reg.register_metric(requests);
+    // Expose the registry (can only expose one registry at a time).
+    exp.expose(reg);
+    // Run the io_context to start exposition.
+    ioc.run();
+}
+----
+
+Visiting `http://localhost:8080/metrics` returns:
+
+[source]
+----
+# TYPE requests_total counter
+# HELP requests_total Number of received requests
+requests_total 1
+----
+
+Note that the `_total` suffix is appended automatically for counters: pass the
+base name `requests`, not `requests_total`.
+
+=== A richer example
+
+The next example adds labels, an info metric, and a histogram:
+
+[source,cpp]
+----
+#include <boost/prometheus.hpp>
+
+int main()
+{
+    namespace prometheus = boost::prometheus;
+    namespace asio = boost::asio;
+
+    asio::io_context ioc;
+
+    prometheus::exposer exp(ioc.get_executor(),
+        asio::ip::tcp::endpoint(asio::ip::address_v4::loopback(), 8080));
+
+    prometheus::registry reg;
+
+    prometheus::info_vec build_info("build", {"build_type", "version"});
+    prometheus::counter_vec requests("requests",
+        {.help = "Number of received requests"},
+        {"method"});
+    prometheus::histogram req_duration(
+        "request_duration_seconds",
+        {.help = "Duration of HTTP requests in seconds",
+         .unit = "seconds",
+         .buckets = {}}); // Empty: use the default bucket set.
+
+    build_info.with_labels({"Debug", "1.0"});
+    requests.with_labels({"GET"}).inc(5);
+    // Caching is also supported for metric vectors.
+    auto& post_requests = requests.with_labels({"POST"});
+    post_requests.inc(2);
+    req_duration.observe(0.5);
+
+    reg.register_metric(build_info);
+    reg.register_metric(requests);
+    reg.register_metric(req_duration);
+
+    exp.expose(reg);
+    ioc.run();
+}
+----
