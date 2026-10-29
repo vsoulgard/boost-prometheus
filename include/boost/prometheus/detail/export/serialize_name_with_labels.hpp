@@ -8,6 +8,7 @@
 #ifndef BOOST_PROMETHEUS_DETAIL_EXPORT_SERIALIZE_NAME_WITH_LABELS_HPP
 #define BOOST_PROMETHEUS_DETAIL_EXPORT_SERIALIZE_NAME_WITH_LABELS_HPP
 
+#include <boost/prometheus/detail/config.hpp>
 #include <boost/prometheus/detail/string_buffer.hpp>
 
 #include <boost/assert.hpp>
@@ -42,9 +43,11 @@ std::string serialize_name_with_labels(
     result.resize(required_size);
     char* data = result.data();
     std::size_t off = 0;
-    // std::copy_n instead of std::memcpy because GCC in release mode
-    // produces false positive [-Wstringop-overflow=].
-    std::copy_n(name.data(), name.size(), data + off);
+    // Disable [-Wstringop-overflow=] for GCC, because it
+    // produces false positive in  release mode.
+    BOOST_PROMETHEUS_DISABLE_STRINGOP_OVERFLOW_WARNING
+    std::memcpy(data + off, name.data(), name.size());
+    BOOST_PROMETHEUS_RESTORE_STRINGOP_OVERFLOW_WARNING
     off += name.size();
     if constexpr (suffix.size())
     {
