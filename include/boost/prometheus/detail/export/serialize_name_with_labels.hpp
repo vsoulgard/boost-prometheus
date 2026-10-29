@@ -42,7 +42,9 @@ std::string serialize_name_with_labels(
     result.resize(required_size);
     char* data = result.data();
     std::size_t off = 0;
-    std::memcpy(data + off, name.data(), name.size());
+    // std::copy_n instead of std::memcpy because GCC in release mode
+    // produces false positive [-Wstringop-overflow=].
+    std::copy_n(name.data(), name.size(), data + off);
     off += name.size();
     if constexpr (suffix.size())
     {
@@ -75,7 +77,7 @@ std::string serialize_name_with_labels(
         std::memcpy(data + off - 1, "}", 1);
     }
     std::memcpy(data + off, " ", 1);
-    BOOST_ASSERT(result.size() == required_size);
+    BOOST_ASSERT(off == required_size - 1);
     return result;
 }
 
