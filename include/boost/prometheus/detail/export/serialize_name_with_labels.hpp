@@ -43,11 +43,14 @@ std::string serialize_name_with_labels(
     result.resize(required_size);
     char* data = result.data();
     std::size_t off = 0;
-    // Disable [-Wstringop-overflow=] for GCC, because it produces
-    // false positives in release mode with aggressive optimization.
-    BOOST_PROMETHEUS_DISABLE_STRINGOP_OVERFLOW_WARNING
+    // Disable [-Werror=stringop-overflow=] and [-Werror=restrict] for GCC,
+    // because it produces false positives in release
+    // mode with aggressive optimization.
+    BOOST_PROMETHEUS_GCC_DISABLE_STRINGOP_OVERFLOW_WARNING
+    BOOST_PROMETHEUS_GCC_DISABLE_RESTRICT_WARNING
     std::memcpy(data + off, name.data(), name.size());
-    BOOST_PROMETHEUS_RESTORE_STRINGOP_OVERFLOW_WARNING
+    BOOST_PROMETHEUS_GCC_RESTORE_RESTRICT_WARNING
+    BOOST_PROMETHEUS_GCC_RESTORE_STRINGOP_OVERFLOW_WARNING
     off += name.size();
     if constexpr (suffix.size())
     {
