@@ -14,59 +14,100 @@
 // Metrics
 |
 xref:reference:boost/prometheus/counter.adoc[`counter`]
+
 xref:reference:boost/prometheus/gauge.adoc[`gauge`]
+
 xref:reference:boost/prometheus/histogram.adoc[`histogram`]
+
 xref:reference:boost/prometheus/gaugehistogram.adoc[`gaugehistogram`]
+
+xref:reference:boost/prometheus/info.adoc[`info`]
 
 // Vectors and items
 |
 xref:reference:boost/prometheus/counter_vec.adoc[`counter_vec`]
+
 xref:reference:boost/prometheus/gauge_vec.adoc[`gauge_vec`]
+
 xref:reference:boost/prometheus/histogram_vec.adoc[`histogram_vec`]
+
 xref:reference:boost/prometheus/gaugehistogram_vec.adoc[`gaugehistogram_vec`]
+
 xref:reference:boost/prometheus/info_vec.adoc[`info_vec`]
+
 xref:reference:boost/prometheus/counter_item.adoc[`counter_item`]
+
 xref:reference:boost/prometheus/gauge_item.adoc[`gauge_item`]
+
 xref:reference:boost/prometheus/histogram_item.adoc[`histogram_item`]
+
 xref:reference:boost/prometheus/gaugehistogram_item.adoc[`gaugehistogram_item`]
+
 xref:reference:boost/prometheus/info_item.adoc[`info_item`]
 
 // Static metrics
 |
 xref:reference:boost/prometheus/static_counter.adoc[`static_counter`]
+
 xref:reference:boost/prometheus/static_gauge.adoc[`static_gauge`]
+
 xref:reference:boost/prometheus/static_histogram.adoc[`static_histogram`]
+
 xref:reference:boost/prometheus/static_info.adoc[`static_info`]
+
 xref:reference:boost/prometheus/static_registry.adoc[`static_registry`]
 
 // Options
 |
 xref:reference:boost/prometheus/metric_opts.adoc[`metric_opts`]
+
 xref:reference:boost/prometheus/histogram_opts.adoc[`histogram_opts`]
+
 xref:reference:boost/prometheus/info_opts.adoc[`info_opts`]
+
 xref:reference:boost/prometheus/help.adoc[`help`]
+
 xref:reference:boost/prometheus/unit.adoc[`unit`]
+
 xref:reference:boost/prometheus/labels.adoc[`labels`]
+
 xref:reference:boost/prometheus/buckets.adoc[`buckets`]
+
 xref:reference:boost/prometheus/default_buckets.adoc[`default_buckets`]
+
 xref:reference:boost/prometheus/atomic_policy.adoc[`atomic_policy`]
+
 xref:reference:boost/prometheus/default_atomic_policy.adoc[`default_atomic_policy`]
+
 xref:reference:boost/prometheus/default_static_registry_name.adoc[`default_static_registry_name`]
 
 // Exposer and serialization
 |
 xref:reference:boost/prometheus/exposer.adoc[`exposer`]
+
 xref:reference:boost/prometheus/gzip_policy.adoc[`gzip_policy`]
+
 xref:reference:boost/prometheus/default_gzip_policy.adoc[`default_gzip_policy`]
+
 xref:reference:boost/prometheus/ssl_policy.adoc[`ssl_policy`]
+
 xref:reference:boost/prometheus/default_ssl_policy.adoc[`default_ssl_policy`]
+
 xref:reference:boost/prometheus/parse_buffer_size.adoc[`parse_buffer_size`]
+
 xref:reference:boost/prometheus/default_parse_buffer_size.adoc[`default_parse_buffer_size`]
+
 xref:reference:boost/prometheus/header_limit_size.adoc[`header_limit_size`]
+
 xref:reference:boost/prometheus/default_header_limit_size.adoc[`default_header_limit_size`]
+
 xref:reference:boost/prometheus/expose_static_registry.adoc[`expose_static_registry`]
+
 xref:reference:boost/prometheus/authorization_policy.adoc[`authorization_policy`]
+
 xref:reference:boost/prometheus/registry.adoc[`registry`]
+
 xref:reference:boost/prometheus/serialize-0a.adoc[`serialize`]
+
 xref:reference:boost/prometheus/gzip_encode.adoc[`gzip_encode`]
 |===

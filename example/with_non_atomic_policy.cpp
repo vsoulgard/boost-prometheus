@@ -46,13 +46,11 @@ int main(int argc, char* argv[])
     // Disable thread-safety for all objects for extra optimization.
     using non_atomic_policy = prometheus::atomic_policy<false>;
     prometheus::registry<non_atomic_policy> reg;
-    prometheus::info_vec<non_atomic_policy> build_info(
+    prometheus::info build_info(
         "build",
-        {"build_type", "compiler", "boost_version"});
-    build_info.with_labels(
-        {"example_with_non_atomic_policy",
-        BOOST_COMPILER,
-        boost_version_str()});
+        {.help = "Build information"},
+        {"build_type", "compiler", "boost_version"},
+        {"Debug", BOOST_COMPILER, boost_version_str()});
     prometheus::counter_vec<non_atomic_policy> requests(
         "requests",
         {.help = "Number of received requests", .unit = ""},

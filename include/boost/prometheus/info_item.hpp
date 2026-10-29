@@ -67,7 +67,7 @@ namespace boost::prometheus {
 template <typename AtomicPolicyType>
 class info_item
 {
-    using internal_type = detail::info_internal<true>;
+    using internal_type = detail::info_internal<false>;
 
     internal_type internal_;
 

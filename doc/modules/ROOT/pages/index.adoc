@@ -109,7 +109,10 @@ int main()
 
     prometheus::registry reg;
 
-    prometheus::info_vec build_info("build", {"build_type", "version"});
+    prometheus::info build_info("build",
+        {.help = "Build information"},
+        {"build_type", "version"},
+        {"Debug", "1.0"});
     prometheus::counter_vec requests("requests",
         {.help = "Number of received requests"},
         {"method"});
@@ -119,7 +122,6 @@ int main()
          .unit = "seconds",
          .buckets = {}}); // Empty: use the default bucket set.
 
-    build_info.with_labels({"Debug", "1.0"});
     requests.with_labels({"GET"}).inc(5);
     // Caching is also supported for metric vectors.
     auto& post_requests = requests.with_labels({"POST"});

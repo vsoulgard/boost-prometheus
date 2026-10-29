@@ -18,6 +18,7 @@
 #include <boost/prometheus/gaugehistogram_vec.hpp>
 #include <boost/prometheus/histogram.hpp>
 #include <boost/prometheus/histogram_vec.hpp>
+#include <boost/prometheus/info.hpp>
 #include <boost/prometheus/info_vec.hpp>
 #include <boost/prometheus/metric_options.hpp>
 
@@ -97,6 +98,7 @@ class registry
     using histogram_vec_ptr_type = histogram_vec<AtomicPolicyType>*;
     using gaugehistogram_ptr_type = gaugehistogram<AtomicPolicyType>*;
     using gaugehistogram_vec_ptr_type = gaugehistogram_vec<AtomicPolicyType>*;
+    using info_ptr_type = info*;
     using info_vec_ptr_type = info_vec<AtomicPolicyType>*;
 
     // Each type has independent std::mutex with atomic_policy<true>
@@ -109,6 +111,7 @@ class registry
         histogram_vec_ptr_type,
         gaugehistogram_ptr_type,
         gaugehistogram_vec_ptr_type,
+        info_ptr_type,
         info_vec_ptr_type> 
     metrics_;
 
@@ -176,7 +179,6 @@ public:
     template <typename MetricType>
     void register_metric(MetricType& metric)
     {
-        static_assert(is_atomic() == MetricType::is_atomic(), "Registry and metric type must share the same atomic policy");
         // Insert metric address
         metrics_.insert(&metric);
     }
@@ -195,7 +197,6 @@ public:
     template <typename MetricType>
     void unregister_metric(MetricType& metric)
     {
-        static_assert(is_atomic() == MetricType::is_atomic(), "Registry and metric type must share the same atomic policy");
         metrics_.erase(&metric);
     }
 };

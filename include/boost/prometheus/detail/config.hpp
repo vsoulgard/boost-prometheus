@@ -24,6 +24,24 @@
     #define BOOST_PROMETHEUS_MSVC_RESTORE_WARNING
 #endif
 
+#if defined(__GNUC__) && !defined(__clang__)
+    #define BOOST_PROMETHEUS_GCC_DISABLE_STRINGOP_OVERFLOW_WARNING \
+        _Pragma("GCC diagnostic push") \
+        _Pragma("GCC diagnostic ignored \"-Wstringop-overflow\"")
+    #define BOOST_PROMETHEUS_GCC_RESTORE_STRINGOP_OVERFLOW_WARNING \
+        _Pragma("GCC diagnostic pop")
+    #define BOOST_PROMETHEUS_GCC_DISABLE_RESTRICT_WARNING \
+        _Pragma("GCC diagnostic push") \
+        _Pragma("GCC diagnostic ignored \"-Wrestrict\"")
+    #define BOOST_PROMETHEUS_GCC_RESTORE_RESTRICT_WARNING \
+        _Pragma("GCC diagnostic pop")
+#else
+    #define BOOST_PROMETHEUS_GCC_DISABLE_STRINGOP_OVERFLOW_WARNING
+    #define BOOST_PROMETHEUS_GCC_RESTORE_STRINGOP_OVERFLOW_WARNING
+    #define BOOST_PROMETHEUS_GCC_DISABLE_RESTRICT_WARNING
+    #define BOOST_PROMETHEUS_GCC_RESTORE_RESTRICT_WARNING
+#endif
+
 namespace boost::prometheus::detail {
 
 constexpr std::size_t cache_line_size = BOOST_PROMETHEUS_CACHE_LINE_SIZE;

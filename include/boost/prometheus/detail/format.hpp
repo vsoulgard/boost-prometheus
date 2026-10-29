@@ -10,6 +10,8 @@
 
 #include <boost/prometheus/detail/metric_traits.hpp>
 
+#include <boost/prometheus/info.hpp>
+
 #include <boost/assert.hpp>
 #include <boost/core/yield_primitives.hpp>
 
@@ -435,6 +437,14 @@ struct format
             serialize_gaugehistogram(metric.internal_, out_buffer);
         }
 
+        template <typename BufferType>
+        static void serialize(info& metric, BufferType& out_buffer)
+        {
+            append(metric.internal_.prometheus_prefix_sv_, out_buffer);
+            append(metric.series_name_, out_buffer);
+            append("1\n", out_buffer);
+        }
+
         template <typename MetricVecType, typename BufferType> requires(
             prometheus::detail::counter_vec_specialization<MetricVecType> ||
             prometheus::detail::gauge_vec_specialization<MetricVecType>)
@@ -578,6 +588,14 @@ struct format
         {
             append(metric.internal_.openmetrics_prefix_sv_, out_buffer);
             serialize_histogram(metric.internal_, out_buffer);
+        }
+
+        template <typename BufferType>
+        static void serialize(info& metric, BufferType& out_buffer)
+        {
+            append(metric.internal_.openmetrics_prefix_sv_, out_buffer);
+            append(metric.series_name_, out_buffer);
+            append("1\n", out_buffer);
         }
 
         template <typename MetricVecType, typename BufferType> requires(

@@ -2730,6 +2730,72 @@ BOOST_AUTO_TEST_CASE(gaugehistogram_non_atomic_openmetrics_1_0)
     test_gaugehistogram_openmetrics_1_0<atomic_policy<false>>();
 }
 
+BOOST_AUTO_TEST_CASE(info_prometheus_0_0_4)
+{
+    registry reg;
+    info empty_in("empty", {}, {}, {});
+    reg.register_metric(empty_in);
+
+    std::string result;
+    serialize<format::prometheus_0_0_4>(reg, result);
+    BOOST_TEST(result == std::string_view(
+        "# TYPE empty_info gauge\n"
+        "empty_info 1\n"));
+    result.clear();
+    info in("build", {}, {"version", "component"}, {"0.1", "auth"});
+    reg.register_metric(in);
+    info in2("libraries", {.help = "Installed libraries"}, {"boost"}, {"1.90.0"});
+    reg.register_metric(in2);
+    serialize<format::prometheus_0_0_4>(reg, result);
+    // Order is not guaranteed
+    BOOST_TEST(result.find(
+        "# TYPE empty_info gauge\n"
+        "empty_info 1\n") != std::string::npos);
+    BOOST_TEST(result.find(
+        "# TYPE build_info gauge\n"
+        "build_info{component=\"auth\",version=\"0.1\"} 1\n") != std::string::npos);
+    BOOST_TEST(result.find(
+        "# TYPE libraries_info gauge\n"
+        "# HELP libraries_info Installed libraries\n"
+        "libraries_info{boost=\"1.90.0\"} 1\n") != std::string::npos);
+    BOOST_TEST(result.size() == 37u + 69u + 103u);
+}
+
+BOOST_AUTO_TEST_CASE(info_openmetrics_1_0)
+{
+    registry reg;
+    info empty_in("empty", {}, {}, {});
+    reg.register_metric(empty_in);
+
+    std::string result;
+    serialize<format::openmetrics_1_0>(reg, result);
+    BOOST_TEST(result == std::string_view(
+        "# TYPE empty info\n"
+        "empty_info 1\n"
+        "# EOF\n"));
+    result.clear();
+    info in("build", {}, {"version", "component"}, {"0.1", "auth"});
+    info in2("libraries", {.help = "Installed libraries"}, {"boost"}, {"1.90.0"});
+    reg.register_metric(in);
+    reg.register_metric(in2);
+    serialize<format::openmetrics_1_0>(reg, result);
+    // Order is not guaranteed
+    BOOST_TEST(result.find(
+        "# TYPE empty info\n"
+        "empty_info 1\n") != std::string::npos);
+    BOOST_TEST(result.find(
+        "# TYPE build info\n"
+        "build_info{component=\"auth\",version=\"0.1\"} 1\n") != std::string::npos);
+    BOOST_TEST(result.find(
+        "# TYPE libraries info\n"
+        "# HELP libraries Installed libraries\n"
+        "libraries_info{boost=\"1.90.0\"} 1\n") != std::string::npos);
+    BOOST_TEST(result.substr(result.size() - 6u, 6u) == std::string_view(
+        "# EOF\n"
+    ));
+    BOOST_TEST(result.size() == 31u + 63u + 92u + 6u);
+}
+
 BOOST_AUTO_TEST_CASE(gaugehistogram_vec_prometheus_0_0_4)
 {
     test_gaugehistogram_vec_prometheus_0_0_4<atomic_policy<true>>();

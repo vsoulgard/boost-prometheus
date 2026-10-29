@@ -60,13 +60,11 @@ int main(int argc, char* argv[])
     asio::io_context ioc;
 
     prometheus::registry reg;
-    prometheus::info_vec build_info(
+    prometheus::info build_info(
         "build",
-        {"build_type", "compiler", "boost_version"});
-    build_info.with_labels(
-        {"example_with_authorization",
-        BOOST_COMPILER,
-        boost_version_str()});
+        {.help = "Build information"},
+        {"build_type", "compiler", "boost_version"},
+        {"Debug", BOOST_COMPILER, boost_version_str()});
     prometheus::counter_vec requests(
         "requests",
         {.help = "Number of received requests", .unit = ""},
