@@ -2655,7 +2655,7 @@ BOOST_AUTO_TEST_CASE(concurrent_histogram_openmetrics_1_0, * boost::unit_test::t
         threads.emplace_back([&]()
         {
             ready_count.fetch_add(1u, std::memory_order_release);
-            
+
             while (!start_flag.load(std::memory_order_acquire))
             {
                 std::this_thread::yield();
@@ -2772,7 +2772,7 @@ BOOST_AUTO_TEST_CASE(concurrent_gaugehistogram_openmetrics_1_0, * boost::unit_te
         threads.emplace_back([&]()
         {
             ready_count.fetch_add(1u, std::memory_order_release);
-            
+
             while (!start_flag.load(std::memory_order_acquire))
             {
                 std::this_thread::yield();
@@ -2789,7 +2789,7 @@ BOOST_AUTO_TEST_CASE(concurrent_gaugehistogram_openmetrics_1_0, * boost::unit_te
         threads.emplace_back([&]()
         {
             ready_count.fetch_add(1, std::memory_order_release);
-            
+
             while (!start_flag.load(std::memory_order_acquire))
             {
                 std::this_thread::yield();
@@ -2945,7 +2945,7 @@ BOOST_AUTO_TEST_CASE(concurrent_static_histogram_openmetrics_1_0, * boost::unit_
         threads.emplace_back([&]()
         {
             ready_count.fetch_add(1u, std::memory_order_release);
-            
+
             while (!start_flag.load(std::memory_order_acquire))
             {
                 std::this_thread::yield();

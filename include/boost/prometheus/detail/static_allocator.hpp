@@ -11,6 +11,8 @@
 #include <boost/prometheus/detail/string_buffer.hpp>
 #include <boost/prometheus/detail/types_fwd.hpp>
 
+#include <cstddef>
+
 namespace boost::prometheus::detail {
 
 template <std::size_t Capacity>
