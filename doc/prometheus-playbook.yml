@@ -29,7 +29,7 @@ content:
       start_path: doc
       edit_url: 'https://github.com/vsoulgard/boost-prometheus/edit/develop/{path}'
 
-ui: 
+ui:
   bundle:
     url: https://github.com/boostorg/website-v2-docs/releases/download/ui-master/ui-bundle.zip
     snapshot: true

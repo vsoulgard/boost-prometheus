@@ -133,6 +133,7 @@ jobs:
 
     container:
       image: ${{ matrix.container }}
+      # Required for thread sanitizer to work.
       options: --security-opt seccomp=unconfined
 
     env:
