@@ -45,6 +45,8 @@ class gauge_vec;
 template <typename>
 class histogram;
 
+class info;
+
 template <typename>
 class histogram_vec;
 

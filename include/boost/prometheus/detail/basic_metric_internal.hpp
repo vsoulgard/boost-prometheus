@@ -48,7 +48,7 @@ struct basic_metric_internal
     basic_metric_internal& operator=(basic_metric_internal&&) = delete;
 
     basic_metric_internal(std::string&& base_string)
-    requires (HasBaseString)
+    requires (HasBaseString && !HasPrefixSVs)
     : base_string_(std::move(base_string)) {}
 
     basic_metric_internal(std::string&& base_string, std::size_t openmetrics_prefix_offset)

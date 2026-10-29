@@ -31,7 +31,10 @@ std::string serialize_name_with_labels(
 
     std::string result;
     constexpr std::string_view suffix(Suffix);
-    std::size_t required_size = name.size() + 2 + suffix.size();
+    bool has_labels = labels.size() > 0;
+    std::size_t required_size = name.size() + 1 + suffix.size();
+    if (has_labels)
+        required_size += 1;
     for (std::size_t i = 0; i < labels.size(); i++)
     {
         required_size += labels[i].first.size() + labelvalues[i].size() + 4;
@@ -46,28 +49,31 @@ std::string serialize_name_with_labels(
         std::memcpy(data + off, suffix.data(), suffix.size());
         off += suffix.size();
     }
-    std::memcpy(data + off, "{", 1);
-    off += 1;
-    for (std::size_t i = 0; i < labels.size(); i++)
+    if (has_labels)
     {
-        // Get original index for the label.
-        std::size_t label_index = labels[i].second;
-        std::memcpy(
-            data + off,
-            labels[i].first.data(),
-            labels[i].first.size());
-        off += labels[i].first.size();
-        std::memcpy(data + off, "=\"", 2);
-        off += 2;
-        std::memcpy(
-            data + off,
-            labelvalues[label_index].data(),
-            labelvalues[label_index].size());
-            off += labelvalues[label_index].size();
-        std::memcpy(data + off, "\",", 2);
-        off += 2;
+        std::memcpy(data + off, "{", 1);
+        off += 1;
+        for (std::size_t i = 0; i < labels.size(); i++)
+        {
+            // Get original index for the label.
+            std::size_t label_index = labels[i].second;
+            std::memcpy(
+                data + off,
+                labels[i].first.data(),
+                labels[i].first.size());
+            off += labels[i].first.size();
+            std::memcpy(data + off, "=\"", 2);
+            off += 2;
+            std::memcpy(
+                data + off,
+                labelvalues[label_index].data(),
+                labelvalues[label_index].size());
+                off += labelvalues[label_index].size();
+            std::memcpy(data + off, "\",", 2);
+            off += 2;
+        }
+        std::memcpy(data + off - 1, "}", 1);
     }
-    std::memcpy(data + off - 1, "}", 1);
     std::memcpy(data + off, " ", 1);
     BOOST_ASSERT(result.size() == required_size);
     return result;

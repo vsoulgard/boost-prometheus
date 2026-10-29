@@ -40,7 +40,11 @@ int main()
 
     // Create registry and some metrics.
     prometheus::registry reg;
-    prometheus::info_vec build_info("build", {"build_type", "version"});
+    prometheus::info build_info(
+        "build",
+        {.help = "Build information"},
+        {"build_type", "version"},
+        {"Debug", "1.0"});
     prometheus::counter_vec requests("requests",
         {.help = "Number of received requests", .unit = ""},
         {"method"});
@@ -49,7 +53,6 @@ int main()
         {.help = "Duration of HTTP requests in seconds",
             .unit = "seconds", .buckets = {}}); // Default buckets
 
-    build_info.with_labels({"simple_example", "1.0"});
     requests.with_labels({"GET"}).inc(5.0);
     // Caching is also supported for metric vectors.
     auto& post_requests = requests.with_labels({"POST"});

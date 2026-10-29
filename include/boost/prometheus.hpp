@@ -25,6 +25,7 @@
 #include <boost/prometheus/histogram.hpp>
 #include <boost/prometheus/info_item.hpp>
 #include <boost/prometheus/info_vec.hpp>
+#include <boost/prometheus/info.hpp>
 #include <boost/prometheus/metric_options.hpp>
 #include <boost/prometheus/registry.hpp>
 #include <boost/prometheus/serialize.hpp>

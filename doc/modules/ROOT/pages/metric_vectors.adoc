@@ -228,7 +228,7 @@ them.
 | xref:reference:boost/prometheus/gauge.adoc[`gauge`] | xref:reference:boost/prometheus/gauge_vec.adoc[`gauge_vec`]
 | xref:reference:boost/prometheus/histogram.adoc[`histogram`] | xref:reference:boost/prometheus/histogram_vec.adoc[`histogram_vec`]
 | xref:reference:boost/prometheus/gaugehistogram.adoc[`gaugehistogram`] | xref:reference:boost/prometheus/gaugehistogram_vec.adoc[`gaugehistogram_vec`]
-| `info` | xref:reference:boost/prometheus/info_vec.adoc[`info_vec`]
+| xref:reference:boost/prometheus/info.adoc[`info`] | xref:reference:boost/prometheus/info_vec.adoc[`info_vec`]
 |===
 
 The `_vec` variant accepts the same xref:metric_options.adoc[options]
