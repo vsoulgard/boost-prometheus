@@ -32,7 +32,7 @@ auto load_relaxed(T& t)
     if constexpr (requires { t.load(std::memory_order_relaxed); })
         return t.load(std::memory_order_relaxed);
     else
-        return t;
+        return std::atomic_ref<T>(t).load(std::memory_order_relaxed);
 }
 
 template <typename T>
@@ -41,7 +41,7 @@ auto load_acquire(T& t)
     if constexpr (requires { t.load(std::memory_order_acquire); })
         return t.load(std::memory_order_acquire);
     else
-        return t;
+        return std::atomic_ref<T>(t).load(std::memory_order_acquire);
 }
 
 template <typename T>
