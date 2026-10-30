@@ -27,12 +27,12 @@ namespace boost::prometheus {
 namespace detail {
 
 template <typename T>
-auto load_relaxed(T& t)
+auto load_relaxed_or_non_atomic(T& t)
 {
     if constexpr (requires { t.load(std::memory_order_relaxed); })
         return t.load(std::memory_order_relaxed);
     else
-        return std::atomic_ref<T>(t).load(std::memory_order_relaxed);
+        return t;
 }
 
 template <typename T>
@@ -152,7 +152,7 @@ struct format
         std::uint64_t cum_count = 0;
         for (std::size_t i = 0; i < buckets.size(); i++)
         {
-            cum_count += detail::load_relaxed(buckets[i].value);
+            cum_count += detail::load_relaxed_or_non_atomic(buckets[i].value);
             append(names[i], out);
             append(cum_count, out);
             append("\n", out);
@@ -185,7 +185,7 @@ struct format
     {
         BOOST_ASSERT(other.buckets.size() == buf.buckets.size());
         for (std::size_t i = 0; i < buf.buckets.size(); ++i) {
-            auto v = detail::load_relaxed(buf.buckets[i].value);
+            auto v = detail::load_relaxed_or_non_atomic(buf.buckets[i].value);
             detail::fetch_add_relaxed(other.buckets[i].value, v);
             detail::store_relaxed(buf.buckets[i].value, 0);
         }
@@ -212,7 +212,7 @@ struct format
             while (count != detail::load_acquire(buffer.count))
                 boost::core::sp_thread_pause();
 
-            double sum_value = detail::load_relaxed(buffer.sum);
+            double sum_value = detail::load_relaxed_or_non_atomic(buffer.sum);
 
             BOOST_ASSERT(h.bucket_names_svs_.size() == buffer.buckets.size());
             std::uint64_t cum_count = serialize_histogram_buckets(
@@ -227,7 +227,7 @@ struct format
             BOOST_ASSERT(h.bucket_names_svs_.size() == buffer.buckets.size());
             std::uint64_t cum_count = serialize_histogram_buckets(
                 h.bucket_names_svs_, buffer.buckets, out);
-            write_sc(detail::load_relaxed(buffer.sum), cum_count);
+            write_sc(detail::load_relaxed_or_non_atomic(buffer.sum), cum_count);
         }
     }
 
