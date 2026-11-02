@@ -172,6 +172,8 @@ struct push_op
                 result_ec = error::make_http_status_error(status);
             return finish(self);
         }
+        case state_t::shutting_down:
+            return;
         }
     }
 
