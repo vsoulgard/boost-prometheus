@@ -7,16 +7,19 @@
 
 #include <boost/prometheus/exposer.hpp>
 
+#include <boost/asio/any_io_executor.hpp>
+
 #include <boost/test/unit_test.hpp>
 
+using namespace boost;
 using namespace boost::prometheus;
 
 BOOST_AUTO_TEST_SUITE(test_exposer)
 
 BOOST_AUTO_TEST_CASE(default_constructor_is_deleted)
 {
-    static_assert(!std::is_default_constructible_v<exposer<atomic_policy<true>>>);
-    static_assert(!std::is_default_constructible_v<exposer<atomic_policy<false>>>);
+    static_assert(!std::is_default_constructible_v<exposer<asio::any_io_executor, atomic_policy<true>>>);
+    static_assert(!std::is_default_constructible_v<exposer<asio::any_io_executor, atomic_policy<false>>>);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

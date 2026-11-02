@@ -85,6 +85,8 @@ xref:reference:boost/prometheus/default_static_registry_name.adoc[`default_stati
 |
 xref:reference:boost/prometheus/exposer.adoc[`exposer`]
 
+xref:reference:boost/prometheus/pushgateway.adoc[`pushgateway`]
+
 xref:reference:boost/prometheus/gzip_policy.adoc[`gzip_policy`]
 
 xref:reference:boost/prometheus/default_gzip_policy.adoc[`default_gzip_policy`]

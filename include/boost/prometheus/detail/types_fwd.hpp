@@ -71,6 +71,9 @@ class static_histogram;
 template <detail::string_buffer, typename...>
 class static_info;
 
+template <detail::string_buffer, typename>
+class static_registry;
+
 } // namespace boost::prometheus
 
 #endif

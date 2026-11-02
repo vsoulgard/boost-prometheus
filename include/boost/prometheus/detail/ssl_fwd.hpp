@@ -15,7 +15,7 @@ class stream;
 
 class context;
 
-} // boost::asio::ssl
+} // namespace boost::asio::ssl
 
 #include <boost/asio/ssl/stream_base.hpp>
 

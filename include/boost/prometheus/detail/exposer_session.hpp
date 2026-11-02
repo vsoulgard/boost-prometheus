@@ -80,7 +80,7 @@ class exposer_session
     alloc_t alloc_;
 
     ExposerType* exposer_;
-    http::response<http::vector_body<char>, http::basic_fields<alloc_t>> response_;
+    response_type response_;
     // Buffer to store the gzip result to.
     [[no_unique_address]]
     gzip_buffer_type gzip_buffer_;

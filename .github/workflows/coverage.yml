@@ -29,6 +29,8 @@ jobs:
 
     container:
         image: ${{ matrix.container }}
+        volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
 
     steps:
       - name: Checkout
@@ -50,12 +52,20 @@ jobs:
             gpg \
             gpg-agent \
             curl \
+            docker.io \
             ${{ matrix.install }}
 
       - name: Setup Boost
         run: |
           python3 tools/ci.py setup-boost \
             --source-dir=$(pwd)
+
+      - name: Start Pushgateway
+        run: |
+          docker run -d \
+            --name pushgateway \
+            --network container:$(hostname) \
+            prom/pushgateway:latest
 
       - name: Build and run the tests using CMake
         run: |

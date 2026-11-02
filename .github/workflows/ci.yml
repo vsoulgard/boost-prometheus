@@ -135,6 +135,8 @@ jobs:
       image: ${{ matrix.container }}
       # Required for thread sanitizer to work.
       options: --security-opt seccomp=unconfined
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
 
     env:
       DEBIAN_FRONTEND: noninteractive
@@ -156,6 +158,7 @@ jobs:
             cmake \
             make \
             python3 \
+            docker.io \
             ${{ matrix.install }}
 
       - name: Setup Boost
@@ -163,6 +166,13 @@ jobs:
 
       - name: Build B2 distribution
         run: python3 tools/ci.py build-b2-distro --toolset ${{ matrix.toolset }}
+
+      - name: Start Pushgateway
+        run: |
+          docker run -d \
+            --name pushgateway \
+            --network container:$(hostname) \
+            prom/pushgateway:latest
 
       - name: Build and run the tests using CMake
         run: |
@@ -222,6 +232,8 @@ jobs:
 
     container:
       image: ${{ matrix.container }}
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
 
     env:
       DEBIAN_FRONTEND: noninteractive
@@ -240,10 +252,18 @@ jobs:
             openssl \
             libssl-dev \
             ca-certificates \
+            docker.io \
             ${{ matrix.install }}
 
       - name: Setup Boost
         run: python3 tools/ci.py setup-boost --source-dir=$(pwd)
+
+      - name: Start Pushgateway
+        run: |
+          docker run -d \
+            --name pushgateway \
+            --network container:$(hostname) \
+            prom/pushgateway:latest
 
       - name: Run B2 tests
         run: |

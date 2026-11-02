@@ -1,0 +1,255 @@
+//
+// Copyright (c) 2026 Vladislav Soulgard (vsoulgard at gmail dot com)
+//
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+
+= Pushgateway
+:toc: left
+
+https://github.com/prometheus/pushgateway[Prometheus Pushgateway]
+accepts metrics from clients that cannot be scraped directly — batch jobs,
+cron tasks, short-lived processes — and makes them available for Prometheus
+to scrape. It flips the usual pull model on its head: the client pushes
+metrics when they are ready, and Prometheus reads them from the gateway at
+its own pace.
+
+`pushgateway` is the client for this model. It connects to a Pushgateway
+instance over HTTP (or HTTPS), uploads a snapshot of a registry, and returns.
+It is the write-side counterpart to xref:reference:boost/prometheus/exposer.adoc[`exposer`]:
+where the exposer serves metrics on demand, `pushgateway` sends them to a server.
+
+== Quick example
+
+[source,cpp]
+----
+using namespace boost::prometheus;
+namespace asio = boost::asio;
+
+asio::awaitable<void> run_batch(asio::io_context& ioc)
+{
+    // Registry with the metrics to push.
+    registry reg;
+    counter jobs_processed("jobs_processed", {.help = "Jobs processed"});
+    jobs_processed.inc(42.0);
+    reg.register_metric(jobs_processed);
+
+    // Pushgateway client, reusing the application's executor.
+    pushgateway pg(ioc.get_executor());
+    auto endpoint = asio::ip::tcp::endpoint(
+        asio::ip::make_address("127.0.0.1"), 9091);
+
+    // Push to job group "batch_job".
+    prometheus::error_code ec;
+    co_await pg.async_push(endpoint, "batch_job", reg,
+        asio::redirect_error(asio::use_awaitable, ec));
+
+    if (ec)
+        std::cerr << "push failed: " << ec.message() << "\n";
+}
+
+int main()
+{
+    asio::io_context ioc;
+    asio::co_spawn(ioc, run_batch(ioc), asio::detached);
+    ioc.run();
+}
+----
+
+After the push completes, the metrics are visible at
+`http://127.0.0.1:9091/metrics` and can be scraped by Prometheus like any
+other target.
+
+[NOTE]
+====
+`pushgateway` sends metrics in the Prometheus 0.0.4 text format. OpenMetrics
+1.0 is not supported by the Pushgateway's ingestion endpoint.
+====
+
+== Push semantics
+
+A push **replaces** the values of every metric present in the request body.
+Metrics that already exist in the job group but are **not** present in the
+current request are **left untouched** — they are neither deleted nor
+reset. This corresponds to the Pushgateway's `POST /metrics/job/<job>`
+semantics.
+
+To remove all metrics of a job group, use `async_clear()` (see
+xref:#clearing[Clearing metrics]).
+
+== Static registries
+
+Static metrics live in a xref:reference:boost/prometheus/static_registry.adoc[`static_registry`]
+and have no runtime objects. `pushgateway` provides an overload that takes 
+the registry **type** as a template parameter instead of a runtime object:
+
+[source,cpp]
+----
+using batch_registry = static_registry<"batch">;
+
+using jobs_processed = static_counter<
+    "jobs_processed",
+    help<"Jobs processed">>;
+batch_registry::register_metric<jobs_processed>();
+
+jobs_processed::inc(42.0);
+
+asio::awaitable<void> push_static(asio::io_context& ioc)
+{
+    pushgateway pg(ioc.get_executor());
+
+    prometheus::error_code ec;
+    co_await pg.async_push<batch_registry>(endpoint, "batch_job",
+        asio::redirect_error(asio::use_awaitable, ec));
+
+    if (ec)
+        std::cerr << "push failed: " << ec.message() << "\n";
+}
+----
+
+== Authorization
+
+Pushgateway instances can require an `Authorization` header. Pass the header
+value as an additional argument:
+
+[source,cpp]
+----
+prometheus::error_code ec;
+co_await pg.async_push(endpoint, "batch_job", "Bearer secret-token", reg,
+    asio::redirect_error(asio::use_awaitable, ec));
+----
+
+The string is sent **as-is** — include the scheme prefix (`"Bearer "`,
+`"Basic "`, etc.) yourself. `pushgateway` does not interpret or validate
+the header.
+
+== TLS
+
+To connect over HTTPS, enable `ssl_policy<true>` and pass an
+`asio::ssl::context` to the constructor:
+
+[source,cpp]
+----
+asio::ssl::context ssl_ctx(asio::ssl::context::tls_client);
+ssl_ctx.load_verify_file("ca.pem");
+
+pushgateway<
+    asio::io_context::executor_type,
+    ssl_policy<true>>
+pg(ioc.get_executor(), ssl_ctx);
+
+prometheus::error_code ec;
+co_await pg.async_push(https_endpoint, "batch_job", reg,
+    asio::redirect_error(asio::use_awaitable, ec));
+----
+
+The SSL context must outlive the `pushgateway` and every operation that
+references it.
+
+[id=clearing]
+== Clearing metrics
+
+`async_clear()` removes every metric previously pushed under a job group:
+
+[source,cpp]
+----
+prometheus::error_code ec;
+co_await pg.async_clear(endpoint, "batch_job",
+    asio::redirect_error(asio::use_awaitable, ec));
+
+if (ec)
+    std::cerr << "clear failed: " << ec.message() << "\n";
+----
+
+The entire job group is deleted; individual metrics cannot be removed
+selectively. Clearing a job group that does not exist is a no-op.
+
+== Options
+
+`pushgateway` accepts the same policy types as xref:reference:boost/prometheus/exposer.adoc[`exposer`]
+and applies them in the same way:
+
+[cols="1,1,2", options="header"]
+|===
+| Option | Default | Description
+
+| `atomic_policy<bool>`
+| `atomic_policy<true>`
+| Atomicity of the registry being pushed. Does not affect the thread-safety
+  of the `pushgateway` itself.
+
+| `gzip_policy<bool>`
+| `gzip_policy<true>`
+| Compress the request body with gzip.
+
+| `parse_buffer_size<N>`
+| `parse_buffer_size<2048>`
+| Static buffer size for the HTTP field parser.
+
+| `header_limit_size<N>`
+| `header_limit_size<2048>`
+| Maximum size of the response header block.
+
+| `ssl_policy<bool>`
+| `ssl_policy<false>`
+| Connect over TLS. Requires the SSL constructor and OpenSSL.
+|===
+
+== Thread safety
+
+A `pushgateway` instance is **not thread-safe**. Concurrent calls to `async_push()` or
+`async_clear()` on the same instance are a data race.
+
+Use one instance per thread, or serialize access externally. Multiple
+instances pointing at the same Pushgateway are fine.
+
+== Lifetime
+
+The `pushgateway` does not own:
+
+* the **registry** passed to `async_push()` — it must outlive the operation;
+* the **SSL context** passed to the TLS constructor — it must outlive the
+  `pushgateway` and every operation that references it;
+* the **executor** — same as for `exposer`, the caller is responsible for
+  running the associated `io_context`.
+
+== Error handling
+
+Every `async_push()` and `async_clear()` completes with a
+`boost::system::error_code`. Three categories of errors may appear:
+
+* **Transport errors** — connection refused, TLS handshake failure, read
+  timeout. These are standard Asio errors; the request never reached the
+  Pushgateway.
+* **HTTP status errors** — the Pushgateway responded with a non-2xx status.
+  The error code carries the status and uses the `prometheus.http_status`
+  category, so `ec.message()` returns the canonical reason phrase, e.g.
+  `"401 Unauthorized"`.
+* **Pushgateway errors** — client-side validation failures that prevent
+  the request from being sent at all. These use the
+  `prometheus.pushgateway` category and are described by the
+  `pushgateway_errc` enum:
+
+[source,cpp]
+----
+prometheus::error_code ec;
+co_await pg.async_push(endpoint, "batch_job", reg,
+    asio::redirect_error(asio::use_awaitable, ec));
+
+if (ec == pushgateway_errc::incorrect_job_name)
+{
+    // The job name was rejected locally — the request was not sent.
+}
+else if (ec.category() == error::get_http_status_category())
+{
+    // The Pushgateway responded with a non-2xx status.
+    // ec.value() is the HTTP status code (e.g. 401, 404, 503).
+    std::cerr << "rejected: " << ec.message() << "\n";
+}
+else if (ec)
+{
+    // Transport error.
+    std::cerr << "transport error: " << ec.message() << "\n";
+}
+----

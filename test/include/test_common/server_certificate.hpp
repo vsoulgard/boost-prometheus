@@ -73,7 +73,7 @@ constexpr std::string_view private_key =
     "IblVbeXfs5v38D5oqXg7qnw8\n"
     "-----END PRIVATE KEY-----\n";
 
-void load_server_certificate(boost::asio::ssl::context& ctx)
+inline void load_server_certificate(boost::asio::ssl::context& ctx)
 {
     ctx.set_options(
         boost::asio::ssl::context::default_workarounds |

@@ -48,7 +48,7 @@ constexpr std::string_view root_certificate =
     "1ArwBXw57BXWNvDWrEabV3cQgK0oxxs=\n"
     "-----END CERTIFICATE-----\n";
 
-void load_client_certificate(boost::asio::ssl::context& ctx)
+inline void load_client_certificate(boost::asio::ssl::context& ctx)
 {
     ctx.add_certificate_authority(boost::asio::buffer(root_certificate.data(), root_certificate.size()));
     ctx.set_verify_mode(boost::asio::ssl::verify_peer);
