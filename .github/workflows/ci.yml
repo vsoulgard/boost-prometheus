@@ -232,6 +232,8 @@ jobs:
 
     container:
       image: ${{ matrix.container }}
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
 
     env:
       DEBIAN_FRONTEND: noninteractive
@@ -254,6 +256,13 @@ jobs:
 
       - name: Setup Boost
         run: python3 tools/ci.py setup-boost --source-dir=$(pwd)
+
+      - name: Start Pushgateway
+        run: |
+          docker run -d \
+            --name pushgateway \
+            --network container:$(hostname) \
+            prom/pushgateway:latest
 
       - name: Run B2 tests
         run: |
