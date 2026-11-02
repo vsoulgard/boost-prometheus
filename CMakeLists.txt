@@ -40,6 +40,10 @@ else()
     )
 endif()
 
+if(MINGW)
+    target_link_libraries(boost_prometheus INTERFACE ws2_32 mswsock)
+endif()
+
 if(BUILD_TESTING)
     # Custom target tests; required by the Boost superproject
     if(NOT TARGET tests)
