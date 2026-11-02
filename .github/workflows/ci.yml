@@ -171,6 +171,7 @@ jobs:
         run: |
           docker run -d \
             --name pushgateway \
+            --network container:$(hostname) \
             -p 9091:9091 \
             prom/pushgateway:latest
 
