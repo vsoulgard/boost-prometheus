@@ -27,12 +27,6 @@ jobs:
             cxxflags: '-g -O0 --coverage -fkeep-inline-functions -fkeep-static-functions -fprofile-update=atomic'
             ldflags: '--coverage'
 
-    services:
-      pushgateway:
-        image: prom/pushgateway:latest
-        ports:
-          - 9091:9091
-
     container:
         image: ${{ matrix.container }}
 
@@ -62,6 +56,13 @@ jobs:
         run: |
           python3 tools/ci.py setup-boost \
             --source-dir=$(pwd)
+
+      - name: Start Pushgateway
+        run: |
+          docker run -d \
+            --name pushgateway \
+            -p 9091:9091 \
+            prom/pushgateway:latest
 
       - name: Build and run the tests using CMake
         run: |

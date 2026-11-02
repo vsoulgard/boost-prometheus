@@ -131,12 +131,6 @@ jobs:
             cxxflags: '-fsanitize=thread'
             ldflags: '-fsanitize=thread'
 
-    services:
-      pushgateway:
-        image: prom/pushgateway:latest
-        ports:
-          - 9091:9091
-
     container:
       image: ${{ matrix.container }}
       # Required for thread sanitizer to work.
@@ -169,6 +163,13 @@ jobs:
 
       - name: Build B2 distribution
         run: python3 tools/ci.py build-b2-distro --toolset ${{ matrix.toolset }}
+
+      - name: Start Pushgateway
+        run: |
+          docker run -d \
+            --name pushgateway \
+            -p 9091:9091 \
+            prom/pushgateway:latest
 
       - name: Build and run the tests using CMake
         run: |

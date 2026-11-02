@@ -167,7 +167,7 @@ selectively. Clearing a job group that does not exist is a no-op.
 
 == Options
 
-`pushgateway` accepts the same policy types as xref:exposer.adoc[`exposer`]
+`pushgateway` accepts the same policy types as xref:reference:boost/prometheus/exposer.adoc[`exposer`]
 and applies them in the same way:
 
 [cols="1,1,2", options="header"]
