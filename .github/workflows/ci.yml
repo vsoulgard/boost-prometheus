@@ -304,6 +304,9 @@ jobs:
             build-type: 'Release'
             build-shared-libs: 1
 
+    env:
+      CMAKE_BUILD_PARALLEL_LEVEL: 4
+
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -356,6 +359,7 @@ jobs:
   windows-mingw-ucrt-cmake:
     name: "Windows CMake MinGW UCRT64 ${{ matrix.build-type }}"
     runs-on: windows-2022
+
     strategy:
       fail-fast: false
       matrix:
@@ -369,6 +373,10 @@ jobs:
     defaults:
       run:
         shell: msys2 {0}
+
+    env:
+      CMAKE_BUILD_PARALLEL_LEVEL: 4
+
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -414,7 +422,6 @@ jobs:
             --generator "Ninja" \
             --build-shared-libs ${{ matrix.build-shared-libs }} \
             "--cxxflags=-Werror"
-            "--ldflags=-lws2_32"
 
   osx:
     name: "OS X ${{ matrix.build-system }}"
