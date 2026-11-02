@@ -252,6 +252,7 @@ jobs:
             openssl \
             libssl-dev \
             ca-certificates \
+            docker.io \
             ${{ matrix.install }}
 
       - name: Setup Boost
