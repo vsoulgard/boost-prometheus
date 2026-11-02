@@ -65,7 +65,6 @@ jobs:
           docker run -d \
             --name pushgateway \
             --network container:$(hostname) \
-            -p 9091:9091 \
             prom/pushgateway:latest
 
       - name: Build and run the tests using CMake
