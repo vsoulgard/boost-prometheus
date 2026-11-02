@@ -414,6 +414,7 @@ jobs:
             --generator "Ninja" \
             --build-shared-libs ${{ matrix.build-shared-libs }} \
             "--cxxflags=-Werror"
+            "--ldflags=-lws2_32"
 
   osx:
     name: "OS X ${{ matrix.build-system }}"
