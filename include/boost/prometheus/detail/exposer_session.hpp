@@ -11,7 +11,7 @@
 #include <boost/prometheus/gzip_encode.hpp>
 #include <boost/prometheus/serialize.hpp>
 
-#include <boost/prometheus/detail/ssl_fwd.hpp>
+#include <boost/prometheus/detail/ssl_traits.hpp>
 #include <boost/prometheus/detail/static_allocator.hpp>
 #include <boost/prometheus/detail/string_buffer.hpp>
 
@@ -41,7 +41,6 @@ template <
     typename SocketType,
     typename ExposerType,
     typename GzipPolicy,
-    typename SSLPolicy,
     typename ParseBufferSize,
     typename HeaderLimitSize,
     typename AuthorizationPolicy,
@@ -53,19 +52,9 @@ class exposer_session
 
     using response_type = http::response<http::vector_body<char>, http::basic_fields<alloc_t>>;
 
-    using socket_type = std::conditional_t<
-        SSLPolicy::enabled,
-        typename boost::asio::ssl::stream<SocketType>,
-        SocketType>;
-
     using gzip_buffer_type = std::conditional_t<
         GzipPolicy::enabled,
         typename response_type::body_type::value_type,
-        std::tuple<>>;
-
-    using ssl_ctx_ptr_type = std::conditional_t<
-        SSLPolicy::enabled,
-        typename boost::asio::ssl::context*,
         std::tuple<>>;
 
     // gzip compression threshold
@@ -74,7 +63,7 @@ class exposer_session
     static constexpr bool has_auth = !std::is_void_v<AuthorizationPolicy>;
     static constexpr bool has_static_registry = !std::is_void_v<StaticRegistry>;
 
-    socket_type socket_;
+    SocketType socket_;
     boost::beast::flat_static_buffer<static_buffer_size> buffer_;
     allocator_buffer<static_buffer_size> alloc_buffer_;
     alloc_t alloc_;
@@ -85,47 +74,13 @@ class exposer_session
     [[no_unique_address]]
     gzip_buffer_type gzip_buffer_;
 
-public:
-
-    explicit exposer_session(SocketType&& socket, ExposerType& exposer)
-    requires (!SSLPolicy::enabled)
-    : socket_(std::move(socket)),
-    alloc_(alloc_buffer_),
-    exposer_(&exposer),
-    response_(
-        std::piecewise_construct,
-        std::make_tuple(),
-        std::make_tuple(alloc_)
-    )
+    void init()
     {
         BOOST_ASSERT(exposer_ != nullptr);
         response_.body().reserve(4096);
     }
 
-    explicit exposer_session(
-        SocketType&& socket,
-        ExposerType& exposer,
-        boost::asio::ssl::context& ssl_ctx)
-    requires (SSLPolicy::enabled)
-    : socket_(std::move(socket), ssl_ctx),
-    alloc_(alloc_buffer_),
-    exposer_(&exposer),
-    response_(
-        std::piecewise_construct,
-        std::make_tuple(),
-        std::make_tuple(alloc_)
-    )
-    {
-        BOOST_ASSERT(exposer_ != nullptr);
-        response_.body().reserve(4096);
-    }
-
-    exposer_session(const exposer_session&)            = delete;
-    exposer_session& operator=(const exposer_session&) = delete;
-    exposer_session(exposer_session&&)                 = delete;
-    exposer_session& operator=(exposer_session&&)      = delete;
-
-    constexpr bool authorize(const auto& request)
+    constexpr bool authorize(const auto& request) const
     {
         if constexpr (has_auth == false)
         {
@@ -183,7 +138,7 @@ public:
             auto it = request.find(http::field::accept_encoding);
             if (it != request.end() && it->value().find("gzip") != std::string_view::npos)
             {
-                // encode response
+                // Compress response.
                 bool result = gzip_encode(response_.body(), gzip_buffer_);
                 BOOST_ASSERT(result);
                 if (result)
@@ -195,23 +150,82 @@ public:
         }
     }
 
+    void serialize_registry(const auto& request)
+    {
+        response_.result(http::status::ok);
+        auto* registry_ptr = exposer_->get_registry();
+        auto it = request.find(http::field::accept);
+        if (it != request.end() && it->value().find("application/openmetrics-text") != std::string_view::npos)
+        {
+            response_.set(http::field::content_type, format::openmetrics_1_0::content_type);
+            if constexpr (has_static_registry)
+            {
+                serialize<format::openmetrics_1_0, typename StaticRegistry::type, false>(response_.body());
+            }
+            if (registry_ptr)
+            {
+                serialize<format::openmetrics_1_0>(*registry_ptr, response_.body());
+            }
+            else
+            {
+                constexpr std::string_view eof = "# EOF\n";
+                format::append(eof, response_.body());
+            }
+        }
+        else
+        {
+            // Fallback: Prometheus 0.0.4 format
+            response_.set(http::field::content_type, format::prometheus_0_0_4::content_type);
+            if constexpr (has_static_registry)
+            {
+                serialize<format::prometheus_0_0_4, typename StaticRegistry::type>(response_.body());
+            }
+            if (registry_ptr)
+            {
+                serialize<format::prometheus_0_0_4>(*registry_ptr, response_.body());
+            }
+        }
+    }
+
+public:
+
+    explicit exposer_session(SocketType&& socket, ExposerType& exposer)
+    : socket_(std::move(socket)),
+    alloc_(alloc_buffer_),
+    exposer_(&exposer),
+    response_(
+        std::piecewise_construct,
+        std::make_tuple(),
+        std::make_tuple(alloc_)
+    )
+    {
+        init();
+    }
+
+    exposer_session(const exposer_session&)            = delete;
+    exposer_session& operator=(const exposer_session&) = delete;
+    exposer_session(exposer_session&&)                 = delete;
+    exposer_session& operator=(exposer_session&&)      = delete;
+
     asio::awaitable<void> run()
     {
+        beast::error_code ec;
+        if constexpr (is_ssl_stream<SocketType>::value)
+        {
+            // SSL handshake.
+            co_await socket_.async_handshake(
+                boost::asio::ssl::stream_base::server,
+                boost::asio::redirect_error(boost::asio::use_awaitable, ec));
+            if (ec) co_return;
+        }
+
         while (true)
         {
-            beast::error_code ec;
-            if constexpr (SSLPolicy::enabled)
-            {
-                // SSL handshake
-                co_await socket_.async_handshake(
-                    boost::asio::ssl::stream_base::server,
-                    boost::asio::redirect_error(boost::asio::use_awaitable, ec));
-                if (ec) break;
-            }
-
+            // Clear everything.
             response_.clear();
             response_.body().clear();
             alloc_buffer_.reset();
+            buffer_.clear();
 
             http::request_parser<http::empty_body, alloc_t> parser(
                 std::piecewise_construct,
@@ -222,8 +236,6 @@ public:
             parser.header_limit(HeaderLimitSize::value);
             parser.body_limit(0);
 
-            buffer_.consume(buffer_.size());
-
             co_await http::async_read_header(
                 socket_, buffer_, parser,
                 asio::redirect_error(asio::use_awaitable, ec));
@@ -231,13 +243,8 @@ public:
             if (ec) break;
 
             auto& req = parser.get();
-
-            response_.version(req.version());
-
             if (req.target() != exposer_->route())
-            {
                 assign_not_found();
-            }
             else
             {
                 bool auth_result = authorize(req);
@@ -247,13 +254,9 @@ public:
                     if constexpr (has_auth)
                     {
                         if constexpr (AuthorizationPolicy::return_not_found)
-                        {
                             assign_not_found();
-                        }
                         else
-                        {
                             assign_unauthorized();
-                        }
                     }
                 }
                 else if (is_get == false)
@@ -262,48 +265,14 @@ public:
                 }
                 else
                 {
-                    response_.result(http::status::ok);
-                    auto* registry_ptr = exposer_->get_registry();
-                    auto it = req.find(http::field::accept);
-                    if (it != req.end() && it->value().find("application/openmetrics-text") != std::string_view::npos)
-                    {
-                        response_.set(http::field::content_type, format::openmetrics_1_0::content_type);
-                        if constexpr (has_static_registry)
-                        {
-                            serialize<format::openmetrics_1_0, typename StaticRegistry::type, false>(response_.body());
-                        }
-                        if (registry_ptr)
-                        {
-                            serialize<format::openmetrics_1_0>(*registry_ptr, response_.body());
-                        }
-                        else
-                        {
-                            constexpr std::string_view eof = "# EOF\n";
-                            format::append(eof, response_.body());
-                        }
-                    }
-                    else
-                    {
-                        // Fallback: Prometheus 0.0.4 format
-                        response_.set(http::field::content_type, format::prometheus_0_0_4::content_type);
-                        if constexpr (has_static_registry)
-                        {
-                            serialize<format::prometheus_0_0_4, typename StaticRegistry::type>(response_.body());
-                        }
-                        if (registry_ptr)
-                        {
-                            serialize<format::prometheus_0_0_4>(*registry_ptr, response_.body());
-                        }
-                    }
+                    serialize_registry(req);
                     if constexpr (GzipPolicy::enabled)
-                    {
                         gzip_response(req);
-                    }
                 }
             }
 
+            response_.version(req.version());
             response_.keep_alive(req.keep_alive());
-
             response_.prepare_payload();
 
             co_await http::async_write(
@@ -314,7 +283,7 @@ public:
             {
                 if (gzip_buffer_.size() > 0)
                 {
-                    // Swap buffers back
+                    // Swap buffers back.
                     std::swap(response_.body(), gzip_buffer_);
                     gzip_buffer_.clear();
                 }
@@ -322,16 +291,16 @@ public:
 
             if (ec || !response_.keep_alive()) break;
         }
-        boost::beast::error_code ec;
-        if constexpr (SSLPolicy::enabled)
+
+        if constexpr (is_ssl_stream<SocketType>::value)
         {
-            // Shutdown SSL stream
+            // Shutdown SSL stream.
             co_await socket_.async_shutdown(
                 boost::asio::redirect_error(boost::asio::use_awaitable, ec));
         }
         else
         {
-            // Shutdown regular TCP stream
+            // Shutdown regular TCP stream.
             socket_.shutdown(tcp::socket::shutdown_send, ec);
         }
     }
