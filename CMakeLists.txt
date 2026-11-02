@@ -41,7 +41,7 @@ else()
 endif()
 
 if(MINGW)
-    target_link_libraries(boost_prometheus INTERFACE ws2_32)
+    target_link_libraries(boost_prometheus INTERFACE ws2_32 mswsock)
 endif()
 
 if(BUILD_TESTING)
