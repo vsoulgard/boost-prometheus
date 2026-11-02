@@ -69,8 +69,7 @@ struct push_op
         handshaking, // SSL only
         writing,
         reading,
-        shutting_down, // SSL only
-        done
+        shutting_down // SSL only
     };
     state_t state = state_t::starting;
     boost::system::error_code result_ec;
@@ -116,7 +115,6 @@ struct push_op
         if (state == state_t::shutting_down)
         {
             close_socket();
-            state = state_t::done;
             self.complete(result_ec);
             return;
         }
@@ -174,10 +172,6 @@ struct push_op
                 result_ec = error::make_http_status_error(status);
             return finish(self);
         }
-
-        case state_t::shutting_down:
-        case state_t::done:
-            return;
         }
     }
 
@@ -263,7 +257,6 @@ private:
         else
         {
             close_socket();
-            state = state_t::done;
             self.complete(result_ec);
         }
     }

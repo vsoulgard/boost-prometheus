@@ -15,7 +15,6 @@ namespace prometheus {
 
 enum class pushgateway_errc : int
 {
-    success = 0,
     incorrect_job_name = 1
 };
 
@@ -42,7 +41,7 @@ namespace system {
 template <>
 struct is_error_code_enum<::boost::prometheus::pushgateway_errc>
 {
-    static const bool value = true;
+    static constexpr bool value = true;
 };
 
 } // namespace system

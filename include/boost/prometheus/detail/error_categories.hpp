@@ -50,7 +50,6 @@ public:
     {
         switch (static_cast<pushgateway_errc>(ev))
         {
-            case pushgateway_errc::success:            return "success";
             case pushgateway_errc::incorrect_job_name: return "incorrect job name";
         }
         return "unknown Prometheus pushgateway error";
