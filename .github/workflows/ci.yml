@@ -390,7 +390,7 @@ jobs:
             --variant debug,release
 
   windows-mingw-ucrt-cmake:
-    name: "Windows MinGW UCRT64 CMake ${{ matrix.build-type }}"
+    name: "Windows CMake MinGW UCRT64 ${{ matrix.build-type }}"
     runs-on: windows-2022
     strategy:
       fail-fast: false
@@ -425,7 +425,7 @@ jobs:
             python
 
       - name: Setup Docker
-        uses: docker/setup-docker-action@v3
+        uses: docker/setup-docker-action@v5
         with:
           set-host: true
 
