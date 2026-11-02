@@ -28,7 +28,7 @@ using static_h = static_histogram<
 
 inline void setup_static_registry()
 {
-    static bool _ = [&](){
+    static bool init = [&](){
         static_c::inc<"POST">(15.0);
         static_g::set(50.0);
         static_h::observe(0.1);
@@ -37,6 +37,7 @@ inline void setup_static_registry()
         premade_static_registry::register_metric<static_h>();
         return true;
     }();
+    (void)init;
 }
 
 // Premade registry is big enough to trigger gzip compression.
@@ -45,7 +46,7 @@ inline std::unique_ptr<registry<>> setup_registry()
     std::unique_ptr<registry<>> reg = std::make_unique<registry<>>();
     static counter_vec c(
         "requests",
-        {.help = "Number of HTTP requests"},
+        {.help = "Number of HTTP requests", .unit = ""},
         {"method"});
     static gauge g("applications_active",
         {.help = "Current number of applications", .unit = ""});

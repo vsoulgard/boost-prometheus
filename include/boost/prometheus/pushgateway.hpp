@@ -180,9 +180,9 @@ private:
         typename request_type::body_type::value_type,
         std::tuple<>>;
 
+    Executor executor_;
     detail::allocator_buffer<static_buffer_size> alloc_buffer_;
     alloc_t alloc_;
-    Executor executor_;
     request_type request_;
     // Parse response header only.
     beast::http::response_parser<beast::http::empty_body, alloc_t>
