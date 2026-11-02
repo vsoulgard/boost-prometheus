@@ -353,42 +353,6 @@ jobs:
             --variant debug,release
         shell: bash
 
-  osx:
-    name: "OS X ${{ matrix.build-system }}"
-    runs-on: macos-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
-        build-system: [CMake, B2]
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Setup Boost
-        run: python3 ./tools/ci.py setup-boost --source-dir=$(pwd)
-
-      - name: Build B2 distribution
-        run: python3 ./tools/ci.py build-b2-distro --toolset clang
-
-      - name: Build and run the tests using CMake
-        if: matrix.build-system == 'CMake'
-        run: |
-          python3 ./tools/ci.py build-cmake-distro \
-            --build-type Debug \
-            --cxxstd 20 \
-            --toolset clang \
-            "--cxxflags=-Werror"
-
-      - name: Run B2 tests
-        if: matrix.build-system == 'B2'
-        run: |
-          python3 ./tools/ci.py run-b2-tests \
-            --toolset clang \
-            --cxxstd 20 \
-            --variant debug,release
-
   windows-mingw-ucrt-cmake:
     name: "Windows CMake MinGW UCRT64 ${{ matrix.build-type }}"
     runs-on: windows-2022
@@ -424,16 +388,15 @@ jobs:
             git
             python
 
-      - name: Setup Docker
-        uses: docker/setup-docker-action@v5
-        with:
-          set-host: true
-
-      - name: Start Pushgateway
+      - name: Download and start Pushgateway
+        shell: pwsh
         run: |
-          docker run -d --name pushgateway \
-            -p 9091:9091 \
-            prom/pushgateway:latest
+          $url = "https://github.com/prometheus/pushgateway/releases/download/v1.11.4/pushgateway-1.11.4.windows-amd64.tar.gz"
+          $output = "pushgateway.tar.gz"
+          Invoke-WebRequest -Uri $url -OutFile $output
+          tar -xzf $output
+          cd pushgateway-1.11.4.windows-amd64
+          Start-Process cmd -ArgumentList "/c start /b pushgateway.exe --web.listen-address=:9091 > ..\pushgateway.log 2> ..\pushgateway.err.log" -NoNewWindow
 
       - name: Setup Boost
         run: python tools/ci.py setup-boost --source-dir=$(pwd)
@@ -451,3 +414,39 @@ jobs:
             --generator "Ninja" \
             --build-shared-libs ${{ matrix.build-shared-libs }} \
             "--cxxflags=-Werror"
+
+  osx:
+    name: "OS X ${{ matrix.build-system }}"
+    runs-on: macos-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        build-system: [CMake, B2]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Boost
+        run: python3 ./tools/ci.py setup-boost --source-dir=$(pwd)
+
+      - name: Build B2 distribution
+        run: python3 ./tools/ci.py build-b2-distro --toolset clang
+
+      - name: Build and run the tests using CMake
+        if: matrix.build-system == 'CMake'
+        run: |
+          python3 ./tools/ci.py build-cmake-distro \
+            --build-type Debug \
+            --cxxstd 20 \
+            --toolset clang \
+            "--cxxflags=-Werror"
+
+      - name: Run B2 tests
+        if: matrix.build-system == 'B2'
+        run: |
+          python3 ./tools/ci.py run-b2-tests \
+            --toolset clang \
+            --cxxstd 20 \
+            --variant debug,release
