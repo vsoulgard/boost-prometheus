@@ -1,0 +1,25 @@
+//
+// Copyright (c) 2026 Vladislav Soulgard (vsoulgard at gmail dot com)
+//
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+
+#include <boost/prometheus/pushgateway.hpp>
+
+#include <boost/asio/any_io_executor.hpp>
+
+#include <boost/test/unit_test.hpp>
+
+using namespace boost;
+using namespace boost::prometheus;
+
+BOOST_AUTO_TEST_SUITE(test_pushgateway)
+
+BOOST_AUTO_TEST_CASE(default_constructor_is_deleted)
+{
+    static_assert(!std::is_default_constructible_v<pushgateway<asio::any_io_executor, atomic_policy<true>>>);
+    static_assert(!std::is_default_constructible_v<pushgateway<asio::any_io_executor, atomic_policy<false>>>);
+}
+
+BOOST_AUTO_TEST_SUITE_END()

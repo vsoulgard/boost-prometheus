@@ -16,7 +16,6 @@
 #include <boost/prometheus/registry.hpp>
 #include <boost/prometheus/metric_options.hpp>
 
-#include <boost/asio/any_io_executor.hpp>
 #include <boost/asio/basic_stream_socket.hpp>
 
 #include <atomic>

@@ -27,6 +27,12 @@ jobs:
             cxxflags: '-g -O0 --coverage -fkeep-inline-functions -fkeep-static-functions -fprofile-update=atomic'
             ldflags: '--coverage'
 
+    services:
+      pushgateway:
+        image: prom/pushgateway:latest
+        ports:
+          - 9091:9091
+
     container:
         image: ${{ matrix.container }}
 

@@ -131,6 +131,12 @@ jobs:
             cxxflags: '-fsanitize=thread'
             ldflags: '-fsanitize=thread'
 
+    services:
+      pushgateway:
+        image: prom/pushgateway:latest
+        ports:
+          - 9091:9091
+
     container:
       image: ${{ matrix.container }}
       # Required for thread sanitizer to work.

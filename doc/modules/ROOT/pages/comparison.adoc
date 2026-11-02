@@ -119,16 +119,14 @@ user-supplied label values, use the runtime variant.
 | User-defined via `authorization_policy` — any scheme (Bearer, Basic, custom), validated by a callback you provide
 | Basic only (Base64 `user:password` in the `Authorization` header)
 
-| Push gateway support
-| No (pull exposition only)
+| Pushgateway support
+| Yes
 | Yes
 |===
 
 == When prometheus-cpp may fit better
 
 * Your project cannot move to C++20 yet.
-* You need push-gateway support (Boost.Prometheus currently provides pull
-  exposition only).
 * You depend on prometheus-cpp's specific integrations or have an existing
   deployment built around it.
 

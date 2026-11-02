@@ -11,6 +11,7 @@
 * xref:metric_vectors.adoc[]
 * xref:static_metrics.adoc[]
 * xref:exposer_options.adoc[]
+* xref:pushgateway.adoc[]
 * xref:serialization.adoc[]
 * xref:comparison.adoc[]
 * xref:examples.adoc[]

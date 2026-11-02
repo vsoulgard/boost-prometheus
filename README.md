@@ -14,7 +14,7 @@ Header-only, optimized for production, and designed to integrate naturally with 
 
 - **Both OpenMetrics 1.0 and Prometheus 0.0.4 text formats** — the response format is selected via the HTTP `Accept` header, so both formats can be served by the same exposer.
 - **Heavily optimized** — See [benchmarks](bench/bench.ipynb).
-- **Boost.Asio exposer** — HTTP exposition with gzip compression, authentication, and SSL/TLS.
+- **Boost.Asio exposer and Pushgateway** — HTTP exposition with gzip compression, authentication, and SSL/TLS.
 - **Header-only** — just include and go.
 - **Thread-Safe** — Metric updates (`inc()`, `observe()`), label lookup/creation (`with_labels()`), and metric registration (`register_metric()`) are fully thread-safe and can be called concurrently from multiple threads.
 - **Static metrics** — labels are validated by the compiler, and the exposition text is serialized at compile time — minimal overhead.

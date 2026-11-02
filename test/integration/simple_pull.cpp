@@ -12,16 +12,13 @@
 #include <boost/prometheus/static_info.hpp>
 #include <boost/prometheus/static_registry.hpp>
 
-#include <boost/beast/core/tcp_stream.hpp>
-#include <boost/beast/core/flat_buffer.hpp>
-#include <boost/beast/http.hpp>
-
 #include <boost/asio/thread_pool.hpp>
 
 #include <boost/test/unit_test.hpp>
 
-#include "test_common/gzip_decode.hpp"
 #include "test_common/client_certificate.hpp"
+#include "test_common/gzip_decode.hpp"
+#include "test_common/make_request.hpp"
 #include "test_common/server_certificate.hpp"
 
 #include <string_view>
@@ -31,47 +28,15 @@ using namespace boost;
 using namespace beast;
 using namespace boost::asio;
 using namespace boost::prometheus;
+using namespace boost::prometheus::test;
+
+const ip::tcp::endpoint target_ep(asio::ip::address_v4::loopback(), 8080);
 
 BOOST_AUTO_TEST_SUITE(test_exposer_simple_pull)
-
-std::string make_request(
-    beast::tcp_stream& stream,
-    std::string_view host,
-    std::string_view route,
-    std::string_view accept)
-{
-    http::request<http::empty_body> req{http::verb::get, route, 11};
-    req.set(http::field::host, host);
-    req.set(http::field::user_agent, "Prometheus/2.51.0");
-    req.set(http::field::accept, accept);
-    req.keep_alive(true);
-
-    beast::error_code ec;
-    http::write(stream, req, ec);
-    if (ec)
-    {
-        BOOST_FAIL("Failed to write request: " << ec.message());
-    }
-
-    beast::flat_buffer buffer;
-    http::response<http::string_body> res;
-    
-    http::read(stream, buffer, res, ec);
-    if (ec)
-    {
-        BOOST_FAIL("Failed to read response: " << ec.message());
-    }
-
-    BOOST_TEST(res.keep_alive() == true);
-    BOOST_TEST(res.result() == http::status::ok);
-
-    return std::move(res.body());
-}
 
 BOOST_AUTO_TEST_CASE(prometheus_0_0_4)
 {
     io_context ioc;
-    ip::tcp::endpoint target_ep(asio::ip::address_v4::loopback(), 8080);
     exposer exp(ioc.get_executor(), target_ep, "/metrics");
 
     // Run exposer in other thread
@@ -83,10 +48,7 @@ BOOST_AUTO_TEST_CASE(prometheus_0_0_4)
 
     beast::error_code ec;
     stream.connect(target_ep, ec);
-    if (ec)
-    {
-        BOOST_FAIL("Failed to connect: " << ec.message());
-    }
+    if (ec) BOOST_FAIL("Failed to connect: " << ec.message());
 
     // Empty exposer
     std::string result = make_request(stream, "127.0.0.1:8080", "/metrics", "text/plain;version=0.0.4");
@@ -166,7 +128,6 @@ BOOST_AUTO_TEST_CASE(prometheus_0_0_4)
 BOOST_AUTO_TEST_CASE(openmetrics_1_0)
 {
     io_context ioc;
-    ip::tcp::endpoint target_ep(asio::ip::address_v4::loopback(), 8080);
     exposer exp(ioc.get_executor(), target_ep, "/metrics");
 
     // Run exposer in other thread
@@ -270,7 +231,6 @@ BOOST_AUTO_TEST_CASE(openmetrics_1_0)
 BOOST_AUTO_TEST_CASE(registry_swap)
 {
     io_context ioc;
-    ip::tcp::endpoint target_ep(asio::ip::address_v4::loopback(), 8080);
     exposer exp(ioc.get_executor(), target_ep, "/metrics");
 
     // Run exposer in other thread
@@ -411,7 +371,6 @@ BOOST_AUTO_TEST_CASE(concurrent_scraping)
 
     asio::thread_pool pool(num_server_threads);
 
-    ip::tcp::endpoint target_ep(asio::ip::address_v4::loopback(), 8080);
     exposer exp(pool.get_executor(), target_ep, "/metrics");
 
     registry reg;
@@ -516,7 +475,6 @@ BOOST_AUTO_TEST_CASE(concurrent_scraping)
 BOOST_AUTO_TEST_CASE(authorization)
 {
     io_context ioc;
-    ip::tcp::endpoint target_ep(asio::ip::address_v4::loopback(), 8080);
     exposer<decltype(ioc.get_executor()),
     authorization_policy<"Bearer", [](std::string_view auth)
     {
@@ -632,7 +590,6 @@ BOOST_AUTO_TEST_CASE(authorization)
 BOOST_AUTO_TEST_CASE(authorization_with_realm)
 {
     io_context ioc;
-    ip::tcp::endpoint target_ep(asio::ip::address_v4::loopback(), 8080);
     exposer<decltype(ioc.get_executor()),
     authorization_policy<"Bearer", [](std::string_view auth)
     {
@@ -748,7 +705,6 @@ BOOST_AUTO_TEST_CASE(authorization_with_realm)
 BOOST_AUTO_TEST_CASE(authorization_with_not_found)
 {
     io_context ioc;
-    ip::tcp::endpoint target_ep(asio::ip::address_v4::loopback(), 8080);
     exposer<decltype(ioc.get_executor()),
     authorization_policy<"Bearer", [](std::string_view auth)
     {
@@ -863,7 +819,6 @@ BOOST_AUTO_TEST_CASE(invalid_header)
 {
     // Request with very big header
     io_context ioc;
-    ip::tcp::endpoint target_ep(asio::ip::address_v4::loopback(), 8080);
     exposer exp(ioc.get_executor(), target_ep, "/metrics");
 
     // Run exposer in other thread
@@ -924,7 +879,6 @@ BOOST_AUTO_TEST_CASE(invalid_method)
     // receive a response with HTTP status code method_not_allowed
     // and an Allow header set to GET.
     io_context ioc;
-    ip::tcp::endpoint target_ep(asio::ip::address_v4::loopback(), 8080);
     exposer exp(ioc.get_executor(), target_ep, "/metrics");
 
     // Run exposer in other thread
@@ -1009,7 +963,6 @@ BOOST_AUTO_TEST_CASE(invalid_route)
     // A request with invalid route must
     // receive a response with HTTP status code not_found
     io_context ioc;
-    ip::tcp::endpoint target_ep(asio::ip::address_v4::loopback(), 8080);
     exposer exp(ioc.get_executor(), target_ep, "/metrics");
 
     // Run exposer in other thread
@@ -1062,7 +1015,6 @@ BOOST_AUTO_TEST_CASE(gzip_encoding)
     // we expect that smaller responses are still in
     // plain text format.
     io_context ioc;
-    ip::tcp::endpoint target_ep(asio::ip::address_v4::loopback(), 8080);
     exposer exp(ioc.get_executor(), target_ep, "/metrics");
 
     // Run exposer in other thread
@@ -1238,7 +1190,6 @@ BOOST_AUTO_TEST_CASE(gzip_encoding)
 BOOST_AUTO_TEST_CASE(gzip_encoding_disabled)
 {
     io_context ioc;
-    ip::tcp::endpoint target_ep(asio::ip::address_v4::loopback(), 8080);
     exposer<decltype(ioc.get_executor()), gzip_policy<false>> exp(ioc.get_executor(), target_ep, "/metrics");
 
     // Run exposer in other thread
@@ -1415,7 +1366,6 @@ BOOST_AUTO_TEST_CASE(ssl_mode)
     test::load_server_certificate(server_ctx);
 
     io_context ioc;
-    ip::tcp::endpoint target_ep(asio::ip::address_v4::loopback(), 8080);
     exposer<decltype(ioc.get_executor()), ssl_policy<true>> exp(
         ioc.get_executor(), server_ctx, target_ep, "/metrics");
 
@@ -1557,7 +1507,6 @@ BOOST_AUTO_TEST_CASE(with_static_registry_prometheus_0_0_4)
 {
     using static_reg = static_registry<"simple_pull_registry">;
     io_context ioc;
-    ip::tcp::endpoint target_ep(asio::ip::address_v4::loopback(), 8080);
     exposer<decltype(ioc.get_executor()), expose_static_registry<static_reg>> exp(
         ioc.get_executor(), target_ep, "/metrics");
 
@@ -1700,7 +1649,6 @@ BOOST_AUTO_TEST_CASE(with_static_registry_openmetrics_1_0)
 {
     using static_reg = static_registry<"simple_pull_registry_om">;
     io_context ioc;
-    ip::tcp::endpoint target_ep(asio::ip::address_v4::loopback(), 8080);
     exposer<decltype(ioc.get_executor()), expose_static_registry<static_reg>> exp(
         ioc.get_executor(), target_ep, "/metrics");
 

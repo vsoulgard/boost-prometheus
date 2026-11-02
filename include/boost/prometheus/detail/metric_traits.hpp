@@ -31,6 +31,15 @@ struct metric_specialization_impl<Template<U>, Template> : std::true_type {};
 template <typename T, template <typename> class Template>
 concept metric_specialization = metric_specialization_impl<T, Template>::value;
 
+template <typename T, template <auto, typename> class Template>
+struct static_registry_specialization_impl : std::false_type {};
+
+template <template <auto, typename> class Template, auto V, typename U>
+struct static_registry_specialization_impl<Template<V, U>, Template> : std::true_type {};
+
+template <typename T>
+concept static_registry_specialization = static_registry_specialization_impl<T, static_registry>::value;
+
 template <typename T>
 concept static_counter_specialization = static_metric_specialization<T, static_counter>;
 
