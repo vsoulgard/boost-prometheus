@@ -29,6 +29,8 @@ jobs:
 
     container:
         image: ${{ matrix.container }}
+        volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
 
     steps:
       - name: Checkout
@@ -50,6 +52,7 @@ jobs:
             gpg \
             gpg-agent \
             curl \
+            docker.io \
             ${{ matrix.install }}
 
       - name: Setup Boost
