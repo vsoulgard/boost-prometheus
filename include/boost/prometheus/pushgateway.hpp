@@ -258,8 +258,8 @@ public:
         std::make_tuple(),
         std::make_tuple(alloc_)
     ),
-    socket_(executor_, ssl_ctx),
-    ssl_ctx_(ssl_ctx)
+    ssl_ctx_(ssl_ctx),
+    socket_(executor_, ssl_ctx_)
     {
         request_.body().reserve(4096);
     }

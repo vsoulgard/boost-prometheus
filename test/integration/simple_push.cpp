@@ -76,13 +76,13 @@ asio::awaitable<void> serve_one(
         {
             test::gzip_decode(req.body(), decoded);
             result = decoded;
-            BOOST_TEST(decoded.size() > 1024);
+            BOOST_TEST(decoded.size() > 1024u);
         }
         else
         {
             result = req.body();
             if (!expect_no_gzip)
-                BOOST_TEST(result.size() <= 1024);
+                BOOST_TEST(result.size() <= 1024u);
         }
         // Static registry has another payload.
         if (expect_static_registry)
