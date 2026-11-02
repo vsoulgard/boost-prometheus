@@ -388,3 +388,66 @@ jobs:
             --toolset clang \
             --cxxstd 20 \
             --variant debug,release
+
+  windows-mingw-ucrt-cmake:
+    name: "Windows MinGW UCRT64 CMake ${{ matrix.build-type }}"
+    runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - build-type: 'Debug'
+            cxxstd: '20'
+            build-shared-libs: 0
+          - build-type: 'Release'
+            cxxstd: '20'
+            build-shared-libs: 1
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup MSYS2 (UCRT64)
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-make
+            mingw-w64-ucrt-x86_64-ninja
+            mingw-w64-ucrt-x86_64-openssl
+            mingw-w64-ucrt-x86_64-ca-certificates
+            git
+            python
+
+      - name: Setup Docker
+        uses: docker/setup-docker-action@v3
+        with:
+          set-host: true
+
+      - name: Start Pushgateway
+        run: |
+          docker run -d --name pushgateway \
+            -p 9091:9091 \
+            prom/pushgateway:latest
+
+      - name: Setup Boost
+        run: python tools/ci.py setup-boost --source-dir=$(pwd)
+
+      - name: Build B2 distribution
+        run: python tools/ci.py build-b2-distro --toolset gcc
+
+      - name: Build and run the tests using CMake
+        run: |
+          python tools/ci.py build-cmake-distro \
+            --build-type ${{ matrix.build-type }} \
+            --cxxstd ${{ matrix.cxxstd }} \
+            --toolset gcc \
+            --integration-tests 1 \
+            --generator "Ninja" \
+            --build-shared-libs ${{ matrix.build-shared-libs }} \
+            "--cxxflags=-Werror"
