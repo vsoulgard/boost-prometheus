@@ -113,12 +113,17 @@ class exposer
         typename boost::asio::ssl::context*,
         std::tuple<>>;
 
+    using plain_socket = boost::asio::basic_stream_socket<boost::asio::ip::tcp, Executor>;
+
 public:
 
     /**
      * \brief Socket type accepted by the exposer.
      */
-    using socket_type = boost::asio::basic_stream_socket<boost::asio::ip::tcp, Executor>;
+    using socket_type = std::conditional_t<
+        ssl_policy_type::enabled,
+        typename boost::asio::ssl::stream<plain_socket>,
+        plain_socket>;
     /**
      * \brief Acceptor type used by the exposer.
      */
@@ -149,7 +154,6 @@ private:
         socket_type,
         exposer<Executor, Options...>,
         gzip_policy_type,
-        ssl_policy_type,
         parse_buffer_size_type,
         header_limit_size_type,
         authorization_policy_type,
@@ -169,24 +173,26 @@ private:
         }
     }
 
-    boost::asio::awaitable<void> ssl_session_runner(socket_type socket)
+    boost::asio::awaitable<void> session_runner(plain_socket socket)
     {
         try
         {
-            session_type session(std::move(socket), *this, *ssl_ctx_);
-            co_await session.run();
+            if constexpr (ssl_policy_type::enabled)
+            {
+                // SSL stream.
+                session_type session(socket_type(std::move(socket), *ssl_ctx_), *this);
+                co_await session.run();
+            }
+            else
+            {
+                session_type session(std::move(socket), *this);
+                co_await session.run();
+            }
         }
-        catch (const std::exception& e) {}
-    }
-
-    boost::asio::awaitable<void> session_runner(socket_type socket)
-    {
-        try
+        catch (const std::exception& e)
         {
-            session_type session(std::move(socket), *this);
-            co_await session.run();
+            BOOST_ASSERT_MSG(false, e.what());
         }
-        catch (const std::exception& e) {}
     }
 
     boost::asio::awaitable<void> listen()
@@ -194,7 +200,7 @@ private:
         while (!stop_source_.stop_requested())
         {
             beast::error_code ec;
-            socket_type socket = co_await acceptor_.async_accept(
+            plain_socket socket = co_await acceptor_.async_accept(
                 boost::asio::redirect_error(boost::asio::use_awaitable, ec));
 
             if (ec)
@@ -204,22 +210,10 @@ private:
                 continue;
             }
 
-            if (stop_source_.stop_requested()) break;
-
-            if constexpr (ssl_policy_type::enabled)
-            {
-                boost::asio::co_spawn(
-                    executor_,
-                    ssl_session_runner(std::move(socket)),
-                    boost::asio::detached);
-            }
-            else
-            {
-                boost::asio::co_spawn(
-                    executor_,
-                    session_runner(std::move(socket)),
-                    boost::asio::detached);
-            }
+            boost::asio::co_spawn(
+                executor_,
+                session_runner(std::move(socket)),
+                boost::asio::detached);
         }
     }
 
