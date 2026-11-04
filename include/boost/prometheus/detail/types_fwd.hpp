@@ -14,7 +14,7 @@ namespace boost::prometheus {
 
 namespace detail {
 
-template <typename, typename, typename>
+template <typename, typename, typename, typename>
 class basic_metric_vec;
 
 template <typename>
