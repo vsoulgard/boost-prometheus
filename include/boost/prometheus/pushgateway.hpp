@@ -59,11 +59,9 @@ namespace boost::prometheus {
  * `ssl_policy<true>` (see below); when enabled, the constructor also takes
  * an `asio::ssl::context&` that must outlive the `pushgateway` instance.
  *
- * \par Template parameters (policies)
- * The template parameters mirror those of \ref exposer.
- *
- * The accepted policy types are:
- *
+ * \tparam Executor The Asio executor type, typically obtained via
+ *         `decltype(ioc.get_executor())`.
+ * \tparam Options  Zero or more policy types:
  * * `atomic_policy<bool>` — selects the atomicity of `registry_type`.
  *   Defaults to `default_atomic_policy` (`atomic_policy<true>`). Note that
  *   `pushgateway` itself is never thread-safe (see above); this policy
@@ -79,11 +77,6 @@ namespace boost::prometheus {
  * * `ssl_policy<bool>` — when `true`, connects over TLS. Defaults to
  *   `default_ssl_policy` (`ssl_policy<false>`). Requires the SSL-enabled
  *   `pushgateway` constructor and OpenSSL.
- *
- * \tparam Executor The Asio executor type, typically obtained via
- *         `decltype(ioc.get_executor())`.
- * \tparam Options  Zero or more policy types (see above). Order does not
- *         matter; when a policy is omitted, its default is used.
  *
  * \par Lifetime
  * The `pushgateway` owns its socket and internal buffers, but does **not**

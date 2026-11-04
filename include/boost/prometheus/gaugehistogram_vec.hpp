@@ -99,6 +99,7 @@ namespace boost::prometheus {
  */
 template <typename AtomicPolicyType = default_atomic_policy>
 class gaugehistogram_vec : public detail::basic_metric_vec<
+    AtomicPolicyType,
     gaugehistogram_vec<AtomicPolicyType>,
     gaugehistogram_item<AtomicPolicyType>,
     histogram_opts
@@ -106,6 +107,7 @@ class gaugehistogram_vec : public detail::basic_metric_vec<
 {
     using item_type = gaugehistogram_item<AtomicPolicyType>;
     using base_type = detail::basic_metric_vec<
+        AtomicPolicyType,
         gaugehistogram_vec<AtomicPolicyType>,
         item_type,
         histogram_opts

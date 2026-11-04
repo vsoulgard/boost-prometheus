@@ -26,24 +26,40 @@ BOOST_AUTO_TEST_CASE(default_constructor_is_deleted)
 
 BOOST_AUTO_TEST_CASE(construction_default_options)
 {
-    counter_vec c("http_requests", {"first", "second"});
+    {
+        counter_vec<atomic_policy<true>> c("http_requests", {"first", "second"});
+    }
+    {
+        counter_vec<atomic_policy<false>> c("http_requests", {"first", "second"});
+    }
 }
 
 BOOST_AUTO_TEST_CASE(construction_custom_options)
 {
-    counter_vec c("request_duration_seconds", {.help = "help string", .unit = "seconds"}, {"first", "second"});
+    {
+        counter_vec<atomic_policy<true>> c("request_duration_seconds",
+            {.help = "help string", .unit = "seconds"}, {"first", "second"});
+    }
+    {
+        counter_vec<atomic_policy<false>> c("request_duration_seconds",
+            {.help = "help string", .unit = "seconds"}, {"first", "second"});
+    }
 }
 
-BOOST_AUTO_TEST_CASE(with_labels_equal)
+template <typename AtomicPolicy>
+void test_with_labels_equal()
 {
     {
-        counter_vec c("http_requests", {"first"});
+        counter_vec<AtomicPolicy> c("http_requests", {"first"});
         auto& counter1 = c.with_labels({"1"});
         auto& counter2 = c.with_labels({"1"});
+        BOOST_TEST(c.size() == 1u);
         BOOST_TEST(&counter1 == &counter2);
         auto& counter3 = c.with_labels({"3"});
+        BOOST_TEST(c.size() == 2u);
         BOOST_TEST(&counter3 != &counter2);
         auto& counter4 = c.with_labels({"5"});
+        BOOST_TEST(c.size() == 3u);
         BOOST_TEST(&counter3 != &counter4);
         // Test with containers
         std::vector<std::string> vec = {"1"};
@@ -53,16 +69,20 @@ BOOST_AUTO_TEST_CASE(with_labels_equal)
         BOOST_TEST(&counter6 == &counter2);
         std::array<std::string_view, 1> arr = {"1"};
         auto& counter7 = c.with_labels(arr);
+        BOOST_TEST(c.size() == 3u);
         BOOST_TEST(&counter7 == &counter2);
     }
     {
-        counter_vec c("http_requests", {"first", "second"});
+        counter_vec<AtomicPolicy> c("http_requests", {"first", "second"});
         auto& counter1 = c.with_labels({"1", "2"});
         auto& counter2 = c.with_labels({"1", "2"});
+        BOOST_TEST(c.size() == 1u);
         BOOST_TEST(&counter1 == &counter2);
         auto& counter3 = c.with_labels({"3", "4"});
+        BOOST_TEST(c.size() == 2u);
         BOOST_TEST(&counter3 != &counter2);
         auto& counter4 = c.with_labels({"5", "6"});
+        BOOST_TEST(c.size() == 3u);
         BOOST_TEST(&counter3 != &counter4);
         // Test with containers
         std::vector<std::string> vec = {"1", "2"};
@@ -72,16 +92,20 @@ BOOST_AUTO_TEST_CASE(with_labels_equal)
         BOOST_TEST(&counter6 == &counter2);
         std::array<std::string_view, 2> arr = {"1", "2"};
         auto& counter7 = c.with_labels(arr);
+        BOOST_TEST(c.size() == 3u);
         BOOST_TEST(&counter7 == &counter2);
     }
     {
-        counter_vec c("http_requests", {"first", "second", "third"});
+        counter_vec<AtomicPolicy> c("http_requests", {"first", "second", "third"});
         auto& counter1 = c.with_labels({"1", "2", "3"});
         auto& counter2 = c.with_labels({"1", "2", "3"});
+        BOOST_TEST(c.size() == 1u);
         BOOST_TEST(&counter1 == &counter2);
         auto& counter3 = c.with_labels({"3", "4", "5"});
+        BOOST_TEST(c.size() == 2u);
         BOOST_TEST(&counter3 != &counter2);
         auto& counter4 = c.with_labels({"5", "6", "7"});
+        BOOST_TEST(c.size() == 3u);
         BOOST_TEST(&counter3 != &counter4);
         // Test with containers
         std::vector<std::string> vec = {"1", "2", "3"};
@@ -91,13 +115,15 @@ BOOST_AUTO_TEST_CASE(with_labels_equal)
         BOOST_TEST(&counter6 == &counter2);
         std::array<std::string_view, 3> arr = {"1", "2", "3"};
         auto& counter7 = c.with_labels(arr);
+        BOOST_TEST(c.size() == 3u);
         BOOST_TEST(&counter7 == &counter2);
     }
 }
 
-BOOST_AUTO_TEST_CASE(with_labels_inc, * boost::unit_test::tolerance(1e-9))
+template <typename AtomicPolicy>
+void test_with_labels_inc()
 {
-    counter_vec c("http_requests", {"first", "second"});
+    counter_vec<AtomicPolicy> c("http_requests", {"first", "second"});
     auto& counter1 = c.with_labels({"1", "2"});
     auto& counter2 = c.with_labels({"1", "2"});
     counter1.inc();
@@ -123,35 +149,41 @@ BOOST_AUTO_TEST_CASE(with_labels_inc, * boost::unit_test::tolerance(1e-9))
     BOOST_TEST(counter7.get_value() == 4.5);
 }
 
-BOOST_AUTO_TEST_CASE(with_labels_rvalue)
+template <typename AtomicPolicy>
+void test_with_labels_rvalue()
 {
+    using key_type = typename counter_vec<AtomicPolicy>::key_type;
     // Construct by lvalue
     {
         // std::vector
         std::vector<std::string> vec = {"1", "2"};
-        counter_vec c("http_requests", {"first", "second"});
+        counter_vec<AtomicPolicy> c("http_requests", {"first", "second"});
+        BOOST_TEST(c.size() == 0u);
         c.with_labels(vec);
+        BOOST_TEST(c.size() == 1u);
         BOOST_TEST(vec == std::vector<std::string>({"1", "2"}));
         c.with_labels(vec);
+        BOOST_TEST(c.size() == 1u);
         BOOST_TEST(vec == std::vector<std::string>({"1", "2"}));
         c.with_labels(std::move(vec));
         // If exists, vec isn't moved (single thread only).
+        BOOST_TEST(c.size() == 1u);
         BOOST_TEST(vec == std::vector<std::string>({"1", "2"}));
 
         // basic_metric_vec::key_type
-        counter_vec<>::key_type key = {"3", "4"};
+        key_type key = {"3", "4"};
         c.with_labels(key);
-        BOOST_TEST(key == counter_vec<>::key_type({"3", "4"}));
+        BOOST_TEST(key == key_type({"3", "4"}));
         c.with_labels(key);
-        BOOST_TEST(key == counter_vec<>::key_type({"3", "4"}));
+        BOOST_TEST(key == key_type({"3", "4"}));
         c.with_labels(std::move(key));
-        BOOST_TEST(key == counter_vec<>::key_type({"3", "4"}));
+        BOOST_TEST(key == key_type({"3", "4"}));
     }
     // Construct by rvalue
     {
         // std::vector
         std::vector<std::string> vec1 = {"1", "2"};
-        counter_vec c("http_requests", {"first", "second"});
+        counter_vec<AtomicPolicy> c("http_requests", {"first", "second"});
         c.with_labels(std::move(vec1));
         // All elements are moved.
         BOOST_TEST(vec1 == std::vector<std::string>(2));
@@ -161,14 +193,44 @@ BOOST_AUTO_TEST_CASE(with_labels_rvalue)
         BOOST_TEST(vec2 == std::vector<std::string>({"1", "2"}));
 
         // basic_metric_vec::key_type
-        counter_vec<>::key_type key1 = {"3", "4"};
+        key_type key1 = {"3", "4"};
         c.with_labels(std::move(key1));
         // Whole key is moved.
         BOOST_TEST(key1.empty());
-        counter_vec<>::key_type key2 = {"3", "4"};
+        key_type key2 = {"3", "4"};
         c.with_labels(std::move(key2));
-        BOOST_TEST(key2 == counter_vec<>::key_type({"3", "4"}));
+        BOOST_TEST(key2 == key_type({"3", "4"}));
     }
+}
+
+BOOST_AUTO_TEST_CASE(with_labels_equal)
+{
+    test_with_labels_equal<atomic_policy<true>>();
+}
+
+BOOST_AUTO_TEST_CASE(with_labels_equal_non_atomic)
+{
+    test_with_labels_equal<atomic_policy<false>>();
+}
+
+BOOST_AUTO_TEST_CASE(with_labels_inc, * boost::unit_test::tolerance(1e-9))
+{
+    test_with_labels_inc<atomic_policy<true>>();
+}
+
+BOOST_AUTO_TEST_CASE(with_labels_inc_non_atomic, * boost::unit_test::tolerance(1e-9))
+{
+    test_with_labels_inc<atomic_policy<false>>();
+}
+
+BOOST_AUTO_TEST_CASE(with_labels_rvalue)
+{
+    test_with_labels_rvalue<atomic_policy<true>>();
+}
+
+BOOST_AUTO_TEST_CASE(with_labels_rvalue_non_atomic)
+{
+    test_with_labels_rvalue<atomic_policy<false>>();
 }
 
 BOOST_AUTO_TEST_CASE(concurrent_update, * boost::unit_test::tolerance(1e-9))

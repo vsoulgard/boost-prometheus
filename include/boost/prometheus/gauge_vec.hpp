@@ -76,6 +76,7 @@ namespace boost::prometheus {
  */
 template <typename AtomicPolicyType = default_atomic_policy>
 class gauge_vec : public detail::basic_metric_vec<
+    AtomicPolicyType,
     gauge_vec<AtomicPolicyType>,
     gauge_item<AtomicPolicyType>,
     metric_opts
@@ -83,6 +84,7 @@ class gauge_vec : public detail::basic_metric_vec<
 {
     using item_type = gauge_item<AtomicPolicyType>;
     using base_type = detail::basic_metric_vec<
+        AtomicPolicyType,
         gauge_vec<AtomicPolicyType>,
         item_type,
         metric_opts

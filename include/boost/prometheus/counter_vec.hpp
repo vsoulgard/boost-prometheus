@@ -78,6 +78,7 @@ namespace boost::prometheus {
  */
 template <typename AtomicPolicyType = default_atomic_policy>
 class counter_vec : public detail::basic_metric_vec<
+    AtomicPolicyType,
     counter_vec<AtomicPolicyType>,
     counter_item<AtomicPolicyType>,
     metric_opts
@@ -85,6 +86,7 @@ class counter_vec : public detail::basic_metric_vec<
 {
     using item_type = counter_item<AtomicPolicyType>;
     using base_type = detail::basic_metric_vec<
+        AtomicPolicyType,
         counter_vec<AtomicPolicyType>,
         item_type,
         metric_opts

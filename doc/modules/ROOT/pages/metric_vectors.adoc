@@ -167,6 +167,7 @@ Exposed as (only two `GET` buckets shown for brevity):
 ----
 # TYPE request_duration_seconds histogram
 # HELP request_duration_seconds Request latency
+# UNIT request_duration_seconds seconds
 request_duration_seconds_bucket{le="0.005",method="GET"} 0
 request_duration_seconds_bucket{le="0.01",method="GET"} 1
 request_duration_seconds_bucket{le="0.05",method="GET"} 1
@@ -202,8 +203,8 @@ Exposed as:
 
 [source]
 ----
-# HELP build Build information
 # TYPE build info
+# HELP build Build information
 build_info{build_type="Release",commit="abc123",version="1.0"} 1
 ----
 
