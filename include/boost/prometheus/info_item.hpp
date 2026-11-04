@@ -71,7 +71,7 @@ class info_item
 
     internal_type internal_;
 
-    template <typename, typename, typename>
+    template <typename, typename, typename, typename>
     friend class detail::basic_metric_vec;
 
     // Serialization
