@@ -158,7 +158,7 @@ void test_with_labels_rvalue()
         // std::vector
         std::vector<std::string> vec = {"1", "2"};
         counter_vec<AtomicPolicy> c("http_requests", {"first", "second"});
-        BOOST_TEST(c.size() == 0);
+        BOOST_TEST(c.size() == 0u);
         c.with_labels(vec);
         BOOST_TEST(c.size() == 1u);
         BOOST_TEST(vec == std::vector<std::string>({"1", "2"}));
