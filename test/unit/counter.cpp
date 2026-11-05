@@ -16,7 +16,7 @@ BOOST_AUTO_TEST_SUITE(test_counter)
 
 BOOST_AUTO_TEST_CASE(default_constructor_is_deleted)
 {
-    static_assert(!std::is_default_constructible_v<counter<>>);
+    static_assert(!std::is_default_constructible_v<counter<atomic_policy<true>>>);
     static_assert(!std::is_default_constructible_v<counter<atomic_policy<false>>>);
 }
 

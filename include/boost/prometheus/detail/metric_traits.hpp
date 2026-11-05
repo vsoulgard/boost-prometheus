@@ -44,7 +44,13 @@ template <typename T>
 concept static_counter_specialization = static_metric_specialization<T, static_counter>;
 
 template <typename T>
+concept static_int_counter_specialization = static_metric_specialization<T, static_int_counter>;
+
+template <typename T>
 concept static_gauge_specialization = static_metric_specialization<T, static_gauge>;
+
+template <typename T>
+concept static_int_gauge_specialization = static_metric_specialization<T, static_int_gauge>;
 
 template <typename T>
 concept static_histogram_specialization = static_metric_specialization<T, static_histogram>;
@@ -53,7 +59,13 @@ template <typename T>
 concept static_info_specialization = static_metric_specialization<T, static_info>;
 
 template <typename T>
-concept static_gauge_internal_specialization = metric_specialization<T, static_gauge_internal>;
+concept static_double_gauge_internal_specialization = metric_specialization<T, static_double_gauge_internal>;
+
+template <typename T>
+concept static_int_gauge_internal_specialization = metric_specialization<T, static_int_gauge_internal>;
+
+template <typename T>
+concept static_uint_gauge_internal_specialization = metric_specialization<T, static_uint_gauge_internal>;
 
 template <typename T>
 concept static_histogram_internal_specialization = metric_specialization<T, static_histogram_internal>;
@@ -65,10 +77,16 @@ template <typename T>
 concept counter_specialization = metric_specialization<T, counter>;
 
 template <typename T>
+concept int_counter_specialization = metric_specialization<T, int_counter>;
+
+template <typename T>
 concept counter_vec_specialization = metric_specialization<T, counter_vec>;
 
 template <typename T>
 concept gauge_specialization = metric_specialization<T, gauge>;
+
+template <typename T>
+concept int_gauge_specialization = metric_specialization<T, int_gauge>;
 
 template <typename T>
 concept gauge_vec_specialization = metric_specialization<T, gauge_vec>;

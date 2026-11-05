@@ -17,14 +17,14 @@
 namespace boost::prometheus::detail {
 
 BOOST_PROMETHEUS_MSVC_DISABLE_ALIGN_WARNING
-template <typename AtomicPolicyType, std::size_t Alignment, typename IntType = std::uint64_t>
+template <typename AtomicPolicyType, std::size_t Alignment>
 struct histogram_bucket_value
 {
     using count_type = std::conditional_t<
         AtomicPolicyType::enabled,
-        std::atomic<IntType>,
-        IntType
-    >;
+        std::atomic<std::uint64_t>,
+        std::uint64_t>;
+
     alignas(Alignment) count_type value;
 };
 BOOST_PROMETHEUS_MSVC_RESTORE_WARNING

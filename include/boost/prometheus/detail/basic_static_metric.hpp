@@ -57,9 +57,9 @@ public:
         }
         else
         {
-            return const_find_substr<metric_name, unit_type::value>();
+            return const_ends_with<metric_name, unit_type::value>();
         }
-    }(), "Metric name must include Unit");
+    }(), "Metric name must have unit as suffix");
 
     using serialized_header = static_serialize_header<derived_type, MetricName, Options...>;
 

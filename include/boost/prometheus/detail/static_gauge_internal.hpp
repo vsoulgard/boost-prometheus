@@ -19,24 +19,23 @@
 namespace boost::prometheus::detail {
 
 BOOST_PROMETHEUS_MSVC_DISABLE_ALIGN_WARNING
-template <typename AtomicPolicyType>
+template <typename T, typename AtomicPolicy>
 struct static_gauge_internal
 {
-    template <typename T>
-    static constexpr std::size_t alignment = AtomicPolicyType::enabled ? cache_line_size : alignof(T);
+    static constexpr std::size_t alignment = AtomicPolicy::enabled ? cache_line_size : alignof(T);
 
     struct gauge_entry
     {
         // Metric name in text format
         std::string_view formatted_name;
-        alignas(alignment<double>)
-        mutable double value;
+        alignas(alignment)
+        mutable T value;
 
-        double get_value() const noexcept
+        T get_value() const noexcept
         {
-            if constexpr (AtomicPolicyType::enabled)
+            if constexpr (AtomicPolicy::enabled)
             {
-                std::atomic_ref<double> atomic_value(value);
+                std::atomic_ref<T> atomic_value(value);
                 return atomic_value.load(std::memory_order_relaxed);
             }
             else
@@ -68,12 +67,39 @@ struct static_gauge_internal
         return entries_.size() - 1;
     }
 
-    double& value_ref(std::size_t index) noexcept
+    T& value_ref(std::size_t index) noexcept
     {
         return entries_[index].value;
     }
 };
 BOOST_PROMETHEUS_MSVC_RESTORE_WARNING
+
+template <typename AtomicPolicy>
+struct static_double_gauge_internal : public static_gauge_internal<double, AtomicPolicy>
+{
+    using base_type = static_gauge_internal<double, AtomicPolicy>;
+
+    static_double_gauge_internal(std::string_view prometheus_header, std::string_view openmetrics_header) :
+        base_type(prometheus_header, openmetrics_header) {}
+};
+
+template <typename AtomicPolicy>
+struct static_int_gauge_internal : public static_gauge_internal<std::int64_t, AtomicPolicy>
+{
+    using base_type = static_gauge_internal<std::int64_t, AtomicPolicy>;
+
+    static_int_gauge_internal(std::string_view prometheus_header, std::string_view openmetrics_header) :
+        base_type(prometheus_header, openmetrics_header) {}
+};
+
+template <typename AtomicPolicy>
+struct static_uint_gauge_internal : public static_gauge_internal<std::uint64_t, AtomicPolicy>
+{
+    using base_type = static_gauge_internal<std::uint64_t, AtomicPolicy>;
+
+    static_uint_gauge_internal(std::string_view prometheus_header, std::string_view openmetrics_header) :
+        base_type(prometheus_header, openmetrics_header) {}
+};
 
 } // namespace boost::prometheus::detail
 

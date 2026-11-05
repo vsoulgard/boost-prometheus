@@ -12,6 +12,7 @@
 
 #include <boost/prometheus/detail/histogram_internal.hpp>
 
+#include <boost/prometheus/detail/export/metric_type_string.hpp>
 #include <boost/prometheus/detail/export/serialize_header.hpp>
 #include <boost/prometheus/detail/export/serialize_histogram_names.hpp>
 
@@ -78,8 +79,8 @@ class histogram
     static internal_type init_internal(std::string_view name, const histogram_opts& options)
     {
         auto headers = detail::serialize_header<
-            internal_type::prometheus_type,
-            internal_type::openmetrics_type
+            detail::metric_type_string<histogram>::prometheus_type,
+            detail::metric_type_string<histogram>::openmetrics_type
         >(name, options);
         
         std::span<const double> bucket_boundaries;

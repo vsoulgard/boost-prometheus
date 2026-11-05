@@ -67,7 +67,7 @@ namespace boost::prometheus {
  * // Cached: same reference as the first call above.
  * auto& running = active.with_labels({"running"});
  * running.inc();    // 43
- * running.dec(3);   // 40
+ * running.dec(3.0); // 40
  *
  * // Exposed as:
  * //   applications_active{state="running"} 40

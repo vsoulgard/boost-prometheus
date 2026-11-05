@@ -143,6 +143,14 @@ struct format
         append_to_chars<max_uint64_size>(v, out);
     }
 
+    template <typename B>
+    static void append(std::int64_t v, B& out)
+    {
+        constexpr std::size_t max_int64_size =
+            std::numeric_limits<std::int64_t>::digits10 + 2;
+        append_to_chars<max_int64_size>(v, out);
+    }
+
     template <typename Buckets, typename BufferType>
     static std::uint64_t serialize_histogram_buckets(
         std::span<const std::string_view> names,
@@ -280,7 +288,9 @@ struct format
 
         template <typename MetricType, typename BufferType> requires (
             prometheus::detail::counter_specialization<MetricType> ||
-            prometheus::detail::gauge_specialization<MetricType>)
+            prometheus::detail::int_counter_specialization<MetricType> ||
+            prometheus::detail::gauge_specialization<MetricType> ||
+            prometheus::detail::int_gauge_specialization<MetricType>)
         static void serialize(MetricType& metric, BufferType& out_buffer)
         {
             append(metric.internal_.prometheus_prefix_sv_, out_buffer);
@@ -386,7 +396,9 @@ struct format
         }
 
         template <typename StaticMetricType, typename BufferType> requires(
-            prometheus::detail::static_gauge_internal_specialization<StaticMetricType>)
+            prometheus::detail::static_double_gauge_internal_specialization<StaticMetricType> ||
+            prometheus::detail::static_int_gauge_internal_specialization<StaticMetricType> ||
+            prometheus::detail::static_uint_gauge_internal_specialization<StaticMetricType>)
         static void serialize(StaticMetricType& metric, BufferType& out_buffer)
         {
             if (metric.size() == 0) return;
@@ -440,7 +452,9 @@ struct format
 
         template <typename MetricType, typename BufferType> requires (
             prometheus::detail::counter_specialization<MetricType> ||
-            prometheus::detail::gauge_specialization<MetricType>)
+            prometheus::detail::int_counter_specialization<MetricType> ||
+            prometheus::detail::gauge_specialization<MetricType> ||
+            prometheus::detail::int_gauge_specialization<MetricType>)
         static void serialize(MetricType& metric, BufferType& out_buffer)
         {
             append(metric.internal_.openmetrics_prefix_sv_, out_buffer);
@@ -518,7 +532,9 @@ struct format
         }
 
         template <typename StaticMetricType, typename BufferType> requires(
-            prometheus::detail::static_gauge_internal_specialization<StaticMetricType>)
+            prometheus::detail::static_double_gauge_internal_specialization<StaticMetricType> ||
+            prometheus::detail::static_int_gauge_internal_specialization<StaticMetricType> ||
+            prometheus::detail::static_uint_gauge_internal_specialization<StaticMetricType>)
         static void serialize(StaticMetricType& metric, BufferType& out_buffer)
         {
             if (metric.size() == 0) return;
@@ -526,7 +542,7 @@ struct format
             for (const auto& el : metric.entries_)
             {
                 append(el.formatted_name, out_buffer);
-                append(el.value, out_buffer);
+                append(el.get_value(), out_buffer);
                 append("\n", out_buffer);
             }
         }

@@ -10,9 +10,14 @@
 
 #include <boost/prometheus/metric_options.hpp>
 
-#include <boost/prometheus/detail/counter_internal.hpp>
+#include <boost/prometheus/detail/gauge_internal.hpp>
 
+#include <boost/prometheus/detail/export/metric_type_string.hpp>
 #include <boost/prometheus/detail/export/serialize_prefix.hpp>
+
+#include <boost/assert.hpp>
+
+#include <cmath>
 
 namespace boost::prometheus {
 
@@ -49,7 +54,7 @@ namespace boost::prometheus {
 template <typename AtomicPolicyType = default_atomic_policy>
 class counter
 {
-    using internal_type = detail::counter_internal<AtomicPolicyType>;
+    using internal_type = detail::gauge_internal<double, AtomicPolicyType>;
 
     internal_type internal_;
 
@@ -61,8 +66,8 @@ class counter
         BOOST_ASSERT_MSG(name.find("_total") == std::string_view::npos,
             "Counter name shouldn't contain \"_total\" suffix; it will be appended automatically");
         auto prefixes = detail::serialize_prefix<
-            internal_type::prometheus_type,
-            internal_type::openmetrics_type
+            detail::metric_type_string<counter>::prometheus_type,
+            detail::metric_type_string<counter>::openmetrics_type
         >(name, options);
         return internal_type(std::move(prefixes.base_string), prefixes.openmetrics_prefix_offset);
     }
@@ -111,6 +116,7 @@ public:
      */
     void inc(double value = 1.0) noexcept
     {
+        BOOST_ASSERT_MSG(!std::signbit(value), "The counter increment must be a positive value");
         internal_.inc(value);
     }
 };

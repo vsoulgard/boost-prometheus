@@ -16,7 +16,7 @@ BOOST_AUTO_TEST_SUITE(test_gauge)
 
 BOOST_AUTO_TEST_CASE(default_constructor_is_deleted)
 {
-    static_assert(!std::is_default_constructible_v<gauge<>>);
+    static_assert(!std::is_default_constructible_v<gauge<atomic_policy<true>>>);
     static_assert(!std::is_default_constructible_v<gauge<atomic_policy<false>>>);
 }
 
@@ -93,7 +93,7 @@ BOOST_AUTO_TEST_CASE(inc_dec_custom_value, * boost::unit_test::tolerance(1e-9))
 
 BOOST_AUTO_TEST_CASE(non_atomic_construction)
 {
-    gauge<atomic_policy<false>> g("non_atomic_gauge_bytes_total", {"help text", "bytes"});
+    gauge<atomic_policy<false>> g("non_atomic_gauge_bytes", {"help text", "bytes"});
     BOOST_TEST(g.get_value() == 0.0);
     BOOST_TEST(g.is_atomic() == false);
 }

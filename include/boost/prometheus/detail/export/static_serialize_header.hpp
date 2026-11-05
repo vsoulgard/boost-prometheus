@@ -14,40 +14,11 @@
 #include <boost/prometheus/detail/metric_traits.hpp>
 #include <boost/prometheus/detail/string_buffer.hpp>
 
+#include <boost/prometheus/detail/export/metric_type_string.hpp>
+
 #include <string_view>
 
 namespace boost::prometheus::detail {
-
-template <typename T>
-struct static_metric_type_string;
-
-template <detail::string_buffer Name, typename... Options>
-struct static_metric_type_string<static_counter<Name, Options...>>
-{
-    static constexpr detail::string_buffer prometheus_type  = "counter";
-    static constexpr detail::string_buffer openmetrics_type = "counter";
-};
-
-template <detail::string_buffer Name, typename... Options>
-struct static_metric_type_string<static_gauge<Name, Options...>>
-{
-    static constexpr detail::string_buffer prometheus_type  = "gauge";
-    static constexpr detail::string_buffer openmetrics_type = "gauge";
-};
-
-template <detail::string_buffer Name, typename... Options>
-struct static_metric_type_string<static_histogram<Name, Options...>>
-{
-    static constexpr detail::string_buffer prometheus_type  = "histogram";
-    static constexpr detail::string_buffer openmetrics_type = "histogram";
-};
-
-template <detail::string_buffer Name, typename... Options>
-struct static_metric_type_string<static_info<Name, Options...>>
-{
-    static constexpr detail::string_buffer prometheus_type = "gauge";
-    static constexpr detail::string_buffer openmetrics_type = "info";
-};
 
 // Compile-time header text format serialization for both OpenMetrics 1.0 and Prometheus 0.0.4
 template <typename MetricType, detail::string_buffer MetricName, typename... Options>
@@ -58,7 +29,8 @@ class static_serialize_header
 
     static constexpr auto series_metric_name = []() consteval
     {
-        if constexpr (static_counter_specialization<MetricType>)
+        if constexpr (static_counter_specialization<MetricType> ||
+            static_int_counter_specialization<MetricType>)
             return MetricName + string_buffer("_total");
         else if constexpr (static_info_specialization<MetricType>)
             return MetricName + string_buffer("_info");
@@ -93,13 +65,13 @@ class static_serialize_header
     static constexpr auto prom_type_part = []() consteval
     {
         return string_buffer("# TYPE ") + series_metric_name + string_buffer(" ") +
-            static_metric_type_string<MetricType>::prometheus_type + string_buffer("\n");
+            metric_type_string<MetricType>::prometheus_type + string_buffer("\n");
     }();
 
     static constexpr auto om_type_part = []() consteval
     {
         return string_buffer("# TYPE ") + MetricName + string_buffer(" ") +
-            static_metric_type_string<MetricType>::openmetrics_type + string_buffer("\n");
+            metric_type_string<MetricType>::openmetrics_type + string_buffer("\n");
     }();
 
     // OpenMetrics # UNIT part

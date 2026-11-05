@@ -15,8 +15,6 @@
 #include <boost/prometheus/detail/static_metric_registrator.hpp>
 #include <boost/prometheus/detail/string_buffer.hpp>
 
-#include <boost/assert.hpp>
-
 namespace boost::prometheus {
 
 /**
