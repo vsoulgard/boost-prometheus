@@ -125,9 +125,6 @@ class gaugehistogram_item
 
     internal_type internal_;
 
-    template <typename, typename, typename, typename>
-    friend class detail::basic_metric_vec;
-
     // Serialization
     friend struct boost::prometheus::format;
 

@@ -77,7 +77,7 @@ namespace boost::prometheus {
 template <detail::string_buffer MetricName, typename... Options>
 class static_counter : public detail::basic_static_metric<
     static_counter,
-    detail::static_gauge_internal,
+    detail::static_double_gauge_internal,
     MetricName,
     Options...
 >
@@ -88,7 +88,7 @@ class static_counter : public detail::basic_static_metric<
 
     using base_type = detail::basic_static_metric<
         static_counter,
-        detail::static_gauge_internal,
+        detail::static_double_gauge_internal,
         MetricName,
         Options...
     >;

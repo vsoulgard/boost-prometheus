@@ -41,8 +41,11 @@ struct static_labels_registrator
     inline static std::size_t index = []()
     {
         std::size_t index;
-        if constexpr (static_counter_specialization<MetricType> ||
-            static_gauge_specialization<MetricType>)
+        if constexpr (
+            static_counter_specialization<MetricType> ||
+            static_int_counter_specialization<MetricType> ||
+            static_gauge_specialization<MetricType> ||
+            static_int_gauge_specialization<MetricType>)
         {
             static constexpr string_buffer formatted_name = static_serialize_name<MetricType, LabelValues...>::value;
             index = MetricType::impl_.add_entry(formatted_name);

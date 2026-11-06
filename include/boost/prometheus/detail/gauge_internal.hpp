@@ -18,37 +18,33 @@
 namespace boost::prometheus::detail {
 
 BOOST_PROMETHEUS_MSVC_DISABLE_ALIGN_WARNING
-template <typename AtomicPolicyType, bool HasPrefixSVs = true>
+template <typename T, typename AtomicPolicyType, bool HasPrefixSVs = true>
 struct gauge_internal : public basic_metric_internal<AtomicPolicyType, true, HasPrefixSVs>
 {
-    static constexpr string_buffer prometheus_type = "gauge";
-    static constexpr string_buffer openmetrics_type = "gauge";
-
     using base_type = basic_metric_internal<AtomicPolicyType, true, HasPrefixSVs>;
 
     using value_type = std::conditional_t<
         AtomicPolicyType::enabled,
-        std::atomic<double>,
-        double
-    >;
+        std::atomic<T>,
+        T>;
 
     alignas(base_type::template alignment<value_type>)
     value_type value_;
 
     gauge_internal(std::string&& base_string)
     : base_type(std::move(base_string)),
-    value_(0.0) {}
+    value_() {}
 
     gauge_internal(std::string&& base_string, std::size_t openmetrics_prefix_offset)
     : base_type(std::move(base_string), openmetrics_prefix_offset),
-    value_(0.0) {}
+    value_() {}
 
     consteval static bool is_atomic()
     {
         return AtomicPolicyType::enabled;
     }
 
-    double get_value() const noexcept
+    T get_value() const noexcept
     {
         if constexpr (AtomicPolicyType::enabled)
         {
@@ -60,7 +56,7 @@ struct gauge_internal : public basic_metric_internal<AtomicPolicyType, true, Has
         }
     }
 
-    void inc(double value) noexcept
+    void inc(T value) noexcept
     {
         if constexpr (AtomicPolicyType::enabled)
         {
@@ -72,7 +68,7 @@ struct gauge_internal : public basic_metric_internal<AtomicPolicyType, true, Has
         }
     }
 
-    void dec(double value) noexcept
+    void dec(T value) noexcept
     {
         if constexpr (AtomicPolicyType::enabled)
         {
@@ -84,7 +80,7 @@ struct gauge_internal : public basic_metric_internal<AtomicPolicyType, true, Has
         }
     }
 
-    void set(double value) noexcept
+    void set(T value) noexcept
     {
         if constexpr (AtomicPolicyType::enabled)
         {

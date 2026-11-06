@@ -15,6 +15,10 @@ xref:reference:boost/prometheus/histogram.adoc[`histogram`],
 xref:reference:boost/prometheus/gaugehistogram.adoc[`gaugehistogram`],
 xref:reference:boost/prometheus/info.adoc[`info`].
 
+With additional integer counterparts:
+xref:reference:boost/prometheus/int_counter.adoc[`int_counter`],
+xref:reference:boost/prometheus/int_gauge.adoc[`int_gauge`],
+
 == Counter
 
 A counter is a monotonically increasing value. It is only allowed to go up, and

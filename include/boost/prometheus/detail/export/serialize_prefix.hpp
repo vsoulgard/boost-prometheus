@@ -82,6 +82,9 @@ auto serialize_prefix(std::string_view name, const OptionsType& options)
         else
             return false;
     }();
+    if constexpr (has_unit_m)
+        BOOST_ASSERT_MSG(name.ends_with(options.unit), "Metric name must have unit as suffix");
+
     const bool has_help = !options.help.empty();
 
     const std::size_t name_size = name.size();

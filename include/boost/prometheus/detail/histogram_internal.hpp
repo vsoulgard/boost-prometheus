@@ -29,28 +29,22 @@ BOOST_PROMETHEUS_MSVC_DISABLE_ALIGN_WARNING
 template <typename AtomicPolicyType, bool HasBaseString = true, bool HasPrefixSVs = true>
 struct histogram_internal : public basic_metric_internal<AtomicPolicyType, HasBaseString, HasPrefixSVs>
 {
-    static constexpr string_buffer prometheus_type = "histogram";
-    static constexpr string_buffer openmetrics_type = "histogram";
-
     using base_type = basic_metric_internal<AtomicPolicyType, HasBaseString, HasPrefixSVs>;
 
     using sum_type = std::conditional_t<
         AtomicPolicyType::enabled,
         std::atomic<double>,
-        double
-    >;
+        double>;
 
     using count_type = std::conditional_t<
         AtomicPolicyType::enabled,
         std::atomic<std::uint64_t>,
-        std::tuple<>
-    >;
+        std::tuple<>>;
 
     using mutex_type = std::conditional_t<
         AtomicPolicyType::enabled,
         std::mutex,
-        std::tuple<>
-    >;
+        std::tuple<>>;
 
     struct histogram_buffer
     {
@@ -60,8 +54,7 @@ struct histogram_internal : public basic_metric_internal<AtomicPolicyType, HasBa
         using buffer_count_type = std::conditional_t<
             AtomicPolicyType::enabled,
             std::atomic<std::uint64_t>,
-            std::tuple<>
-        >;
+            std::tuple<>>;
 
         std::vector<bucket_value_type> buckets;
         alignas(base_type::template alignment<sum_type>)

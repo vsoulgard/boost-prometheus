@@ -10,8 +10,9 @@
 
 #include <boost/prometheus/metric_options.hpp>
 
-#include <boost/prometheus/detail/info_internal.hpp>
+#include <boost/prometheus/detail/basic_metric_internal.hpp>
 
+#include <boost/prometheus/detail/export/metric_type_string.hpp>
 #include <boost/prometheus/detail/export/serialize_header.hpp>
 #include <boost/prometheus/detail/export/serialize_name_with_labels.hpp>
 
@@ -72,7 +73,7 @@ namespace boost::prometheus {
  */
 class info
 {
-    using internal_type = detail::info_internal<true>;
+    using internal_type = detail::basic_metric_internal<atomic_policy<false>, true, true>;
 
     internal_type internal_;
     
@@ -84,8 +85,8 @@ class info
     static internal_type init_internal(std::string_view name, const info_opts& options)
     {
         auto prefixes = detail::serialize_header<
-            internal_type::prometheus_type,
-            internal_type::openmetrics_type
+            detail::metric_type_string<info>::prometheus_type,
+            detail::metric_type_string<info>::openmetrics_type
         >(name, options);
         return internal_type(std::move(prefixes.base_string), prefixes.openmetrics_prefix_offset);
     }

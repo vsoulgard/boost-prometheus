@@ -75,7 +75,7 @@ bool append_bytes(Buffer& out, const std::byte* data, std::size_t n)
     constexpr std::size_t max_value = std::numeric_limits<std::size_t>::max();
 
     BOOST_ASSERT(old_size <= max_value - n);
-    if (old_size > max_value - n)
+    if (old_size > max_value - n) [[unlikely]]
         return false;
 
     const std::size_t new_size = old_size + n;
@@ -98,7 +98,7 @@ bool ensure_spare(Buffer& out, std::size_t extra)
     constexpr std::size_t max_val = std::numeric_limits<std::size_t>::max();
 
     BOOST_ASSERT(size <= max_val - extra);
-    if (size > max_val - extra)
+    if (size > max_val - extra) [[unlikely]]
         return false;
 
     const std::size_t needed = size + extra;
@@ -114,6 +114,7 @@ bool ensure_spare(Buffer& out, std::size_t extra)
     return true;
 }
 
+// TODO: Some checks probably can be removed.
 template <typename BufferInType, typename BufferOutType>
 bool gzip_encode_impl(const BufferInType& in_buffer, BufferOutType& out_buffer)
 {
@@ -144,10 +145,10 @@ bool gzip_encode_impl(const BufferInType& in_buffer, BufferOutType& out_buffer)
 
     constexpr std::size_t chunk_size = 65536;
 
-    if (!ensure_spare(out_buffer, gzip_header.size() + chunk_size))
+    if (!ensure_spare(out_buffer, gzip_header.size() + chunk_size)) [[unlikely]]
         return false;
 
-    if (!append_bytes(out_buffer, gzip_header.data(), gzip_header.size()))
+    if (!append_bytes(out_buffer, gzip_header.data(), gzip_header.size())) [[unlikely]]
         return false;
 
     zlib::deflate_stream compressor;
@@ -166,7 +167,7 @@ bool gzip_encode_impl(const BufferInType& in_buffer, BufferOutType& out_buffer)
     {
         const std::size_t old_size = out_buffer.size();
 
-        if (!ensure_spare(out_buffer, chunk_size))
+        if (!ensure_spare(out_buffer, chunk_size)) [[unlikely]]
             return false;
 
         out_buffer.resize(old_size + chunk_size);
@@ -178,11 +179,11 @@ bool gzip_encode_impl(const BufferInType& in_buffer, BufferOutType& out_buffer)
 
         compressor.write(zs, zlib::Flush::none, ec);
 
-        if (ec && ec != zlib::error::need_buffers)
+        if (ec && ec != zlib::error::need_buffers) [[unlikely]]
             return false;
 
         BOOST_ASSERT(zs.avail_out <= chunk_size);
-        if (zs.avail_out > chunk_size)
+        if (zs.avail_out > chunk_size) [[unlikely]]
             return false;
 
         const std::size_t produced = chunk_size - zs.avail_out;
@@ -190,7 +191,7 @@ bool gzip_encode_impl(const BufferInType& in_buffer, BufferOutType& out_buffer)
 
         if (produced == 0 && zs.avail_in == before_avail_in)
         {
-            if (++stall_counter > max_stall_iterations)
+            if (++stall_counter > max_stall_iterations) [[unlikely]]
                 return false;
         }
         else
@@ -205,7 +206,7 @@ bool gzip_encode_impl(const BufferInType& in_buffer, BufferOutType& out_buffer)
     {
         const std::size_t old_size = out_buffer.size();
 
-        if (!ensure_spare(out_buffer, chunk_size))
+        if (!ensure_spare(out_buffer, chunk_size)) [[unlikely]]
             return false;
 
         out_buffer.resize(old_size + chunk_size);
@@ -215,7 +216,7 @@ bool gzip_encode_impl(const BufferInType& in_buffer, BufferOutType& out_buffer)
 
         compressor.write(zs, zlib::Flush::finish, ec);
 
-        if (ec && ec != zlib::error::end_of_stream)
+        if (ec && ec != zlib::error::end_of_stream) [[unlikely]]
             return false;
 
         BOOST_ASSERT(zs.avail_out <= chunk_size);
@@ -225,7 +226,7 @@ bool gzip_encode_impl(const BufferInType& in_buffer, BufferOutType& out_buffer)
         const std::size_t produced = chunk_size - zs.avail_out;
         out_buffer.resize(old_size + produced);
 
-        if (produced == 0)
+        if (produced == 0) [[unlikely]]
         {
             if (++stall_counter > max_stall_iterations)
                 return false;

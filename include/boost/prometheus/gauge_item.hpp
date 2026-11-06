@@ -29,9 +29,9 @@ namespace boost::prometheus {
  * prometheus::gauge_vec active("applications_active", {}, {"state"});
  *
  * auto& running = active.with_labels({"running"});
- * running.set(42);
+ * running.set(42.0);
  * running.inc();      // 43
- * running.dec(3);     // 40
+ * running.dec(3.0);   // 40
  * \endcode
  *
  * The item's exposition name is serialized by the parent vector at the
@@ -63,12 +63,9 @@ namespace boost::prometheus {
 template <typename AtomicPolicyType>
 class gauge_item
 {
-    using internal_type = detail::gauge_internal<AtomicPolicyType, false>;
+    using internal_type = detail::gauge_internal<double, AtomicPolicyType, false>;
 
     internal_type internal_;
-
-    template <typename, typename, typename, typename>
-    friend class detail::basic_metric_vec;
 
     // Serialization
     friend struct boost::prometheus::format;

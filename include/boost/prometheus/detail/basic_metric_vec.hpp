@@ -8,6 +8,7 @@
 #ifndef BOOST_PROMETHEUS_DETAIL_BASIC_METRIC_VEC_HPP
 #define BOOST_PROMETHEUS_DETAIL_BASIC_METRIC_VEC_HPP
 
+#include <boost/prometheus/detail/export/metric_type_string.hpp>
 #include <boost/prometheus/detail/export/serialize_prefix.hpp>
 
 #include <boost/unordered/concurrent_node_map.hpp>
@@ -183,8 +184,8 @@ protected:
         std::sort(labels_.begin(), labels_.end());
         // Format prefixes
         auto prefixes = serialize_prefix<
-            item_type::internal_type::prometheus_type,
-            item_type::internal_type::openmetrics_type,
+            detail::metric_type_string<item_type>::prometheus_type,
+            detail::metric_type_string<item_type>::openmetrics_type,
             true, false, true
         >(name, options);
         both_format_prefixes_ = std::move(prefixes.base_string);

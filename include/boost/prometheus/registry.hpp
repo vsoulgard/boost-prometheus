@@ -10,16 +10,20 @@
 
 #include <boost/prometheus/detail/tuple_unordered_flat_sets.hpp>
 
-#include <boost/prometheus/counter.hpp>
 #include <boost/prometheus/counter_vec.hpp>
-#include <boost/prometheus/gauge.hpp>
+#include <boost/prometheus/counter.hpp>
 #include <boost/prometheus/gauge_vec.hpp>
-#include <boost/prometheus/gaugehistogram.hpp>
+#include <boost/prometheus/gauge.hpp>
 #include <boost/prometheus/gaugehistogram_vec.hpp>
-#include <boost/prometheus/histogram.hpp>
+#include <boost/prometheus/gaugehistogram.hpp>
 #include <boost/prometheus/histogram_vec.hpp>
-#include <boost/prometheus/info.hpp>
+#include <boost/prometheus/histogram.hpp>
 #include <boost/prometheus/info_vec.hpp>
+#include <boost/prometheus/info.hpp>
+#include <boost/prometheus/int_counter_vec.hpp>
+#include <boost/prometheus/int_counter.hpp>
+#include <boost/prometheus/int_gauge_vec.hpp>
+#include <boost/prometheus/int_gauge.hpp>
 #include <boost/prometheus/metric_options.hpp>
 
 namespace boost::prometheus {
@@ -92,8 +96,12 @@ class registry
 {
     using counter_ptr_type = counter<AtomicPolicyType>*;
     using counter_vec_ptr_type = counter_vec<AtomicPolicyType>*;
+    using int_counter_ptr_type = int_counter<AtomicPolicyType>*;
+    using int_counter_vec_ptr_type = int_counter_vec<AtomicPolicyType>*;
     using gauge_ptr_type = gauge<AtomicPolicyType>*;
     using gauge_vec_ptr_type = gauge_vec<AtomicPolicyType>*;
+    using int_gauge_ptr_type = int_gauge<AtomicPolicyType>*;
+    using int_gauge_vec_ptr_type = int_gauge_vec<AtomicPolicyType>*;
     using histogram_ptr_type = histogram<AtomicPolicyType>*;
     using histogram_vec_ptr_type = histogram_vec<AtomicPolicyType>*;
     using gaugehistogram_ptr_type = gaugehistogram<AtomicPolicyType>*;
@@ -105,8 +113,12 @@ class registry
     detail::tuple_unordered_flat_sets<AtomicPolicyType,
         counter_ptr_type,
         counter_vec_ptr_type,
+        int_counter_ptr_type,
+        int_counter_vec_ptr_type,
         gauge_ptr_type,
         gauge_vec_ptr_type,
+        int_gauge_ptr_type,
+        int_gauge_vec_ptr_type,
         histogram_ptr_type,
         histogram_vec_ptr_type,
         gaugehistogram_ptr_type,
@@ -179,6 +191,13 @@ public:
     template <typename MetricType>
     void register_metric(MetricType& metric)
     {
+        static_assert([]() consteval {
+            if constexpr (requires { MetricType::is_atomic(); })
+                return MetricType::is_atomic() == is_atomic();
+            else
+                return true;
+        }(),
+        "Registry and metric type must share the same atomic policy");
         // Insert metric address
         metrics_.insert(&metric);
     }

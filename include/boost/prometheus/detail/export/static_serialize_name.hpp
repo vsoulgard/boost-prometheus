@@ -75,7 +75,8 @@ struct static_serialize_name
         using labels_type = MetricType::base_type::labels_type;
         constexpr string_buffer metric_name = []() consteval
         {
-            if constexpr (static_counter_specialization<MetricType>)
+            if constexpr (static_counter_specialization<MetricType> ||
+                static_int_counter_specialization<MetricType>)
                 return MetricType::metric_name + string_buffer("_total");
             else if constexpr (static_info_specialization<MetricType>)
                 return MetricType::metric_name + string_buffer("_info");

@@ -45,7 +45,7 @@ int main()
         {.help = "Build information"},
         {"build_type", "version"},
         {"Debug", "1.0"});
-    prometheus::counter_vec requests("requests",
+    prometheus::int_counter_vec requests("requests",
         {.help = "Number of received requests", .unit = ""},
         {"method"});
     prometheus::histogram req_duration(
@@ -53,10 +53,10 @@ int main()
         {.help = "Duration of HTTP requests in seconds",
             .unit = "seconds", .buckets = {}}); // Default buckets
 
-    requests.with_labels({"GET"}).inc(5.0);
+    requests.with_labels({"GET"}).inc(5);
     // Caching is also supported for metric vectors.
     auto& post_requests = requests.with_labels({"POST"});
-    post_requests.inc(2.0);
+    post_requests.inc(2);
     req_duration.observe(0.5);
     // Add metrics to the registry.
     reg.register_metric(build_info);

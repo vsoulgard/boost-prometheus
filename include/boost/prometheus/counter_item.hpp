@@ -8,8 +8,12 @@
 #ifndef BOOST_PROMETHEUS_COUNTER_ITEM_HPP
 #define BOOST_PROMETHEUS_COUNTER_ITEM_HPP
 
-#include <boost/prometheus/detail/counter_internal.hpp>
+#include <boost/prometheus/detail/gauge_internal.hpp>
 #include <boost/prometheus/detail/types_fwd.hpp>
+
+#include <boost/assert.hpp>
+
+#include <cmath>
 
 namespace boost::prometheus {
 
@@ -52,12 +56,9 @@ namespace boost::prometheus {
 template <typename AtomicPolicyType>
 class counter_item
 {
-    using internal_type = detail::counter_internal<AtomicPolicyType, false>;
+    using internal_type = detail::gauge_internal<double, AtomicPolicyType, false>;
 
     internal_type internal_;
-
-    template <typename, typename, typename, typename>
-    friend class detail::basic_metric_vec;
 
     // Serialization
     friend struct boost::prometheus::format;
@@ -107,6 +108,7 @@ public:
      */
     void inc(double value = 1.0) noexcept
     {
+        BOOST_ASSERT_MSG(!std::signbit(value), "The counter increment must be a positive value");
         internal_.inc(value);
     }
 };

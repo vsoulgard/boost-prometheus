@@ -141,7 +141,7 @@ class exposer_session
                 // Compress response.
                 bool result = gzip_encode(response_.body(), gzip_buffer_);
                 BOOST_ASSERT(result);
-                if (result)
+                if (result) [[likely]]
                 {
                     response_.set(http::field::content_encoding, "gzip");
                     std::swap(response_.body(), gzip_buffer_);

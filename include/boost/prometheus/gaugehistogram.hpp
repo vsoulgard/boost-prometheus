@@ -12,6 +12,7 @@
 
 #include <boost/prometheus/detail/gaugehistogram_internal.hpp>
 
+#include <boost/prometheus/detail/export/metric_type_string.hpp>
 #include <boost/prometheus/detail/export/serialize_header.hpp>
 #include <boost/prometheus/detail/export/serialize_histogram_names.hpp>
 
@@ -79,8 +80,8 @@ class gaugehistogram
     static internal_type init_internal(std::string_view name, const histogram_opts& options)
     {
         auto headers = detail::serialize_header<
-            internal_type::prometheus_type,
-            internal_type::openmetrics_type
+            detail::metric_type_string<gaugehistogram>::prometheus_type,
+            detail::metric_type_string<gaugehistogram>::openmetrics_type
         >(name, options);
         // Fallback 0.0.4 format headers (serialized as gauges)
         auto sum_header = detail::serialize_header<

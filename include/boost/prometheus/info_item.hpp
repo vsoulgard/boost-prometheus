@@ -8,7 +8,7 @@
 #ifndef BOOST_PROMETHEUS_INFO_ITEM_HPP
 #define BOOST_PROMETHEUS_INFO_ITEM_HPP
 
-#include <boost/prometheus/detail/info_internal.hpp>
+#include <boost/prometheus/detail/basic_metric_internal.hpp>
 #include <boost/prometheus/detail/types_fwd.hpp>
 
 namespace boost::prometheus {
@@ -67,12 +67,9 @@ namespace boost::prometheus {
 template <typename AtomicPolicyType>
 class info_item
 {
-    using internal_type = detail::info_internal<false>;
+    using internal_type = detail::basic_metric_internal<AtomicPolicyType, true, false>;
 
     internal_type internal_;
-
-    template <typename, typename, typename, typename>
-    friend class detail::basic_metric_vec;
 
     // Serialization
     friend struct boost::prometheus::format;

@@ -12,6 +12,7 @@
 
 #include <boost/prometheus/detail/gauge_internal.hpp>
 
+#include <boost/prometheus/detail/export/metric_type_string.hpp>
 #include <boost/prometheus/detail/export/serialize_prefix.hpp>
 
 namespace boost::prometheus {
@@ -49,7 +50,7 @@ namespace boost::prometheus {
 template <typename AtomicPolicyType = default_atomic_policy>
 class gauge
 {
-    using internal_type = detail::gauge_internal<AtomicPolicyType>;
+    using internal_type = detail::gauge_internal<double, AtomicPolicyType>;
 
     internal_type internal_;
 
@@ -59,8 +60,8 @@ class gauge
     static internal_type init_internal(std::string_view name, const metric_opts& options)
     {
         auto prefixes = detail::serialize_prefix<
-            internal_type::prometheus_type,
-            internal_type::openmetrics_type
+            detail::metric_type_string<gauge>::prometheus_type,
+            detail::metric_type_string<gauge>::openmetrics_type
         >(name, options);
         return internal_type(std::move(prefixes.base_string), prefixes.openmetrics_prefix_offset);
     }

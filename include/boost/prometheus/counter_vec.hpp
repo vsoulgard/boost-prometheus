@@ -68,7 +68,7 @@ namespace boost::prometheus {
  *
  * // Cached: same reference as the first call above.
  * auto& get_requests = requests.with_labels({"GET", "200"});
- * get_requests.inc(5);
+ * get_requests.inc(5.0);
  *
  * // Exposed as:
  * //   requests_total{method="GET",status="200"} 6

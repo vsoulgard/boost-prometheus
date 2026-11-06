@@ -17,7 +17,7 @@ namespace boost::prometheus::detail {
 // Custom find(), because
 // std::string_view().find()
 // is not constexpr in some workarounds.
-template <string_buffer Str, string_buffer Substr>
+template <string_buffer Str, string_buffer Substr, std::size_t Idx = 0>
 consteval bool const_find_substr()
 {
     constexpr std::string_view haystack(Str);
@@ -27,7 +27,7 @@ consteval bool const_find_substr()
     if (needle.size() > haystack.size()) return false;
 
     bool found = false;
-    for (std::size_t i = 0; i <= haystack.size() - needle.size(); i++)
+    for (std::size_t i = Idx; i <= haystack.size() - needle.size(); i++)
     {
         bool match = true;
         for (std::size_t j = 0; j < needle.size(); j++)
@@ -41,6 +41,12 @@ consteval bool const_find_substr()
         if (match) { found = true; break; }
     }
     return found;
+}
+
+template <string_buffer Str, string_buffer Substr>
+consteval bool const_ends_with()
+{
+    return const_find_substr<Str, Substr, Str.size() - Substr.size()>();
 }
 
 } // namespace boost::prometheus::detail
