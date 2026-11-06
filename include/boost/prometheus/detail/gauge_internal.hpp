@@ -44,7 +44,7 @@ struct gauge_internal : public basic_metric_internal<AtomicPolicyType, true, Has
         return AtomicPolicyType::enabled;
     }
 
-    double get_value() const noexcept
+    T get_value() const noexcept
     {
         if constexpr (AtomicPolicyType::enabled)
         {
