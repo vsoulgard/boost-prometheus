@@ -189,16 +189,16 @@ BOOST_AUTO_TEST_CASE(non_atomic_inc_dec)
 BOOST_AUTO_TEST_CASE(size)
 {
     using empty_gauge = static_int_gauge<"size_test_empty_test_int_static_g">;
-    BOOST_TEST(empty_gauge::size() == 0);
+    BOOST_TEST(empty_gauge::size() == 0u);
 
     using test_gauge = static_int_gauge<"size_test">;
-    BOOST_TEST(test_gauge::size() == 1);
+    BOOST_TEST(test_gauge::size() == 1u);
     test_gauge::inc();
-    BOOST_TEST(test_gauge::size() == 1);
+    BOOST_TEST(test_gauge::size() == 1u);
 
     using test_gauge_labels = static_int_gauge<"size_test_labels", labels<"label_1", "label_2">>;
     // 3 different label sequences were created
-    BOOST_TEST(test_gauge_labels::size() == 3);
+    BOOST_TEST(test_gauge_labels::size() == 3u);
 
     test_gauge_labels::inc<"value_1", "value_2">();
     test_gauge_labels::inc<"value_1", "value_2">();
@@ -209,7 +209,7 @@ BOOST_AUTO_TEST_CASE(size)
 
     test_gauge_labels::inc<"value_5", "value_6">();
 
-    BOOST_TEST(test_gauge_labels::size() == 3);
+    BOOST_TEST(test_gauge_labels::size() == 3u);
 }
 
 BOOST_AUTO_TEST_CASE(is_atomic)
