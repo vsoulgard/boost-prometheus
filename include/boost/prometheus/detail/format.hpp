@@ -324,7 +324,9 @@ struct format
 
         template <typename MetricVecType, typename BufferType> requires(
             prometheus::detail::counter_vec_specialization<MetricVecType> ||
-            prometheus::detail::gauge_vec_specialization<MetricVecType>)
+            prometheus::detail::int_counter_vec_specialization<MetricVecType> ||
+            prometheus::detail::gauge_vec_specialization<MetricVecType> || 
+            prometheus::detail::int_gauge_vec_specialization<MetricVecType>)
         static void serialize(MetricVecType& metric_vec, BufferType& out_buffer)
         {
             if (metric_vec.size() == 0) return;
@@ -480,8 +482,10 @@ struct format
         }
 
         template <typename MetricVecType, typename BufferType> requires(
+            prometheus::detail::counter_vec_specialization<MetricVecType> ||
+            prometheus::detail::int_counter_vec_specialization<MetricVecType> ||
             prometheus::detail::gauge_vec_specialization<MetricVecType> ||
-            prometheus::detail::counter_vec_specialization<MetricVecType>)
+            prometheus::detail::int_gauge_vec_specialization<MetricVecType>)
         static void serialize(MetricVecType& metric_vec, BufferType& out_buffer)
         {
             if (metric_vec.size() == 0) return;

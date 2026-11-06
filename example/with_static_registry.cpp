@@ -54,11 +54,11 @@ int main(int argc, char* argv[])
         prometheus::labels<"build_type", "compiler", "boost_version">>;
     build_info::create<
         "example_with_static_registry", BOOST_COMPILER, boost_version_str()>();
-    using requests = prometheus::static_counter<
+    using requests = prometheus::static_int_counter<
         "requests", prometheus::help<"Number of received requests">,
         prometheus::labels<"method">>;
-    requests::inc<"GET">(5.0);
-    requests::inc<"POST">(2.0);
+    requests::inc<"GET">(5);
+    requests::inc<"POST">(2);
     using req_duration = prometheus::static_histogram<
         "request_duration_seconds", prometheus::unit<"seconds">>; // Default buckets
     req_duration::observe(0.1);

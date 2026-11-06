@@ -31,6 +31,13 @@ struct metric_type_string<counter<A>>
 };
 
 template <typename A>
+struct metric_type_string<int_counter_item<A>>
+{
+    static constexpr string_buffer prometheus_type  = "counter";
+    static constexpr string_buffer openmetrics_type = "counter";
+};
+
+template <typename A>
 struct metric_type_string<int_counter<A>>
 {
     static constexpr string_buffer prometheus_type  = "counter";
@@ -46,6 +53,13 @@ struct metric_type_string<gauge_item<A>>
 
 template <typename A>
 struct metric_type_string<gauge<A>>
+{
+    static constexpr string_buffer prometheus_type  = "gauge";
+    static constexpr string_buffer openmetrics_type = "gauge";
+};
+
+template <typename A>
+struct metric_type_string<int_gauge_item<A>>
 {
     static constexpr string_buffer prometheus_type  = "gauge";
     static constexpr string_buffer openmetrics_type = "gauge";

@@ -107,8 +107,7 @@ public:
     /**
      * \brief Adds \p value to the counter.
      *
-     * \param value Amount to add. Must be non-negative; passing a negative
-     *              value is a precondition violation.
+     * \param value Amount to add.
      */
     void inc(std::uint64_t value = 1u) noexcept
     {

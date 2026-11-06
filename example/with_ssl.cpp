@@ -129,12 +129,12 @@ int main(int argc, char* argv[])
         {.help = "Build information"},
         {"build_type", "compiler", "boost_version"},
         {"Debug", BOOST_COMPILER, boost_version_str()});
-    prometheus::counter_vec requests(
+    prometheus::int_counter_vec requests(
         "requests",
         {.help = "Number of received requests", .unit = ""},
         {"method"});
-    requests.with_labels({"GET"}).inc(5.0);
-    requests.with_labels({"POST"}).inc(2.0);
+    requests.with_labels({"GET"}).inc(5);
+    requests.with_labels({"POST"}).inc(2);
     prometheus::histogram req_duration(
         "request_duration_seconds",
         {.help = "", .unit = "seconds", .buckets = {}}); // Default buckets

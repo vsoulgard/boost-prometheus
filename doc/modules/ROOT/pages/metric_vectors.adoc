@@ -226,7 +226,9 @@ them.
 | Basic | Vector
 
 | xref:reference:boost/prometheus/counter.adoc[`counter`] | xref:reference:boost/prometheus/counter_vec.adoc[`counter_vec`]
+| xref:reference:boost/prometheus/int_counter.adoc[`int_counter`] | xref:reference:boost/prometheus/int_counter_vec.adoc[`int_counter_vec`]
 | xref:reference:boost/prometheus/gauge.adoc[`gauge`] | xref:reference:boost/prometheus/gauge_vec.adoc[`gauge_vec`]
+| xref:reference:boost/prometheus/int_gauge.adoc[`int_gauge`] | xref:reference:boost/prometheus/int_gauge_vec.adoc[`int_gauge_vec`]
 | xref:reference:boost/prometheus/histogram.adoc[`histogram`] | xref:reference:boost/prometheus/histogram_vec.adoc[`histogram_vec`]
 | xref:reference:boost/prometheus/gaugehistogram.adoc[`gaugehistogram`] | xref:reference:boost/prometheus/gaugehistogram_vec.adoc[`gaugehistogram_vec`]
 | xref:reference:boost/prometheus/info.adoc[`info`] | xref:reference:boost/prometheus/info_vec.adoc[`info_vec`]

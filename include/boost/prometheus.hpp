@@ -27,7 +27,11 @@
 #include <boost/prometheus/info_item.hpp>
 #include <boost/prometheus/info_vec.hpp>
 #include <boost/prometheus/info.hpp>
+#include <boost/prometheus/int_counter_item.hpp>
+#include <boost/prometheus/int_counter_vec.hpp>
 #include <boost/prometheus/int_counter.hpp>
+#include <boost/prometheus/int_gauge_item.hpp>
+#include <boost/prometheus/int_gauge_vec.hpp>
 #include <boost/prometheus/int_gauge.hpp>
 #include <boost/prometheus/metric_options.hpp>
 #include <boost/prometheus/pushgateway_errc.hpp>

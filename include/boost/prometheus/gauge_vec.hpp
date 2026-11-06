@@ -61,8 +61,8 @@ namespace boost::prometheus {
  *     {.help = "Number of active applications"},// options
  *     {"state"});                               // label names
  *
- * active.with_labels({"running"}).set(42);
- * active.with_labels({"idle"}).set(7);
+ * active.with_labels({"running"}).set(42.0);
+ * active.with_labels({"idle"}).set(7.0);
  *
  * // Cached: same reference as the first call above.
  * auto& running = active.with_labels({"running"});

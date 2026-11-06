@@ -77,19 +77,25 @@ template <typename T>
 concept counter_specialization = metric_specialization<T, counter>;
 
 template <typename T>
+concept counter_vec_specialization = metric_specialization<T, counter_vec>;
+
+template <typename T>
 concept int_counter_specialization = metric_specialization<T, int_counter>;
 
 template <typename T>
-concept counter_vec_specialization = metric_specialization<T, counter_vec>;
+concept int_counter_vec_specialization = metric_specialization<T, int_counter_vec>;
 
 template <typename T>
 concept gauge_specialization = metric_specialization<T, gauge>;
 
 template <typename T>
+concept gauge_vec_specialization = metric_specialization<T, gauge_vec>;
+
+template <typename T>
 concept int_gauge_specialization = metric_specialization<T, int_gauge>;
 
 template <typename T>
-concept gauge_vec_specialization = metric_specialization<T, gauge_vec>;
+concept int_gauge_vec_specialization = metric_specialization<T, int_gauge_vec>;
 
 template <typename T>
 concept histogram_specialization = metric_specialization<T, histogram>;

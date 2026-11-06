@@ -20,7 +20,9 @@
 #include <boost/prometheus/histogram.hpp>
 #include <boost/prometheus/info_vec.hpp>
 #include <boost/prometheus/info.hpp>
+#include <boost/prometheus/int_counter_vec.hpp>
 #include <boost/prometheus/int_counter.hpp>
+#include <boost/prometheus/int_gauge_vec.hpp>
 #include <boost/prometheus/int_gauge.hpp>
 #include <boost/prometheus/metric_options.hpp>
 
@@ -95,9 +97,11 @@ class registry
     using counter_ptr_type = counter<AtomicPolicyType>*;
     using counter_vec_ptr_type = counter_vec<AtomicPolicyType>*;
     using int_counter_ptr_type = int_counter<AtomicPolicyType>*;
+    using int_counter_vec_ptr_type = int_counter_vec<AtomicPolicyType>*;
     using gauge_ptr_type = gauge<AtomicPolicyType>*;
-    using int_gauge_ptr_type = int_gauge<AtomicPolicyType>*;
     using gauge_vec_ptr_type = gauge_vec<AtomicPolicyType>*;
+    using int_gauge_ptr_type = int_gauge<AtomicPolicyType>*;
+    using int_gauge_vec_ptr_type = int_gauge_vec<AtomicPolicyType>*;
     using histogram_ptr_type = histogram<AtomicPolicyType>*;
     using histogram_vec_ptr_type = histogram_vec<AtomicPolicyType>*;
     using gaugehistogram_ptr_type = gaugehistogram<AtomicPolicyType>*;
@@ -110,9 +114,11 @@ class registry
         counter_ptr_type,
         counter_vec_ptr_type,
         int_counter_ptr_type,
+        int_counter_vec_ptr_type,
         gauge_ptr_type,
-        int_gauge_ptr_type,
         gauge_vec_ptr_type,
+        int_gauge_ptr_type,
+        int_gauge_vec_ptr_type,
         histogram_ptr_type,
         histogram_vec_ptr_type,
         gaugehistogram_ptr_type,

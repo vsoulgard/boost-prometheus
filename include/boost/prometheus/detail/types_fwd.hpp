@@ -46,6 +46,12 @@ template <typename>
 class counter;
 
 template <typename>
+class int_counter_item;
+
+template <typename>
+class int_counter_vec;
+
+template <typename>
 class int_counter;
 
 template <typename>
@@ -56,6 +62,12 @@ class gauge_vec;
 
 template <typename>
 class gauge;
+
+template <typename>
+class int_gauge_item;
+
+template <typename>
+class int_gauge_vec;
 
 template <typename>
 class int_gauge;

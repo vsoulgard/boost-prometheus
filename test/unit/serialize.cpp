@@ -484,6 +484,190 @@ void test_int_counter_openmetrics_1_0()
 }
 
 template <typename AtomicPolicyType>
+void test_int_counter_vec_prometheus_0_0_4()
+{
+    registry<AtomicPolicyType> reg;
+    int_counter_vec<AtomicPolicyType> c("http_requests", {"first", "second"});
+    reg.register_metric(c);
+
+    std::string result;
+    serialize<format::prometheus_0_0_4>(reg, result);
+    BOOST_TEST(result.empty());
+    c.with_labels({"1", "2"}).inc();
+    serialize<format::prometheus_0_0_4>(reg, result);
+    BOOST_TEST(result == std::string_view(
+        "# TYPE http_requests_total counter\n"
+        "http_requests_total{first=\"1\",second=\"2\"} 1\n"));
+    result.clear();
+    c.with_labels({"1", "2"}).inc();
+    serialize<format::prometheus_0_0_4>(reg, result);
+    BOOST_TEST(result == std::string_view(
+        "# TYPE http_requests_total counter\n"
+        "http_requests_total{first=\"1\",second=\"2\"} 2\n"));
+    result.clear();
+    c.with_labels({"3", "4"}).inc();
+    serialize<format::prometheus_0_0_4>(reg, result);
+    // Order is not guaranteed
+    BOOST_TEST(result.find(
+        "# TYPE http_requests_total counter\n") != std::string::npos);
+    BOOST_TEST(result.find(
+        "http_requests_total{first=\"1\",second=\"2\"} 2\n") != std::string::npos);
+    BOOST_TEST(result.find(
+        "http_requests_total{first=\"3\",second=\"4\"} 1\n") != std::string::npos);
+    BOOST_TEST(result.size() == 35u + 44u + 44u);
+    result.clear();
+    c.with_labels({"3", "4"}).inc();
+    c.with_labels({"1", "3"}).inc();
+    serialize<format::prometheus_0_0_4>(reg, result);
+    std::size_t header_pos, metric_pos;
+    header_pos = result.find("# TYPE http_requests_total counter\n");
+    BOOST_TEST(header_pos != std::string::npos);
+    metric_pos = result.find("http_requests_total{first=\"1\",second=\"2\"} 2\n");
+    BOOST_TEST(metric_pos != std::string::npos);
+    BOOST_TEST(metric_pos > header_pos);
+    metric_pos = result.find("http_requests_total{first=\"3\",second=\"4\"} 2\n");
+    BOOST_TEST(metric_pos != std::string::npos);
+    BOOST_TEST(metric_pos > header_pos);
+    metric_pos = result.find("http_requests_total{first=\"1\",second=\"3\"} 1\n");
+    BOOST_TEST(metric_pos != std::string::npos);
+    BOOST_TEST(metric_pos > header_pos);
+    BOOST_TEST(result.size() == 35u + 44u + 44u + 44u);
+    // Multiple counter_vecs
+    int_counter_vec<AtomicPolicyType> c2("http_requests2", {.help = "help text", .unit = ""}, {"third", "fourth"});
+    int_counter_vec<AtomicPolicyType> c3("test_c_seconds", {.help = "", .unit = "seconds"}, {"first", "fifth"});
+    c2.with_labels({"3", "4"}).inc();
+    c3.with_labels({"1", "5"}).inc();
+    reg.register_metric(c2);
+    reg.register_metric(c3);
+    result.clear();
+    serialize<format::prometheus_0_0_4>(reg, result);
+
+    header_pos = result.find("# TYPE http_requests_total counter\n");
+    BOOST_TEST(header_pos != std::string::npos);
+    metric_pos = result.find("http_requests_total{first=\"1\",second=\"2\"} 2\n");
+    BOOST_TEST(metric_pos != std::string::npos);
+    BOOST_TEST(metric_pos > header_pos);
+    metric_pos = result.find("http_requests_total{first=\"3\",second=\"4\"} 2\n");
+    BOOST_TEST(metric_pos != std::string::npos);
+    BOOST_TEST(metric_pos > header_pos);
+    metric_pos = result.find("http_requests_total{first=\"1\",second=\"3\"} 1\n");
+    BOOST_TEST(metric_pos != std::string::npos);
+    BOOST_TEST(metric_pos > header_pos);
+
+    header_pos = result.find(
+        "# TYPE http_requests2_total counter\n"
+        "# HELP http_requests2_total help text\n");
+    metric_pos = result.find("http_requests2_total{fourth=\"4\",third=\"3\"} 1\n");
+    BOOST_TEST(metric_pos != std::string::npos);
+    BOOST_TEST(metric_pos > header_pos);
+
+    header_pos = result.find("# TYPE test_c_seconds_total counter\n");
+    metric_pos = result.find("test_c_seconds_total{fifth=\"5\",first=\"1\"} 1\n");
+    BOOST_TEST(metric_pos != std::string::npos);
+    BOOST_TEST(metric_pos > header_pos);
+    BOOST_TEST(result.size() == 35u + 44u + 44u + 44u + 74u + 45u + 36u + 44u);
+}
+
+template <typename AtomicPolicyType>
+void test_int_counter_vec_openmetrics_1_0()
+{
+    registry<AtomicPolicyType> reg;
+    int_counter_vec<AtomicPolicyType> c("http_requests", {"first", "second"});
+    reg.register_metric(c);
+
+    std::string result;
+    serialize<format::openmetrics_1_0>(reg, result);
+    BOOST_TEST(result == "# EOF\n");
+    result.clear();
+    c.with_labels({"1", "2"}).inc();
+    serialize<format::openmetrics_1_0>(reg, result);
+    BOOST_TEST(result == std::string_view(
+        "# TYPE http_requests counter\n"
+        "http_requests_total{first=\"1\",second=\"2\"} 1\n"
+        "# EOF\n"));
+    result.clear();
+    c.with_labels({"1", "2"}).inc();
+    serialize<format::openmetrics_1_0>(reg, result);
+    BOOST_TEST(result == std::string_view(
+        "# TYPE http_requests counter\n"
+        "http_requests_total{first=\"1\",second=\"2\"} 2\n"
+        "# EOF\n"));
+    result.clear();
+    c.with_labels({"3", "4"}).inc();
+    serialize<format::openmetrics_1_0>(reg, result);
+    // Order is not guaranteed
+    BOOST_TEST(result.find(
+        "# TYPE http_requests counter\n") != std::string::npos);
+    BOOST_TEST(result.find(
+        "http_requests_total{first=\"1\",second=\"2\"} 2\n") != std::string::npos);
+    BOOST_TEST(result.find(
+        "http_requests_total{first=\"3\",second=\"4\"} 1\n") != std::string::npos);
+    BOOST_TEST(result.substr(result.size() - 6u, 6u) == std::string_view(
+        "# EOF\n"
+    ));
+    BOOST_TEST(result.size() == 29u + 44u + 44u + 6u);
+    result.clear();
+    c.with_labels({"3", "4"}).inc();
+    c.with_labels({"1", "3"}).inc();
+    serialize<format::openmetrics_1_0>(reg, result);
+    std::size_t header_pos, metric_pos;
+    header_pos = result.find("# TYPE http_requests counter\n");
+    BOOST_TEST(header_pos != std::string::npos);
+    metric_pos = result.find("http_requests_total{first=\"1\",second=\"2\"} 2\n");
+    BOOST_TEST(metric_pos != std::string::npos);
+    BOOST_TEST(metric_pos > header_pos);
+    metric_pos = result.find("http_requests_total{first=\"3\",second=\"4\"} 2\n");
+    BOOST_TEST(metric_pos != std::string::npos);
+    BOOST_TEST(metric_pos > header_pos);
+    metric_pos = result.find("http_requests_total{first=\"1\",second=\"3\"} 1\n");
+    BOOST_TEST(metric_pos != std::string::npos);
+    BOOST_TEST(metric_pos > header_pos);
+    BOOST_TEST(result.substr(result.size() - 6u, 6u) == std::string_view(
+        "# EOF\n"
+    ));
+    BOOST_TEST(result.size() == 29u + 44u + 44u + 44u + 6u);
+    // Multiple counter_vecs
+    int_counter_vec<AtomicPolicyType> c2("http_requests2", {.help = "help text", .unit = ""}, {"third", "fourth"});
+    int_counter_vec<AtomicPolicyType> c3("test_c_seconds", {.help = "", .unit = "seconds"}, {"first", "fifth"});
+    c2.with_labels({"3", "4"}).inc();
+    c3.with_labels({"1", "5"}).inc();
+    reg.register_metric(c2);
+    reg.register_metric(c3);
+    result.clear();
+    serialize<format::openmetrics_1_0>(reg, result);
+
+    header_pos = result.find("# TYPE http_requests counter\n");
+    BOOST_TEST(header_pos != std::string::npos);
+    metric_pos = result.find("http_requests_total{first=\"1\",second=\"2\"} 2\n");
+    BOOST_TEST(metric_pos != std::string::npos);
+    BOOST_TEST(metric_pos > header_pos);
+    metric_pos = result.find("http_requests_total{first=\"3\",second=\"4\"} 2\n");
+    BOOST_TEST(metric_pos != std::string::npos);
+    BOOST_TEST(metric_pos > header_pos);
+    metric_pos = result.find("http_requests_total{first=\"1\",second=\"3\"} 1\n");
+    BOOST_TEST(metric_pos != std::string::npos);
+    BOOST_TEST(metric_pos > header_pos);
+
+    header_pos = result.find(
+        "# TYPE http_requests2 counter\n"
+        "# HELP http_requests2 help text\n");
+    metric_pos = result.find("http_requests2_total{fourth=\"4\",third=\"3\"} 1\n");
+    BOOST_TEST(metric_pos != std::string::npos);
+    BOOST_TEST(metric_pos > header_pos);
+
+    header_pos = result.find(
+        "# TYPE test_c_seconds counter\n"
+        "# UNIT test_c_seconds seconds\n");
+    metric_pos = result.find("test_c_seconds_total{fifth=\"5\",first=\"1\"} 1\n");
+    BOOST_TEST(metric_pos != std::string::npos);
+    BOOST_TEST(metric_pos > header_pos);
+    BOOST_TEST(result.substr(result.size() - 6u, 6u) == std::string_view(
+        "# EOF\n"
+    ));
+    BOOST_TEST(result.size() == 29u + 44u + 44u + 44u + 62u + 45u + 60u + 44u + 6u);
+}
+
+template <typename AtomicPolicyType>
 void test_gauge_prometheus_0_0_4()
 {
     registry<AtomicPolicyType> reg;
@@ -916,6 +1100,191 @@ void test_int_gauge_openmetrics_1_0()
         "# EOF\n"
     ));
     BOOST_TEST(result.size() == 38u + 68u + 79u + 6u);
+}
+
+template <typename AtomicPolicyType>
+void test_int_gauge_vec_prometheus_0_0_4()
+{
+    registry<AtomicPolicyType> reg;
+    int_gauge_vec<AtomicPolicyType> g("test_gauge", {"first", "second"});
+    reg.register_metric(g);
+
+    std::string result;
+    serialize<format::prometheus_0_0_4>(reg, result);
+    BOOST_TEST(result.empty());
+    g.with_labels({"1", "2"}).inc();
+    serialize<format::prometheus_0_0_4>(reg, result);
+    BOOST_TEST(result == std::string_view(
+        "# TYPE test_gauge gauge\n"
+        "test_gauge{first=\"1\",second=\"2\"} 1\n"));
+    result.clear();
+    g.with_labels({"1", "2"}).dec(2);
+    serialize<format::prometheus_0_0_4>(reg, result);
+    BOOST_TEST(result == std::string_view(
+        "# TYPE test_gauge gauge\n"
+        "test_gauge{first=\"1\",second=\"2\"} -1\n"));
+    result.clear();
+    g.with_labels({"3", "4"}).inc();
+    serialize<format::prometheus_0_0_4>(reg, result);
+    // Order is not guaranteed
+    BOOST_TEST(result.find(
+        "# TYPE test_gauge gauge\n") != std::string::npos);
+    BOOST_TEST(result.find(
+        "test_gauge{first=\"1\",second=\"2\"} -1\n") != std::string::npos);
+    BOOST_TEST(result.find(
+        "test_gauge{first=\"3\",second=\"4\"} 1\n") != std::string::npos);
+    BOOST_TEST(result.size() == 24u + 35u + 36u);
+    result.clear();
+    g.with_labels({"3", "4"}).inc();
+    g.with_labels({"1", "3"}).inc();
+    serialize<format::prometheus_0_0_4>(reg, result);
+    std::size_t header_pos, metric_pos;
+    header_pos = result.find("# TYPE test_gauge gauge\n");
+    BOOST_TEST(header_pos != std::string::npos);
+    metric_pos = result.find("test_gauge{first=\"1\",second=\"2\"} -1\n");
+    BOOST_TEST(metric_pos != std::string::npos);
+    BOOST_TEST(metric_pos > header_pos);
+    metric_pos = result.find("test_gauge{first=\"3\",second=\"4\"} 2\n");
+    BOOST_TEST(metric_pos != std::string::npos);
+    BOOST_TEST(metric_pos > header_pos);
+    metric_pos = result.find("test_gauge{first=\"1\",second=\"3\"} 1\n");
+    BOOST_TEST(metric_pos != std::string::npos);
+    BOOST_TEST(metric_pos > header_pos);
+    BOOST_TEST(result.size() == 24u + 35u + 35u + 36u);
+    // Multiple gauge_vecs
+    int_gauge_vec<AtomicPolicyType> g2("test_gauge2", {.help = "help text", .unit = ""}, {"third", "fourth"});
+    int_gauge_vec<AtomicPolicyType> g3("test_gauge_bytes", {.help = "", .unit = "bytes"}, {"first", "fifth"});
+    g2.with_labels({"3", "4"}).inc();
+    g3.with_labels({"1", "5"}).inc();
+    reg.register_metric(g2);
+    reg.register_metric(g3);
+    result.clear();
+    serialize<format::prometheus_0_0_4>(reg, result);
+
+    header_pos = result.find("# TYPE test_gauge gauge\n");
+    BOOST_TEST(header_pos != std::string::npos);
+    metric_pos = result.find("test_gauge{first=\"1\",second=\"2\"} -1\n");
+    BOOST_TEST(metric_pos != std::string::npos);
+    BOOST_TEST(metric_pos > header_pos);
+    metric_pos = result.find("test_gauge{first=\"3\",second=\"4\"} 2\n");
+    BOOST_TEST(metric_pos != std::string::npos);
+    BOOST_TEST(metric_pos > header_pos);
+    metric_pos = result.find("test_gauge{first=\"1\",second=\"3\"} 1\n");
+    BOOST_TEST(metric_pos != std::string::npos);
+    BOOST_TEST(metric_pos > header_pos);
+
+    header_pos = result.find(
+        "# TYPE test_gauge2 gauge\n"
+        "# HELP test_gauge2 help text\n");
+    metric_pos = result.find("test_gauge2{fourth=\"4\",third=\"3\"} 1\n");
+    BOOST_TEST(metric_pos != std::string::npos);
+    BOOST_TEST(metric_pos > header_pos);
+
+    header_pos = result.find(
+        "# TYPE test_gauge_bytes gauge\n");
+    metric_pos = result.find("test_gauge_bytes{fifth=\"5\",first=\"1\"} 1\n");
+    BOOST_TEST(metric_pos != std::string::npos);
+    BOOST_TEST(metric_pos > header_pos);
+    BOOST_TEST(result.size() == 24u + 35u + 35u + 36u + 54u + 36u + 30u + 40u);
+}
+
+template <typename AtomicPolicyType>
+void test_int_gauge_vec_openmetrics_1_0()
+{
+    registry<AtomicPolicyType> reg;
+    int_gauge_vec<AtomicPolicyType> g("test_gauge", {"first", "second"});
+    reg.register_metric(g);
+
+    std::string result;
+    serialize<format::openmetrics_1_0>(reg, result);
+    BOOST_TEST(result == "# EOF\n");
+    result.clear();
+    g.with_labels({"1", "2"}).inc();
+    serialize<format::openmetrics_1_0>(reg, result);
+    BOOST_TEST(result == std::string_view(
+        "# TYPE test_gauge gauge\n"
+        "test_gauge{first=\"1\",second=\"2\"} 1\n"
+        "# EOF\n"));
+    result.clear();
+    g.with_labels({"1", "2"}).dec(2);
+    serialize<format::openmetrics_1_0>(reg, result);
+    BOOST_TEST(result == std::string_view(
+        "# TYPE test_gauge gauge\n"
+        "test_gauge{first=\"1\",second=\"2\"} -1\n"
+        "# EOF\n"));
+    result.clear();
+    g.with_labels({"3", "4"}).inc();
+    serialize<format::openmetrics_1_0>(reg, result);
+    // Order is not guaranteed
+    BOOST_TEST(result.find(
+        "# TYPE test_gauge gauge\n") != std::string::npos);
+    BOOST_TEST(result.find(
+        "test_gauge{first=\"1\",second=\"2\"} -1\n") != std::string::npos);
+    BOOST_TEST(result.find(
+        "test_gauge{first=\"3\",second=\"4\"} 1\n") != std::string::npos);
+    BOOST_TEST(result.substr(result.size() - 6u, 6u) == std::string_view(
+        "# EOF\n"
+    ));
+    BOOST_TEST(result.size() == 24u + 35u + 36u + 6u);
+    result.clear();
+    g.with_labels({"3", "4"}).inc();
+    g.with_labels({"1", "3"}).inc();
+    serialize<format::openmetrics_1_0>(reg, result);
+    std::size_t header_pos, metric_pos;
+    header_pos = result.find("# TYPE test_gauge gauge\n");
+    BOOST_TEST(header_pos != std::string::npos);
+    metric_pos = result.find("test_gauge{first=\"1\",second=\"2\"} -1\n");
+    BOOST_TEST(metric_pos != std::string::npos);
+    BOOST_TEST(metric_pos > header_pos);
+    metric_pos = result.find("test_gauge{first=\"3\",second=\"4\"} 2\n");
+    BOOST_TEST(metric_pos != std::string::npos);
+    BOOST_TEST(metric_pos > header_pos);
+    metric_pos = result.find("test_gauge{first=\"1\",second=\"3\"} 1\n");
+    BOOST_TEST(metric_pos != std::string::npos);
+    BOOST_TEST(metric_pos > header_pos);
+    BOOST_TEST(result.substr(result.size() - 6u, 6u) == std::string_view(
+        "# EOF\n"
+    ));
+    BOOST_TEST(result.size() == 24u + 35u + 35u + 36u + 6u);
+    // Multiple gauge_vecs
+    int_gauge_vec<AtomicPolicyType> g2("test_gauge2", {.help = "help text", .unit = ""}, {"third", "fourth"});
+    int_gauge_vec<AtomicPolicyType> g3("test_gauge_bytes", {.help = "", .unit = "bytes"}, {"first", "fifth"});
+    g2.with_labels({"3", "4"}).inc();
+    g3.with_labels({"1", "5"}).inc();
+    reg.register_metric(g2);
+    reg.register_metric(g3);
+    result.clear();
+    serialize<format::openmetrics_1_0>(reg, result);
+
+    header_pos = result.find("# TYPE test_gauge gauge\n");
+    BOOST_TEST(header_pos != std::string::npos);
+    metric_pos = result.find("test_gauge{first=\"1\",second=\"2\"} -1\n");
+    BOOST_TEST(metric_pos != std::string::npos);
+    BOOST_TEST(metric_pos > header_pos);
+    metric_pos = result.find("test_gauge{first=\"3\",second=\"4\"} 2\n");
+    BOOST_TEST(metric_pos != std::string::npos);
+    BOOST_TEST(metric_pos > header_pos);
+    metric_pos = result.find("test_gauge{first=\"1\",second=\"3\"} 1\n");
+    BOOST_TEST(metric_pos != std::string::npos);
+    BOOST_TEST(metric_pos > header_pos);
+
+    header_pos = result.find(
+        "# TYPE test_gauge2 gauge\n"
+        "# HELP test_gauge2 help text\n");
+    metric_pos = result.find("test_gauge2{fourth=\"4\",third=\"3\"} 1\n");
+    BOOST_TEST(metric_pos != std::string::npos);
+    BOOST_TEST(metric_pos > header_pos);
+
+    header_pos = result.find(
+        "# TYPE test_gauge_bytes gauge\n"
+        "# UNIT test_gauge_bytes bytes\n");
+    metric_pos = result.find("test_gauge_bytes{fifth=\"5\",first=\"1\"} 1\n");
+    BOOST_TEST(metric_pos != std::string::npos);
+    BOOST_TEST(metric_pos > header_pos);
+    BOOST_TEST(result.substr(result.size() - 6u, 6u) == std::string_view(
+        "# EOF\n"
+    ));
+    BOOST_TEST(result.size() == 24u + 35u + 35u + 36u + 54u + 36u + 60u + 40u + 6u);
 }
 
 template <typename AtomicPolicyType>
@@ -3076,6 +3445,26 @@ BOOST_AUTO_TEST_CASE(int_counter_non_atomic_openmetrics_1_0)
     test_int_counter_openmetrics_1_0<atomic_policy<false>>();
 }
 
+BOOST_AUTO_TEST_CASE(int_counter_vec_prometheus_0_0_4)
+{
+    test_int_counter_vec_prometheus_0_0_4<atomic_policy<true>>();
+}
+
+BOOST_AUTO_TEST_CASE(int_counter_vec_non_atomic_prometheus_0_0_4)
+{
+    test_int_counter_vec_prometheus_0_0_4<atomic_policy<false>>();
+}
+
+BOOST_AUTO_TEST_CASE(int_counter_vec_openmetrics_1_0)
+{
+    test_int_counter_vec_openmetrics_1_0<atomic_policy<true>>();
+}
+
+BOOST_AUTO_TEST_CASE(int_counter_vec_non_atomic_openmetrics_1_0)
+{
+    test_int_counter_vec_openmetrics_1_0<atomic_policy<false>>();
+}
+
 BOOST_AUTO_TEST_CASE(gauge_prometheus_0_0_4)
 {
     test_gauge_prometheus_0_0_4<atomic_policy<true>>();
@@ -3134,6 +3523,26 @@ BOOST_AUTO_TEST_CASE(int_gauge_openmetrics_1_0)
 BOOST_AUTO_TEST_CASE(int_gauge_non_atomic_openmetrics_1_0)
 {
     test_int_gauge_openmetrics_1_0<atomic_policy<false>>();
+}
+
+BOOST_AUTO_TEST_CASE(int_gauge_vec_prometheus_0_0_4)
+{
+    test_int_gauge_vec_prometheus_0_0_4<atomic_policy<true>>();
+}
+
+BOOST_AUTO_TEST_CASE(int_gauge_vec_non_atomic_prometheus_0_0_4)
+{
+    test_int_gauge_vec_prometheus_0_0_4<atomic_policy<false>>();
+}
+
+BOOST_AUTO_TEST_CASE(int_gauge_vec_openmetrics_1_0)
+{
+    test_int_gauge_vec_openmetrics_1_0<atomic_policy<true>>();
+}
+
+BOOST_AUTO_TEST_CASE(int_gauge_vec_non_atomic_openmetrics_1_0)
+{
+    test_int_gauge_vec_openmetrics_1_0<atomic_policy<false>>();
 }
 
 BOOST_AUTO_TEST_CASE(histogram_prometheus_0_0_4)

@@ -46,7 +46,7 @@ consteval bool const_find_substr()
 template <string_buffer Str, string_buffer Substr>
 consteval bool const_ends_with()
 {
-    return const_find_substr<Str, Substr, Str.size() - Substr.size()>;
+    return const_find_substr<Str, Substr, Str.size() - Substr.size()>();
 }
 
 } // namespace boost::prometheus::detail
