@@ -44,7 +44,7 @@ struct static_gauge_internal
             }
         }
 
-        gauge_entry(std::string_view formatted_name) : formatted_name(formatted_name), value(0.0) {}
+        gauge_entry(std::string_view formatted_name) : formatted_name(formatted_name), value() {}
     };
 
     std::string_view prometheus_header_;
