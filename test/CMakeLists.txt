@@ -32,6 +32,12 @@ endfunction()
 file(GLOB_RECURSE UNIT_TEST_SOURCES CONFIGURE_DEPENDS "unit/*.cpp")
 add_boost_test(unittests ${UNIT_TEST_SOURCES})
 
+if(MSVC)
+    # Fix MSVC error C1128: number of sections exceeded object file format limit
+    # for some big files, such us serialize.cpp
+    target_compile_options(boost_prometheus_unittests PRIVATE /bigobj)
+endif()
+
 if(BOOST_PROMETHEUS_INTEGRATION_TESTS)
     # OpenSSL required for SSL integration tests
     find_package(OpenSSL REQUIRED)
