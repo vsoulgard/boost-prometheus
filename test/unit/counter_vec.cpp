@@ -47,6 +47,53 @@ BOOST_AUTO_TEST_CASE(construction_custom_options)
 }
 
 template <typename AtomicPolicy>
+void test_construction_rvalue()
+{
+    using key_type = typename counter_vec<AtomicPolicy>::key_type;
+    // Construct by lvalue
+    {
+        // std::vector
+        {
+            std::vector<std::string> vec = {"first", "second"};
+            counter_vec<AtomicPolicy> c("http_requests", vec);
+            BOOST_TEST(vec == std::vector<std::string>({"first", "second"}));
+        }
+        // std::span
+        {
+            std::vector<std::string> vec = {"first", "second"};
+            std::span<const std::string> span = vec;
+            counter_vec<AtomicPolicy> c("http_requests", span);
+            BOOST_TEST(vec == std::vector<std::string>({"first", "second"}));
+        }
+    }
+    // Construct by rvalue
+    {
+        // std::vector
+        {
+            std::vector<std::string> vec = {"first", "second"};
+            counter_vec<AtomicPolicy> c("http_requests", std::move(vec));
+            BOOST_TEST(vec == std::vector<std::string>(2));
+        }
+        // std::span
+        {
+            std::vector<std::string> vec = {"first", "second"};
+            counter_vec<AtomicPolicy> c("http_requests", std::span(vec));
+            BOOST_TEST(vec == std::vector<std::string>({"first", "second"}));
+        }
+    }
+}
+
+BOOST_AUTO_TEST_CASE(construction_rvalue)
+{
+    test_construction_rvalue<atomic_policy<true>>();
+}
+
+BOOST_AUTO_TEST_CASE(construction_rvalue_non_atomic)
+{
+    test_construction_rvalue<atomic_policy<false>>();
+}
+
+template <typename AtomicPolicy>
 void test_with_labels_equal()
 {
     {
