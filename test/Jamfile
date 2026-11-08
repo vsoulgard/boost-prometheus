@@ -11,7 +11,7 @@ import testing ;
 local requirements =
     <library>/boost/prometheus//boost_prometheus
     <library>/boost/test//boost_unit_test_framework/<warnings-as-errors>off
-    <define>BOOST_ALL_NO_LIB=1
+    <define>BOOST_PROMETHEUS_SEPARATE_COMPILATION
     <cxxstd>20
     <include>include
     <toolset>msvc:<cxxflags>/bigobj
@@ -19,6 +19,7 @@ local requirements =
 
 run
     src/entry_point.cpp
+    src/src.cpp
     [ glob unit/*.cpp ]
 : requirements $(requirements)
 : target-name boost_prometheus_unittests
@@ -35,6 +36,7 @@ local integration-requirements =
 
 run
     src/entry_point.cpp
+    src/src.cpp
     [ glob integration/*.cpp ]
 : requirements $(integration-requirements)
 : target-name boost_prometheus_integrationtests

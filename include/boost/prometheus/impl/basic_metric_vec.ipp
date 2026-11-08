@@ -96,21 +96,21 @@ with_labels_impl(SpanType&& labelvalues)
 
 #define BOOST_PROMETHEUS_INSTANTIATE_METRIC_VEC_METHODS(A, D, I, O, Span) \
     template void basic_metric_vec<A, D<A>, I<A>, O>                      \
-    ::init(std::string_view , O&&, Span&&);                               \
+    ::init(std::string_view , O&&, Span);                                 \
     template I<A>& basic_metric_vec<A, D<A>, I<A>, O>                     \
-    ::with_labels_impl(Span&&);
+    ::with_labels_impl(Span);
 
 #define BOOST_PROMETHEUS_INSTANTIATE_METRIC_VEC(D, I, O)                                                              \
     template class basic_metric_vec<atomic_policy<true>, D<atomic_policy<true>>, I<atomic_policy<true>>, O>;          \
     template class basic_metric_vec<atomic_policy<false>, D<atomic_policy<false>>, I<atomic_policy<false>>, O>;       \
-    BOOST_PROMETHEUS_INSTANTIATE_METRIC_VEC_METHODS(atomic_policy<true>, D, I, O, std::span<const std::string_view>)  \
-    BOOST_PROMETHEUS_INSTANTIATE_METRIC_VEC_METHODS(atomic_policy<true>, D, I, O, std::span<const std::string>)       \
-    BOOST_PROMETHEUS_INSTANTIATE_METRIC_VEC_METHODS(atomic_policy<true>, D, I, O, std::vector<std::string>)           \
-    BOOST_PROMETHEUS_INSTANTIATE_METRIC_VEC_METHODS(atomic_policy<true>, D, I, O, metric_vec::key_type)               \
-    BOOST_PROMETHEUS_INSTANTIATE_METRIC_VEC_METHODS(atomic_policy<false>, D, I, O, std::span<const std::string_view>) \
-    BOOST_PROMETHEUS_INSTANTIATE_METRIC_VEC_METHODS(atomic_policy<false>, D, I, O, std::span<const std::string>)      \
-    BOOST_PROMETHEUS_INSTANTIATE_METRIC_VEC_METHODS(atomic_policy<false>, D, I, O, std::vector<std::string>)          \
-    BOOST_PROMETHEUS_INSTANTIATE_METRIC_VEC_METHODS(atomic_policy<false>, D, I, O, metric_vec::key_type)
+    BOOST_PROMETHEUS_INSTANTIATE_METRIC_VEC_METHODS(atomic_policy<true>, D, I, O, std::span<const std::string_view>&) \
+    BOOST_PROMETHEUS_INSTANTIATE_METRIC_VEC_METHODS(atomic_policy<true>, D, I, O, std::span<const std::string>&)      \
+    BOOST_PROMETHEUS_INSTANTIATE_METRIC_VEC_METHODS(atomic_policy<true>, D, I, O, std::vector<std::string>&&)         \
+    BOOST_PROMETHEUS_INSTANTIATE_METRIC_VEC_METHODS(atomic_policy<true>, D, I, O, metric_vec::key_type&&)             \
+    BOOST_PROMETHEUS_INSTANTIATE_METRIC_VEC_METHODS(atomic_policy<false>, D, I, O, std::span<const std::string_view>&)\
+    BOOST_PROMETHEUS_INSTANTIATE_METRIC_VEC_METHODS(atomic_policy<false>, D, I, O, std::span<const std::string>&)     \
+    BOOST_PROMETHEUS_INSTANTIATE_METRIC_VEC_METHODS(atomic_policy<false>, D, I, O, std::vector<std::string>&&)        \
+    BOOST_PROMETHEUS_INSTANTIATE_METRIC_VEC_METHODS(atomic_policy<false>, D, I, O, metric_vec::key_type&&)
 
 namespace boost::prometheus::detail {
 
