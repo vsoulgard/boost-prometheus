@@ -33,7 +33,7 @@ namespace boost::prometheus {
  * `requests_total`. Passing a name that already contains `_total` is a
  * precondition violation (checked in debug builds via `BOOST_ASSERT_MSG`).
  *
- * \tparam AtomicPolicyType Compile-time atomicity policy. The default,
+ * \tparam AtomicPolicy Compile-time atomicity policy. The default,
  *         `default_atomic_policy` (i.e. `atomic_policy<true>`), makes
  *         `inc()` thread-safe. Use `atomic_policy<false>` to skip the atomic
  *         RMW when updates are externally synchronized.
@@ -51,26 +51,17 @@ namespace boost::prometheus {
  * // Exposed as: requests_total 6
  * \endcode
  */
-template <typename AtomicPolicyType = default_atomic_policy>
+template <typename AtomicPolicy = default_atomic_policy>
 class counter
 {
-    using internal_type = detail::gauge_internal<double, AtomicPolicyType>;
+    using internal_type = detail::gauge_internal<double, AtomicPolicy, true>;
 
     internal_type internal_;
 
     // Serialization
     friend struct boost::prometheus::format;
 
-    static internal_type init_internal(std::string_view name, const metric_opts& options)
-    {
-        BOOST_ASSERT_MSG(name.find("_total") == std::string_view::npos,
-            "Counter name shouldn't contain \"_total\" suffix; it will be appended automatically");
-        auto prefixes = detail::serialize_prefix<
-            detail::metric_type_string<counter>::prometheus_type,
-            detail::metric_type_string<counter>::openmetrics_type
-        >(name, options);
-        return internal_type(std::move(prefixes.base_string), prefixes.openmetrics_prefix_offset);
-    }
+    static internal_type init_internal(std::string_view name, const metric_opts& options);
 
 public:
 
@@ -122,5 +113,9 @@ public:
 };
 
 } // namespace boost::prometheus
+
+#ifdef BOOST_PROMETHEUS_HEADER_ONLY
+#include <boost/prometheus/impl/counter.ipp>
+#endif
 
 #endif

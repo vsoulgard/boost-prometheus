@@ -35,7 +35,7 @@ struct types_element_index
 };
 
 BOOST_PROMETHEUS_MSVC_DISABLE_ALIGN_WARNING
-template <typename AtomicPolicyType, typename... Ts>
+template <typename AtomicPolicy, typename... Ts>
 class tuple_unordered_flat_sets
 {
     struct alignas(cache_line_size) aligned_mutex
@@ -44,10 +44,9 @@ class tuple_unordered_flat_sets
     };
 
     using mutex_array_type = std::conditional_t<
-        AtomicPolicyType::enabled,
+        AtomicPolicy::enabled,
         std::array<aligned_mutex, sizeof...(Ts)>,
-        std::tuple<>
-    >;
+        std::tuple<>>;
 
     std::tuple<boost::unordered_flat_set<Ts>...> sets_;
     [[no_unique_address]]
@@ -60,7 +59,7 @@ public:
     {   
         using clean_type = std::decay_t<T>;
 
-        if constexpr (AtomicPolicyType::enabled)
+        if constexpr (AtomicPolicy::enabled)
         {
             std::lock_guard lock(mutexes_[types_element_index<clean_type, Ts...>::value].mtx);
             std::get<boost::unordered_flat_set<clean_type>>(sets_).insert(std::forward<T>(value));
@@ -76,7 +75,7 @@ public:
     {
         using clean_type = std::decay_t<T>;
 
-        if constexpr (AtomicPolicyType::enabled)
+        if constexpr (AtomicPolicy::enabled)
         {
             std::lock_guard lock(mutexes_[types_element_index<clean_type, Ts...>::value].mtx);
             return std::get<boost::unordered_flat_set<clean_type>>(sets_).erase(std::forward<T>(value));
@@ -100,7 +99,7 @@ public:
         {
             auto process_one = [&](auto& set)
             {
-                if constexpr (AtomicPolicyType::enabled)
+                if constexpr (AtomicPolicy::enabled)
                 {   
                     using set_type = std::remove_cvref_t<decltype(set)>;
                     std::lock_guard lock(mutexes_[

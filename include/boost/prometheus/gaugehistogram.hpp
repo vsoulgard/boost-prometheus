@@ -34,7 +34,7 @@ namespace boost::prometheus {
  *
  * When `histogram_opts::buckets` is empty, `default_buckets` is used.
  *
- * \tparam AtomicPolicyType Compile-time atomicity policy. The default,
+ * \tparam AtomicPolicy Compile-time atomicity policy. The default,
  *         `default_atomic_policy` (i.e. `atomic_policy<true>`), makes
  *         `observe()` and `sub()` thread-safe. Use `atomic_policy<false>`
  *         to skip atomic operations when updates are externally
@@ -64,10 +64,10 @@ namespace boost::prometheus {
  * temperature.observe(55.0);
  * \endcode
  */
-template <typename AtomicPolicyType = default_atomic_policy>
+template <typename AtomicPolicy = default_atomic_policy>
 class gaugehistogram
 {
-    using internal_type = detail::gaugehistogram_internal<AtomicPolicyType>;
+    using internal_type = detail::gaugehistogram_internal<AtomicPolicy>;
 
     internal_type internal_;
 
@@ -77,46 +77,7 @@ class gaugehistogram
     // Serialization
     friend struct boost::prometheus::format;
 
-    static internal_type init_internal(std::string_view name, const histogram_opts& options)
-    {
-        auto headers = detail::serialize_header<
-            detail::metric_type_string<gaugehistogram>::prometheus_type,
-            detail::metric_type_string<gaugehistogram>::openmetrics_type
-        >(name, options);
-        // Fallback 0.0.4 format headers (serialized as gauges)
-        auto sum_header = detail::serialize_header<
-            "gauge",
-            "gauge",
-            "_gsum"
-        >(name, histogram_opts{});
-        auto count_header = detail::serialize_header<
-            "gauge",
-            "gauge",
-            "_gcount"
-        >(name, histogram_opts{});
-
-        std::span<const double> bucket_boundaries;
-        if (!options.buckets.empty())
-        {
-            bucket_boundaries = options.buckets;
-        }
-        else
-        {
-            bucket_boundaries = default_buckets::values;
-        }
-        auto histogram_names = detail::serialize_gaugehistogram_names(name, bucket_boundaries);
-        return internal_type(
-            std::move(headers.base_string),
-            headers.openmetrics_prefix_offset,
-            bucket_boundaries,
-            std::move(histogram_names.base_string),
-            histogram_names.buckets_offsets,
-            histogram_names.sum_offset,
-            histogram_names.count_offset,
-            std::move(sum_header.base_string),
-            std::move(count_header.base_string)
-        );
-    }
+    static internal_type init_internal(std::string_view name, const histogram_opts& options);
 
 public:
 
@@ -191,5 +152,9 @@ public:
 };
 
 } // namespace boost::prometheus
+
+#ifdef BOOST_PROMETHEUS_HEADER_ONLY
+#include <boost/prometheus/impl/gaugehistogram.ipp>
+#endif
 
 #endif

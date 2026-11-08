@@ -10,6 +10,13 @@
 
 #include <cstddef>
 
+#if defined(BOOST_PROMETHEUS_SEPARATE_COMPILATION)
+    #define BOOST_PROMETHEUS_DECL
+#else
+    #define BOOST_PROMETHEUS_HEADER_ONLY
+    #define BOOST_PROMETHEUS_DECL inline
+#endif
+
 #ifndef BOOST_PROMETHEUS_CACHE_LINE_SIZE
 #define BOOST_PROMETHEUS_CACHE_LINE_SIZE 64
 #endif
