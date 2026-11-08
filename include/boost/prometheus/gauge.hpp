@@ -27,7 +27,7 @@ namespace boost::prometheus {
  * Unlike \ref counter, the exposition name is emitted as-is — no suffix
  * is appended automatically.
  *
- * \tparam AtomicPolicyType Compile-time atomicity policy. The default,
+ * \tparam AtomicPolicy Compile-time atomicity policy. The default,
  *         `default_atomic_policy` (i.e. `atomic_policy<true>`), makes
  *         `inc()`, `dec()`, and `set()` thread-safe. Use `atomic_policy<false>`
  *         to skip atomic operations when updates are externally synchronized.
@@ -47,24 +47,17 @@ namespace boost::prometheus {
  * // Exposed as: applications_active 100
  * \endcode
  */
-template <typename AtomicPolicyType = default_atomic_policy>
+template <typename AtomicPolicy = default_atomic_policy>
 class gauge
 {
-    using internal_type = detail::gauge_internal<double, AtomicPolicyType>;
+    using internal_type = detail::gauge_internal<double, AtomicPolicy, true>;
 
     internal_type internal_;
 
     // Serialization
     friend struct boost::prometheus::format;
 
-    static internal_type init_internal(std::string_view name, const metric_opts& options)
-    {
-        auto prefixes = detail::serialize_prefix<
-            detail::metric_type_string<gauge>::prometheus_type,
-            detail::metric_type_string<gauge>::openmetrics_type
-        >(name, options);
-        return internal_type(std::move(prefixes.base_string), prefixes.openmetrics_prefix_offset);
-    }
+    static internal_type init_internal(std::string_view name, const metric_opts& options);
 
 public:
 
@@ -129,5 +122,9 @@ public:
 };
 
 } // namespace boost::prometheus
+
+#ifdef BOOST_PROMETHEUS_HEADER_ONLY
+#include <boost/prometheus/impl/gauge.ipp>
+#endif
 
 #endif

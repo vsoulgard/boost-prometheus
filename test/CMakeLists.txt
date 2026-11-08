@@ -10,13 +10,19 @@ if(NOT (BOOST_SUPERPROJECT_VERSION OR DEFINED BOOST_SUPERPROJECT_SOURCE_DIR))
 endif()
 
 function(add_boost_test test_name)
-    add_executable(${PROJECT_NAME}_${test_name} src/entry_point.cpp ${ARGN})
+    add_executable(${PROJECT_NAME}_${test_name} src/entry_point.cpp src/src.cpp ${ARGN})
 
     target_include_directories(${PROJECT_NAME}_${test_name} PRIVATE include)
     target_link_libraries(${PROJECT_NAME}_${test_name}
         PRIVATE
             Boost::prometheus
             Boost::unit_test_framework
+    )
+
+    target_compile_definitions(
+        ${PROJECT_NAME}_${test_name}
+        PRIVATE
+        BOOST_PROMETHEUS_SEPARATE_COMPILATION
     )
 
     # Follow the Boost convention: don't build test targets by default,
@@ -35,7 +41,7 @@ add_boost_test(unittests ${UNIT_TEST_SOURCES})
 if(MSVC)
     # Fix MSVC error C1128: number of sections exceeded object file format limit
     # for some big files, such us serialize.cpp
-    target_compile_options(boost_prometheus_unittests PRIVATE /bigobj)
+    target_compile_options(${PROJECT_NAME}_unittests PRIVATE /bigobj)
 endif()
 
 if(BOOST_PROMETHEUS_INTEGRATION_TESTS)

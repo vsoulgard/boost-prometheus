@@ -16,10 +16,9 @@
 #include <boost/prometheus/pushgateway_errc.hpp>
 #include <boost/prometheus/serialize.hpp>
 
-#include <boost/beast/http.hpp>
-
 #include <boost/asio/basic_stream_socket.hpp>
 #include <boost/asio/ip/tcp.hpp>
+#include <boost/beast/http.hpp>
 
 #include <string_view>
 #include <tuple>
@@ -195,7 +194,8 @@ private:
         std::string host = endpoint.address().to_string();
         if (endpoint.address().is_v6())
             host = "[" + host + "]";
-        host += ":" + std::to_string(endpoint.port());
+        host += std::string_view(":");
+        host += std::to_string(endpoint.port());
         request.set(beast::http::field::host, host);
 
         request.set(beast::http::field::content_type,

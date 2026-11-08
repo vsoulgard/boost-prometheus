@@ -24,6 +24,13 @@
 
 namespace boost::prometheus::detail {
 
+struct metric_vec
+{
+    // Number of preallocated labels in small_vector
+    static constexpr std::size_t key_static_size = 4;
+    using key_type = boost::container::small_vector<std::string, key_static_size>;
+};
+
 /**
  * \brief Common base for all metric vector types.
  *
@@ -85,8 +92,6 @@ template <typename AtomicPolicy, typename DerivedType, typename ItemType, typena
 class basic_metric_vec
 {
     static constexpr std::size_t map_initial_size = 50;
-    // Number of preallocated labels in small_vector
-    static constexpr std::size_t key_static_size = 4;
 
 public:
 
@@ -100,7 +105,7 @@ public:
      * Exposed publicly so that callers can pre-construct a key and pass
      * it by rvalue to `with_labels(...)`, avoiding the final move.
      */
-    using key_type = boost::container::small_vector<std::string, key_static_size>;
+    using key_type = metric_vec::key_type;
 
 protected:
 
@@ -141,7 +146,7 @@ protected:
     map_type map_;
 
     // Sorted labels and original index for serialization.
-    boost::container::small_vector<std::pair<std::string, std::size_t>, key_static_size> labels_;
+    boost::container::small_vector<std::pair<std::string, std::size_t>, metric_vec::key_static_size> labels_;
     // Contains both format prefixes.
     std::string both_format_prefixes_;
     // Headers point to header part of prefix string.
@@ -164,50 +169,7 @@ protected:
      * builds.
      */
     template <typename SpanType>
-    void init(std::string_view name, OptionsType&& options, SpanType&& labels)
-    {
-        BOOST_ASSERT_MSG(name.size() > 0, "Metric name cannot be empty");
-        BOOST_ASSERT_MSG(std::unordered_set<std::string_view>(labels.begin(), labels.end()).size() == labels.size(),
-            "Detected duplicate labels");
-        BOOST_ASSERT_MSG(labels.size() > 0, "Labels list cannot be empty");
-
-        map_.reserve(map_initial_size);
-        labels_.reserve(labels.size());
-        for (std::size_t i = 0; i < labels.size(); i++)
-        {
-            if constexpr (std::is_lvalue_reference_v<SpanType>)
-                labels_.emplace_back(labels[i], i);
-            else
-                labels_.emplace_back(std::move(labels[i]), i);
-        }
-        // Sort labels
-        std::sort(labels_.begin(), labels_.end());
-        // Format prefixes
-        auto prefixes = serialize_prefix<
-            detail::metric_type_string<item_type>::prometheus_type,
-            detail::metric_type_string<item_type>::openmetrics_type,
-            true, false, true
-        >(name, options);
-        both_format_prefixes_ = std::move(prefixes.base_string);
-        prometheus_header_sv_ = std::string_view(both_format_prefixes_).substr(
-            0,
-            prefixes.metric_name_offset
-        );
-        if (prefixes.openmetrics_prefix_offset != 0)
-        {
-            openmetrics_header_sv_ = std::string_view(both_format_prefixes_).substr(
-                prefixes.openmetrics_prefix_offset,
-                both_format_prefixes_.size() - prefixes.openmetrics_prefix_offset);
-        }
-        else
-        {
-            openmetrics_header_sv_ = prometheus_header_sv_;
-        }
-        metric_name_sv_ = std::string_view(both_format_prefixes_).substr(
-            prefixes.metric_name_offset,
-            name.size());
-        BOOST_ASSERT(metric_name_sv_ == name);
-    }
+    void init(std::string_view name, OptionsType&& options, SpanType&& labels);
 
     /**
      * Called by `with_labels(...)` only on a cache miss, i.e. when a new
@@ -235,9 +197,9 @@ protected:
     }
 
     template <typename SpanType>
-    item_type& with_labels_atomic_impl(SpanType&& labelvalues)
+    ItemType& with_labels_atomic_impl(SpanType&& labelvalues)
     {
-        item_type* result;
+        ItemType* result;
         auto get_result = [&result](auto& element)
         {
             result = &element.second;
@@ -263,7 +225,7 @@ protected:
     }
 
     template <typename SpanType>
-    item_type& with_labels_non_atomic_impl(SpanType&& labelvalues)
+    ItemType& with_labels_non_atomic_impl(SpanType&& labelvalues)
     {
         // find (no copy)
         auto it = map_.find(labelvalues);
@@ -286,15 +248,7 @@ protected:
      * \pre `labels_.size() == labelvalues.size()`.
      */
     template <typename SpanType>
-    item_type& with_labels_impl(SpanType&& labelvalues)
-    {
-        BOOST_ASSERT_MSG(labels_.size() == labelvalues.size(),
-            "Incorrect label values count");
-        if constexpr (AtomicPolicy::enabled)
-            return with_labels_atomic_impl(std::forward<SpanType>(labelvalues));
-        else
-            return with_labels_non_atomic_impl(std::forward<SpanType>(labelvalues));
-    }
+    ItemType& with_labels_impl(SpanType&& labelvalues);
 
 public:
 
@@ -342,10 +296,7 @@ public:
      * Mirrors `ItemType::is_atomic()`. When `true`, `with_labels(...)`
      * and item mutations are thread-safe; when `false`, they are not.
      */
-    consteval static bool is_atomic()
-    {
-        return item_type::is_atomic();
-    }
+    consteval static bool is_atomic() { return item_type::is_atomic(); }
 
     /**
      * \brief Returns the number of resolved label combinations.
@@ -358,10 +309,7 @@ public:
      * Safe to call concurrently with `with_labels(...)` and item updates
      * when the atomic policy is enabled.
      */
-    std::size_t size() const noexcept
-    {
-        return map_.size();
-    }
+    std::size_t size() const noexcept { return map_.size(); }
 
     /**
      * \brief Returns a reference to the counter for the given label values.
@@ -464,5 +412,9 @@ public:
 };
 
 } // namespace boost::prometheus::detail
+
+#ifdef BOOST_PROMETHEUS_HEADER_ONLY
+#include <boost/prometheus/impl/basic_metric_vec.ipp>
+#endif
 
 #endif

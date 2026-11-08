@@ -11,6 +11,7 @@
 #include <boost/prometheus/metric_options.hpp>
 
 #include <boost/prometheus/detail/basic_metric_internal.hpp>
+#include <boost/prometheus/detail/config.hpp>
 
 #include <boost/prometheus/detail/export/metric_type_string.hpp>
 #include <boost/prometheus/detail/export/serialize_header.hpp>
@@ -82,14 +83,8 @@ class info
     // Serialization
     friend struct boost::prometheus::format;
 
-    static internal_type init_internal(std::string_view name, const info_opts& options)
-    {
-        auto prefixes = detail::serialize_header<
-            detail::metric_type_string<info>::prometheus_type,
-            detail::metric_type_string<info>::openmetrics_type
-        >(name, options);
-        return internal_type(std::move(prefixes.base_string), prefixes.openmetrics_prefix_offset);
-    }
+    BOOST_PROMETHEUS_DECL
+    static internal_type init_internal(std::string_view name, const info_opts& options);
 
     template <typename SpanType1, typename SpanType2>
     static std::string init_series_name(std::string_view name, SpanType1&& labels, SpanType2&& labelvalues)
@@ -182,5 +177,9 @@ public:
 };
 
 } // namespace boost::prometheus
+
+#ifdef BOOST_PROMETHEUS_HEADER_ONLY
+#include <boost/prometheus/impl/info.ipp>
+#endif
 
 #endif

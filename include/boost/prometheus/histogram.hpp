@@ -63,10 +63,10 @@ namespace boost::prometheus {
  * //   request_duration_seconds_sum 0.51
  * \endcode
  */
-template <typename AtomicPolicyType = default_atomic_policy>
+template <typename AtomicPolicy = default_atomic_policy>
 class histogram
 {
-    using internal_type = detail::histogram_internal<AtomicPolicyType>;
+    using internal_type = detail::histogram_internal<AtomicPolicy>;
 
     internal_type internal_;
 
@@ -76,33 +76,7 @@ class histogram
     // Serialization
     friend struct boost::prometheus::format;
 
-    static internal_type init_internal(std::string_view name, const histogram_opts& options)
-    {
-        auto headers = detail::serialize_header<
-            detail::metric_type_string<histogram>::prometheus_type,
-            detail::metric_type_string<histogram>::openmetrics_type
-        >(name, options);
-        
-        std::span<const double> bucket_boundaries;
-        if (!options.buckets.empty())
-        {
-            bucket_boundaries = options.buckets;
-        }
-        else
-        {
-            bucket_boundaries = default_buckets::values;
-        }
-        auto histogram_names = detail::serialize_histogram_names(name, bucket_boundaries);
-        return internal_type(
-            std::move(headers.base_string),
-            headers.openmetrics_prefix_offset,
-            bucket_boundaries,
-            std::move(histogram_names.base_string),
-            histogram_names.buckets_offsets,
-            histogram_names.sum_offset,
-            histogram_names.count_offset
-        );
-    }
+    static internal_type init_internal(std::string_view name, const histogram_opts& options);
 
 public:
 
@@ -160,5 +134,9 @@ public:
 };
 
 } // namespace boost::prometheus
+
+#ifdef BOOST_PROMETHEUS_HEADER_ONLY
+#include <boost/prometheus/impl/histogram.ipp>
+#endif
 
 #endif

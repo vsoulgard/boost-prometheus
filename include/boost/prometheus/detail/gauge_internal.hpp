@@ -8,9 +8,10 @@
 #ifndef BOOST_PROMETHEUS_DETAIL_GAUGE_INTERNAL_HPP
 #define BOOST_PROMETHEUS_DETAIL_GAUGE_INTERNAL_HPP
 
+#include <boost/prometheus/metric_options.hpp>
+
 #include <boost/prometheus/detail/basic_metric_internal.hpp>
 #include <boost/prometheus/detail/config.hpp>
-#include <boost/prometheus/detail/string_buffer.hpp>
 #include <boost/prometheus/detail/types_fwd.hpp>
 
 #include <atomic>
@@ -18,7 +19,7 @@
 namespace boost::prometheus::detail {
 
 BOOST_PROMETHEUS_MSVC_DISABLE_ALIGN_WARNING
-template <typename T, typename AtomicPolicyType, bool HasPrefixSVs = true>
+template <typename T, typename AtomicPolicyType, bool HasPrefixSVs>
 struct gauge_internal : public basic_metric_internal<AtomicPolicyType, true, HasPrefixSVs>
 {
     using base_type = basic_metric_internal<AtomicPolicyType, true, HasPrefixSVs>;
@@ -32,68 +33,27 @@ struct gauge_internal : public basic_metric_internal<AtomicPolicyType, true, Has
     value_type value_;
 
     gauge_internal(std::string&& base_string)
-    : base_type(std::move(base_string)),
-    value_() {}
+    requires (!HasPrefixSVs);
 
     gauge_internal(std::string&& base_string, std::size_t openmetrics_prefix_offset)
-    : base_type(std::move(base_string), openmetrics_prefix_offset),
-    value_() {}
+    requires (HasPrefixSVs);
 
-    consteval static bool is_atomic()
-    {
-        return AtomicPolicyType::enabled;
-    }
+    consteval static bool is_atomic() { return AtomicPolicyType::enabled; }
 
-    T get_value() const noexcept
-    {
-        if constexpr (AtomicPolicyType::enabled)
-        {
-            return value_.load(std::memory_order_relaxed);
-        }
-        else
-        {
-            return value_;
-        }
-    }
+    T get_value() const noexcept;
 
-    void inc(T value) noexcept
-    {
-        if constexpr (AtomicPolicyType::enabled)
-        {
-            value_.fetch_add(value, std::memory_order_relaxed);
-        }
-        else
-        {
-            value_ += value;
-        }
-    }
+    void inc(T value) noexcept;
 
-    void dec(T value) noexcept
-    {
-        if constexpr (AtomicPolicyType::enabled)
-        {
-            value_.fetch_sub(value, std::memory_order_relaxed);
-        }
-        else
-        {
-            value_ -= value;
-        }
-    }
+    void dec(T value) noexcept;
 
-    void set(T value) noexcept
-    {
-        if constexpr (AtomicPolicyType::enabled)
-        {
-            value_.store(value, std::memory_order_relaxed);
-        }
-        else
-        {
-            value_ = value;
-        }
-    }
+    void set(T value) noexcept;
 };
 BOOST_PROMETHEUS_MSVC_RESTORE_WARNING
 
 } // namespace boost::prometheus::detail
+
+#ifdef BOOST_PROMETHEUS_HEADER_ONLY
+#include <boost/prometheus/impl/gauge_internal.ipp>
+#endif
 
 #endif
