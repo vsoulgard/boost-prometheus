@@ -194,7 +194,8 @@ private:
         std::string host = endpoint.address().to_string();
         if (endpoint.address().is_v6())
             host = "[" + host + "]";
-        host += std::string_view(":") + std::to_string(endpoint.port());
+        host += std::string_view(":");
+        host += std::to_string(endpoint.port());
         request.set(beast::http::field::host, host);
 
         request.set(beast::http::field::content_type,
