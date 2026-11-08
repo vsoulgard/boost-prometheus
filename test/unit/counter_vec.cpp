@@ -49,7 +49,6 @@ BOOST_AUTO_TEST_CASE(construction_custom_options)
 template <typename AtomicPolicy>
 void test_construction_rvalue()
 {
-    using key_type = typename counter_vec<AtomicPolicy>::key_type;
     // Construct by lvalue
     {
         // std::vector
