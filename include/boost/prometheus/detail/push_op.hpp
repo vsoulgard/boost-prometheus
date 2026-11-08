@@ -19,7 +19,6 @@
 #include <boost/asio/basic_stream_socket.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/beast/http.hpp>
-#include <boost/config.hpp>
 
 #include <string_view>
 #include <tuple>
@@ -27,11 +26,6 @@
 
 namespace boost::prometheus::detail {
 
-// Disable false positive on gcc 12
-#if defined(BOOST_GCC) && BOOST_GCC_VERSION >= 12000 && BOOST_GCC_VERSION < 13000
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wrestrict"
-#endif
 // Pushgateway push operation
 template <bool UsesAuth, typename GzipPolicy, typename ResponseParser, typename Socket, typename Request,
     typename DynamicBuffer, typename GzipBuffer, typename AllocBuffer, typename Registry>
@@ -200,7 +194,7 @@ private:
         std::string host = endpoint.address().to_string();
         if (endpoint.address().is_v6())
             host = "[" + host + "]";
-        host += ":" + std::to_string(endpoint.port());
+        host += std::string_view(":") + std::to_string(endpoint.port());
         request.set(beast::http::field::host, host);
 
         request.set(beast::http::field::content_type,
@@ -268,9 +262,6 @@ private:
         }
     }
 };
-#if defined(BOOST_GCC) && BOOST_GCC_VERSION >= 12000 && BOOST_GCC_VERSION < 13000
-    #pragma GCC diagnostic pop
-#endif
 
 } // namespace boost::prometheus::detail
 
