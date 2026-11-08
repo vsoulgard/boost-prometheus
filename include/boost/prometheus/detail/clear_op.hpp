@@ -24,6 +24,11 @@
 
 namespace boost::prometheus::detail {
 
+// Disable false positive on gcc 12
+#if defined(BOOST_GCC) && BOOST_GCC_VERSION > 12000 && BOOST_GCC_VERSION < 13000
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wrestrict"
+#endif
 // Pushgateway clear operation
 template <bool UsesAuth, typename ResponseParser, typename Socket, typename Request,
     typename DynamicBuffer, typename AllocBuffer>
@@ -146,11 +151,6 @@ struct clear_op
 
 private:
 
-    // Disable false positive on gcc 12
-    #if defined(BOOST_GCC) && BOOST_GCC_VERSION > 12000 && BOOST_GCC_VERSION < 13000
-        #pragma GCC diagnostic push
-        #pragma GCC diagnostic ignored "-Wrestrict"
-    #endif
     void prepare_request()
     {
         // Clear everything
@@ -174,9 +174,6 @@ private:
 
         request.prepare_payload();
     }
-    #if defined(BOOST_GCC) && BOOST_GCC_VERSION > 12000 && BOOST_GCC_VERSION < 13000
-        #pragma GCC diagnostic pop
-    #endif
 
     void close_socket() noexcept
     {
@@ -202,6 +199,9 @@ private:
         }
     }
 };
+#if defined(BOOST_GCC) && BOOST_GCC_VERSION > 12000 && BOOST_GCC_VERSION < 13000
+    #pragma GCC diagnostic pop
+#endif
 
 } // namespace boost::prometheus::detail
 
