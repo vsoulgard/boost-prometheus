@@ -16,10 +16,10 @@
 #include <boost/prometheus/pushgateway_errc.hpp>
 #include <boost/prometheus/serialize.hpp>
 
-#include <boost/beast/http.hpp>
-
 #include <boost/asio/basic_stream_socket.hpp>
 #include <boost/asio/ip/tcp.hpp>
+#include <boost/beast/http.hpp>
+#include <boost/config.hpp>
 
 #include <string_view>
 #include <tuple>
@@ -179,6 +179,11 @@ struct push_op
 
 private:
 
+    // Disable false positive on gcc 12
+    #if defined(BOOST_GCC) && BOOST_GCC_VERSION > 12000 && BOOST_GCC_VERSION < 13000
+        #pragma GCC diagnostic push
+        #pragma GCC diagnostic ignored "-Wrestrict"
+    #endif
     void prepare_request()
     {
         // Clear everything
@@ -221,6 +226,9 @@ private:
 
         request.prepare_payload();
     }
+    #if defined(BOOST_GCC) && BOOST_GCC_VERSION > 12000 && BOOST_GCC_VERSION < 13000
+        #pragma GCC diagnostic pop
+    #endif
 
     void serialize_registry()
     {
