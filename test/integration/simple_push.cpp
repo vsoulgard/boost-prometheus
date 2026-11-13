@@ -45,6 +45,7 @@ template <typename Stream>
 asio::awaitable<void> serve_one(
     Stream stream,
     bool expect_no_gzip,
+    bool expect_put,
     bool expect_auth,
     bool expect_static_registry,
     bool return_not_found)
@@ -54,14 +55,17 @@ asio::awaitable<void> serve_one(
     co_await beast::http::async_read(stream, buf, req, asio::use_awaitable);
 
     BOOST_TEST(req.target() == "/metrics/job/" + test_job_name);
-    BOOST_CHECK(req.method() == http::verb::post ||
-        req.method() == http::verb::delete_);
+    if (expect_put)
+        BOOST_CHECK(req.method() == http::verb::put);
+    else
+        BOOST_CHECK(req.method() == http::verb::post ||
+            req.method() == http::verb::delete_);
     beast::http::response<http::string_body> res{http::status::ok, req.version()};
     if (return_not_found)
     {
         res.result(http::status::not_found);
     }
-    else if (req.method() == http::verb::post)
+    else if (req.method() == http::verb::post || req.method() == http::verb::put)
     {
         if (expect_no_gzip)
             BOOST_TEST(req[http::field::content_encoding].empty());
@@ -181,6 +185,7 @@ asio::awaitable<void> serve_one(
 asio::awaitable<void> listener(
     std::shared_ptr<asio::ip::tcp::acceptor> acc,
     bool expect_no_gzip,
+    bool expect_put,
     bool expect_auth,
     bool expect_static_registry,
     bool return_not_found)
@@ -190,7 +195,10 @@ asio::awaitable<void> listener(
         asio::ip::tcp::socket sock = co_await acc->async_accept(use_awaitable);
         try
         {
-            co_await serve_one(std::move(sock), expect_no_gzip, expect_auth, expect_static_registry, return_not_found);
+            co_await serve_one(
+                std::move(sock), expect_no_gzip,
+                expect_put, expect_auth,
+                expect_static_registry, return_not_found);
         }
         catch (const boost::system::system_error&) {}
     }
@@ -200,6 +208,7 @@ asio::awaitable<void> ssl_listener(
     std::shared_ptr<asio::ip::tcp::acceptor> acc,
     std::shared_ptr<boost::asio::ssl::context> ctx,
     bool expect_no_gzip,
+    bool expect_put,
     bool expect_auth,
     bool expect_static_registry,
     bool return_not_found)
@@ -212,7 +221,10 @@ asio::awaitable<void> ssl_listener(
         {
             co_await stream.async_handshake(
                 boost::asio::ssl::stream_base::server, asio::use_awaitable);
-            co_await serve_one(std::move(stream), expect_no_gzip, expect_auth, expect_static_registry, return_not_found);
+            co_await serve_one(
+                std::move(stream), expect_no_gzip,
+                expect_put, expect_auth,
+                expect_static_registry, return_not_found);
         }
         catch (const boost::system::system_error&) {}
     }
@@ -221,6 +233,7 @@ asio::awaitable<void> ssl_listener(
 void start_listening_server(
     io_context& ioc,
     bool expect_no_gzip = false,
+    bool expect_put = false,
     bool expect_auth = false,
     bool expect_static_registry = false,
     bool return_not_found = false)
@@ -228,7 +241,10 @@ void start_listening_server(
     auto acc = std::make_shared<asio::ip::tcp::acceptor>(ioc, target_ep);
     asio::co_spawn(
         ioc,
-        listener(std::move(acc), expect_no_gzip, expect_auth, expect_static_registry, return_not_found),
+        listener(
+            std::move(acc), expect_no_gzip,
+            expect_put, expect_auth,
+            expect_static_registry, return_not_found),
         asio::detached);
 }
 
@@ -239,7 +255,7 @@ void start_listening_ssl_server(io_context& ioc)
     test::load_server_certificate(*ctx);
     auto acc = std::make_shared<asio::ip::tcp::acceptor>(ioc, target_ep);
     asio::co_spawn(ioc, ssl_listener(std::move(acc), std::move(ctx),
-        false, false, false, false), asio::detached);
+        false, false, false, false, false), asio::detached);
 }
 
 BOOST_AUTO_TEST_SUITE(test_pushgateway_simple_push)
@@ -351,7 +367,7 @@ BOOST_AUTO_TEST_CASE(clear_connection_refused)
 BOOST_AUTO_TEST_CASE(push_not_found)
 {
     io_context ioc;
-    start_listening_server(ioc, false, false, false, true);
+    start_listening_server(ioc, false, false, false, false, true);
     pushgateway pgw(ioc.get_executor());
 
     std::size_t counter = 0;
@@ -375,7 +391,7 @@ BOOST_AUTO_TEST_CASE(push_not_found)
 BOOST_AUTO_TEST_CASE(clear_not_found)
 {
     io_context ioc;
-    start_listening_server(ioc, false, false, false, true);
+    start_listening_server(ioc, false, false, false, false, true);
     pushgateway pgw(ioc.get_executor());
 
     std::size_t counter = 0;
@@ -473,7 +489,7 @@ BOOST_AUTO_TEST_CASE(push_disabled_gzip)
 BOOST_AUTO_TEST_CASE(push_auth)
 {
     boost::asio::io_context ioc;
-    start_listening_server(ioc, false, true);
+    start_listening_server(ioc, false, false, true);
     pushgateway pgw(ioc.get_executor());
 
     auto coro_push_auth = [&]() -> boost::asio::awaitable<void>
@@ -508,7 +524,7 @@ BOOST_AUTO_TEST_CASE(push_auth)
 BOOST_AUTO_TEST_CASE(clear_auth)
 {
     boost::asio::io_context ioc;
-    start_listening_server(ioc, false, true);
+    start_listening_server(ioc, false, false, true);
     pushgateway pgw(ioc.get_executor());
 
     auto coro_clear_auth = [&]() -> boost::asio::awaitable<void>
@@ -571,7 +587,7 @@ BOOST_AUTO_TEST_CASE(push_ssl_mode)
 BOOST_AUTO_TEST_CASE(push_static_registry)
 {
     boost::asio::io_context ioc;
-    start_listening_server(ioc, false, false, true);
+    start_listening_server(ioc, false, false, false, true);
     pushgateway pgw(ioc.get_executor());
     setup_static_registry();
 
@@ -607,7 +623,7 @@ BOOST_AUTO_TEST_CASE(push_static_registry)
 BOOST_AUTO_TEST_CASE(push_auth_static_registry)
 {
     boost::asio::io_context ioc;
-    start_listening_server(ioc, false, true, true);
+    start_listening_server(ioc, false, false, true, true);
     pushgateway pgw(ioc.get_executor());
     setup_static_registry();
 
@@ -653,6 +669,91 @@ BOOST_AUTO_TEST_CASE(clear_ssl_mode)
     boost::asio::co_spawn(
         ioc.get_executor(),
         coro_clear(pgw, test_job_name, target_ep),
+        [&ioc](std::exception_ptr eptr)
+        {
+            if (eptr)
+            {
+                try { std::rethrow_exception(eptr); }
+                catch (const std::exception& e) {
+                    BOOST_FAIL(std::string("fail: ") + e.what());
+                }
+            }
+            ioc.stop();
+        }
+    );
+    ioc.run();
+}
+
+BOOST_AUTO_TEST_CASE(clear_and_push_basic)
+{
+    boost::asio::io_context ioc;
+    start_listening_server(ioc, false, true);
+    pushgateway pgw(ioc.get_executor());
+
+    boost::asio::co_spawn(
+        ioc.get_executor(),
+        coro_clear_and_push(pgw, test_job_name, get_registry(), target_ep),
+        [&ioc](std::exception_ptr eptr)
+        {
+            if (eptr)
+            {
+                try { std::rethrow_exception(eptr); }
+                catch (const std::exception& e) {
+                    BOOST_FAIL(std::string("fail: ") + e.what());
+                }
+            }
+            ioc.stop();
+        }
+    );
+    ioc.run();
+}
+
+BOOST_AUTO_TEST_CASE(clear_and_push_disabled_gzip)
+{
+    boost::asio::io_context ioc;
+    start_listening_server(ioc, true, true);
+    pushgateway<
+    decltype(ioc.get_executor()), gzip_policy<false>>
+        pgw(ioc.get_executor());
+
+    boost::asio::co_spawn(
+        ioc.get_executor(),
+        coro_clear_and_push(pgw, test_job_name, get_registry(), target_ep),
+        [&ioc](std::exception_ptr eptr)
+        {
+            if (eptr)
+            {
+                try { std::rethrow_exception(eptr); }
+                catch (const std::exception& e) {
+                    BOOST_FAIL(std::string("fail: ") + e.what());
+                }
+            }
+            ioc.stop();
+        }
+    );
+    ioc.run();
+}
+
+BOOST_AUTO_TEST_CASE(clear_and_push_auth)
+{
+    boost::asio::io_context ioc;
+    start_listening_server(ioc, false, true, true);
+    pushgateway pgw(ioc.get_executor());
+
+    auto coro_clear_and_push_auth = [&]() -> boost::asio::awaitable<void>
+    {
+        for (std::size_t i = 0; i < 10u; i++)
+        {
+            prometheus::error_code ec;
+            co_await pgw.async_clear_and_push(target_ep, test_job_name, "Bearer secret-key", get_registry(),
+                asio::redirect_error(asio::use_awaitable, ec));
+
+            BOOST_TEST(ec == prometheus::error_code());
+        }
+    };
+    boost::asio::co_spawn(
+        ioc.get_executor(),
+        coro_clear_and_push_auth(),
         [&ioc](std::exception_ptr eptr)
         {
             if (eptr)

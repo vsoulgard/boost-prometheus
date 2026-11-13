@@ -25,7 +25,7 @@ to a direct atomic update on pre-resolved storage.
 The following:
 [source,cpp]
 ----
-using requests_total = static_counter<
+using requests_total = static_int_counter<
     "requests",
     help<"Number of received requests">,
     labels<"method", "status">>;
@@ -35,24 +35,15 @@ Compiles to:
 [source,asm]
 ----
 ; Load the pre-calculated unique index for this specific label pair.
-mov     rax, qword ptr [rip + static_counter::index]
-; Load the base pointer of the metrics storage array.
-mov     rdx, qword ptr [rip + static_counter::impl_base]
-shl     rax, 7
-lea     rcx, [rdx + rax]
-add     rcx, 64
-movq    xmm1, qword ptr [rdx + rax + 64]
-; The increment constant (1.0)
-movsd   xmm0, qword ptr [rip + .LCPI4_0]
-; CAS Loop
-.LBB4_1:
-    movq    rax, xmm1
-    addsd   xmm1, xmm0
-    movq    rdx, xmm1
-    lock    cmpxchg qword ptr [rcx], rdx
-    movq    xmm1, rax
-    jne     .LBB4_1
+mov     rax, QWORD PTR [rip + static_int_counter::index]
+sal     rax, 7
+; Add the base pointer of the metrics storage array.
+add     rax, QWORD PTR [rip + static_int_counter::impl_base + 64]
+; Atomic increment.
+lock add        QWORD PTR [rax+64], 1
 ----
+
+View on https://godbolt.org/z/GMM9bPdec[Compiler Explorer]
 
 Static metrics live in a static registry and are exposed
 alongside dynamic metrics via

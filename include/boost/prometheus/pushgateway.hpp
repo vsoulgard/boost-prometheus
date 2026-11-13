@@ -298,7 +298,7 @@ public:
             detail::push_op<false, gzip_policy_type, decltype(response_parser_), socket_type, request_type,
             decltype(buffer_), gzip_buffer_type, decltype(alloc_buffer_), registry_type>{
             response_parser_, socket_, request_, buffer_, gzip_buffer_, alloc_buffer_, registry,
-            std::move(endpoint), std::move(job_name)},
+            std::move(endpoint), std::move(job_name), beast::http::verb::post},
             token,
             socket_
         );
@@ -332,7 +332,7 @@ public:
             detail::push_op<false, gzip_policy_type, decltype(response_parser_), socket_type, request_type,
             decltype(buffer_), gzip_buffer_type, decltype(alloc_buffer_), StaticRegistry>{
             response_parser_, socket_, request_, buffer_, gzip_buffer_, alloc_buffer_,
-            std::move(endpoint), std::move(job_name)},
+            std::move(endpoint), std::move(job_name), beast::http::verb::post},
             token,
             socket_
         );
@@ -372,7 +372,7 @@ public:
             detail::push_op<true, gzip_policy_type, decltype(response_parser_), socket_type, request_type,
             decltype(buffer_), gzip_buffer_type, decltype(alloc_buffer_), registry_type>{
             response_parser_, socket_, request_, buffer_, gzip_buffer_, alloc_buffer_, registry,
-            std::move(endpoint), std::move(job_name), std::move(authorization)},
+            std::move(endpoint), std::move(job_name), std::move(authorization), beast::http::verb::post},
             token,
             socket_
         );
@@ -405,7 +405,156 @@ public:
             detail::push_op<true, gzip_policy_type, decltype(response_parser_), socket_type, request_type,
             decltype(buffer_), gzip_buffer_type, decltype(alloc_buffer_), StaticRegistry>{
             response_parser_, socket_, request_, buffer_, gzip_buffer_, alloc_buffer_,
-            std::move(endpoint), std::move(job_name), std::move(authorization)},
+            std::move(endpoint), std::move(job_name), std::move(authorization), beast::http::verb::post},
+            token,
+            socket_
+        );
+    }
+
+    /**
+     * \brief Clears all metrics of a job group and pushes a dynamic registry to a job.
+     *
+     * Serializes \p registry in the Prometheus 0.0.4 text format, sends it
+     * to the Pushgateway at \p endpoint under \p job_name, and reads the
+     * response. On completion, `ec` is empty on success or contains the
+     * transport / HTTP error otherwise.
+     *
+     * Metrics already present in the job group but absent from
+     * \p registry are **deleted** — only metrics in the request will be
+     * recorded. Use `async_push()` to add new metrics to the job group.
+     *
+     * The registry must outlive the operation.
+     *
+     * \param endpoint Pushgateway address.
+     * \param job_name Job label value, e.g. `"batch_job"`.
+     * \param registry Registry to serialize and push. Must have the same
+     *        `atomic_policy` as this `pushgateway`.
+     * \param token    Completion token with signature
+     *        `void(boost::system::error_code)`.
+     */
+    template
+        <boost::asio::completion_token_for<void(boost::system::error_code)>
+        CompletionToken>
+    auto async_clear_and_push(
+        boost::asio::ip::tcp::endpoint endpoint,
+        std::string job_name,
+        registry_type& registry,
+        CompletionToken&& token)
+    {
+        reset_ssl_stream();
+        return boost::asio::async_compose<CompletionToken,
+            void(boost::system::error_code)>(
+            detail::push_op<false, gzip_policy_type, decltype(response_parser_), socket_type, request_type,
+            decltype(buffer_), gzip_buffer_type, decltype(alloc_buffer_), registry_type>{
+            response_parser_, socket_, request_, buffer_, gzip_buffer_, alloc_buffer_, registry,
+            std::move(endpoint), std::move(job_name), beast::http::verb::put},
+            token,
+            socket_
+        );
+    }
+
+    /**
+     * \overload
+     * \brief Clears all metrics of a job group and pushes a static registry to a job.
+     *
+     * \tparam StaticRegistry A `static_registry<...>` type whose
+     *         `atomic_policy` matches this `pushgateway`. Passed as a
+     *         template parameter because static registries have no
+     *         instances — only the type carries the data.
+     *
+     * \param endpoint Pushgateway address.
+     * \param job_name Job label value.
+     * \param token    Completion token with signature
+     *        `void(boost::system::error_code)`.
+     */
+    template <typename StaticRegistry,
+        boost::asio::completion_token_for<void(boost::system::error_code)>
+        CompletionToken>
+    auto async_clear_and_push(
+        boost::asio::ip::tcp::endpoint endpoint,
+        std::string job_name,
+        CompletionToken&& token)
+    {
+        reset_ssl_stream();
+        return boost::asio::async_compose<CompletionToken,
+            void(boost::system::error_code)>(
+            detail::push_op<false, gzip_policy_type, decltype(response_parser_), socket_type, request_type,
+            decltype(buffer_), gzip_buffer_type, decltype(alloc_buffer_), StaticRegistry>{
+            response_parser_, socket_, request_, buffer_, gzip_buffer_, alloc_buffer_,
+            std::move(endpoint), std::move(job_name), beast::http::verb::put},
+            token,
+            socket_
+        );
+    }
+
+    /**
+     * \overload
+     * \brief Clears all metrics of a job group and pushes a dynamic registry with an `Authorization` header.
+     *
+     * Identical to the 4-argument overload, but sends the given
+     * \p authorization string verbatim as the value of the
+     * `Authorization` header. The header value is used as-is: any scheme
+     * prefix (e.g. `"Bearer "`, `"Basic "`) must be included by the
+     * caller. The Pushgateway only needs to accept or reject the request;
+     * `pushgateway` performs no validation of its own.
+     *
+     * \param endpoint      Pushgateway address.
+     * \param job_name      Job label value.
+     * \param authorization Value of the `Authorization` header.
+     * \param registry      Registry to serialize and push.
+     * \param token         Completion token with signature
+     *        `void(boost::system::error_code)`.
+     */
+    template
+        <boost::asio::completion_token_for<void(boost::system::error_code)>
+        CompletionToken>
+    auto async_clear_and_push(
+        boost::asio::ip::tcp::endpoint endpoint,
+        std::string job_name,
+        std::string authorization,
+        registry_type& registry,
+        CompletionToken&& token)
+    {
+        reset_ssl_stream();
+        return boost::asio::async_compose<CompletionToken,
+            void(boost::system::error_code)>(
+            detail::push_op<true, gzip_policy_type, decltype(response_parser_), socket_type, request_type,
+            decltype(buffer_), gzip_buffer_type, decltype(alloc_buffer_), registry_type>{
+            response_parser_, socket_, request_, buffer_, gzip_buffer_, alloc_buffer_, registry,
+            std::move(endpoint), std::move(job_name), std::move(authorization), beast::http::verb::put},
+            token,
+            socket_
+        );
+    }
+
+    /**
+     * \overload
+     * \brief Clears all metrics of a job group and pushes a static registry with an `Authorization` header.
+     *
+     * \tparam StaticRegistry A `static_registry<...>` type.
+     *
+     * \param endpoint      Pushgateway address.
+     * \param job_name      Job label value.
+     * \param authorization Value of the `Authorization` header.
+     * \param token         Completion token with signature
+     *        `void(boost::system::error_code)`.
+     */
+    template <typename StaticRegistry,
+        boost::asio::completion_token_for<void(boost::system::error_code)>
+        CompletionToken>
+    auto async_clear_and_push(
+        boost::asio::ip::tcp::endpoint endpoint,
+        std::string job_name,
+        std::string authorization,
+        CompletionToken&& token)
+    {
+        reset_ssl_stream();
+        return boost::asio::async_compose<CompletionToken,
+            void(boost::system::error_code)>(
+            detail::push_op<true, gzip_policy_type, decltype(response_parser_), socket_type, request_type,
+            decltype(buffer_), gzip_buffer_type, decltype(alloc_buffer_), StaticRegistry>{
+            response_parser_, socket_, request_, buffer_, gzip_buffer_, alloc_buffer_,
+            std::move(endpoint), std::move(job_name), std::move(authorization), beast::http::verb::put},
             token,
             socket_
         );

@@ -63,6 +63,22 @@ inline auto coro_clear = [](
     }
 };
 
+inline auto coro_clear_and_push = [](
+    auto& pgw,
+    std::string job_name,
+    auto& registry,
+    const asio::ip::tcp::endpoint& target_ep) -> boost::asio::awaitable<void>
+{
+    for (std::size_t i = 0; i < 10u; i++)
+    {
+        prometheus::error_code ec;
+        co_await pgw.async_clear_and_push(target_ep, job_name, registry,
+            asio::redirect_error(asio::use_awaitable, ec));
+
+        BOOST_TEST(ec == prometheus::error_code());
+    }
+};
+
 } // namespace boost::prometheus::test
 
 #endif
