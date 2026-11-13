@@ -75,6 +75,8 @@ current request are **left untouched** — they are neither deleted nor
 reset. This corresponds to the Pushgateway's `POST /metrics/job/<job>`
 semantics.
 
+To replace all metrics of a job group, use `async_clear_and_push()`.
+
 To remove all metrics of a job group, use `async_clear()` (see
 xref:#clearing[Clearing metrics]).
 

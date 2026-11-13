@@ -68,9 +68,37 @@ inline std::unique_ptr<registry<>> setup_registry()
     return reg;
 }
 
+inline std::unique_ptr<registry<>> setup_registry2()
+{
+    std::unique_ptr<registry<>> reg = std::make_unique<registry<>>();
+    static int_counter_vec c(
+        "requests2",
+        {.help = "Number of HTTP requests", .unit = ""},
+        {"method"});
+    static gauge g("applications_active2",
+        {.help = "Current number of applications", .unit = ""});
+    c.with_labels({"POST"}).inc(15u);
+    g.set(50.0);
+    static histogram h(
+        "request_duration2_seconds",
+        {.help = "Duration of HTTP requests in seconds", .unit = "seconds", .buckets = {}});
+    h.observe(0.1);
+
+    reg->register_metric(c);
+    reg->register_metric(g);
+    reg->register_metric(h);
+    return reg;
+}
+
 inline registry<>& get_registry()
 {
     static std::unique_ptr<registry<>> reg = setup_registry();
+    return *reg;
+}
+
+inline registry<>& get_registry2()
+{
+    static std::unique_ptr<registry<>> reg = setup_registry2();
     return *reg;
 }
 

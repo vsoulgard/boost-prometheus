@@ -60,6 +60,8 @@ struct push_op
     // Optional, only if authorization value is provided.
     [[no_unique_address]]
     authorization_type authorization;
+    // PUT or POST method
+    beast::http::verb method;
 
     enum class state_t
     {
@@ -76,34 +78,43 @@ struct push_op
     push_op(ResponseParser& response_parser, Socket& socket, Request& request,
         DynamicBuffer& buffer, GzipBuffer& gzip_buffer, AllocBuffer& alloc_buffer, Registry& registry,
         boost::asio::ip::tcp::endpoint endpoint,
-        std::string job_name) requires (!UsesAuth && !is_static_registry)
+        std::string job_name,
+        beast::http::verb method) requires (!UsesAuth && !is_static_registry)
         : response_parser(response_parser), socket(socket), request(request),
         buffer(buffer), gzip_buffer(gzip_buffer), alloc_buffer(alloc_buffer), registry(registry),
-        endpoint(std::move(endpoint)), job_name(std::move(job_name)) {}
+        endpoint(std::move(endpoint)), job_name(std::move(job_name)), method(method) {}
 
     push_op(ResponseParser& response_parser, Socket& socket, Request& request,
         DynamicBuffer& buffer, GzipBuffer& gzip_buffer, AllocBuffer& alloc_buffer, Registry& registry,
         boost::asio::ip::tcp::endpoint endpoint,
-        std::string job_name, std::string authorization) requires (UsesAuth && !is_static_registry)
+        std::string job_name,
+        std::string authorization,
+        beast::http::verb method) requires (UsesAuth && !is_static_registry)
         : response_parser(response_parser), socket(socket), request(request),
         buffer(buffer), gzip_buffer(gzip_buffer), alloc_buffer(alloc_buffer), registry(registry),
-        endpoint(std::move(endpoint)), job_name(std::move(job_name)), authorization(std::move(authorization)) {}
+        endpoint(std::move(endpoint)), job_name(std::move(job_name)), authorization(std::move(authorization)),
+        method(method) {}
     // Static registry
     push_op(ResponseParser& response_parser, Socket& socket, Request& request,
         DynamicBuffer& buffer, GzipBuffer& gzip_buffer, AllocBuffer& alloc_buffer,
         boost::asio::ip::tcp::endpoint endpoint,
-        std::string job_name) requires (!UsesAuth && is_static_registry)
+        std::string job_name,
+        beast::http::verb method) requires (!UsesAuth && is_static_registry)
         : response_parser(response_parser), socket(socket), request(request),
         buffer(buffer), gzip_buffer(gzip_buffer), alloc_buffer(alloc_buffer),
-        endpoint(std::move(endpoint)), job_name(std::move(job_name)) {}
+        endpoint(std::move(endpoint)), job_name(std::move(job_name)),
+        method(method) {}
     // Static registry with auth
     push_op(ResponseParser& response_parser, Socket& socket, Request& request,
         DynamicBuffer& buffer, GzipBuffer& gzip_buffer, AllocBuffer& alloc_buffer,
         boost::asio::ip::tcp::endpoint endpoint,
-        std::string job_name, std::string authorization) requires (UsesAuth && is_static_registry)
+        std::string job_name,
+        std::string authorization,
+        beast::http::verb method) requires (UsesAuth && is_static_registry)
         : response_parser(response_parser), socket(socket), request(request),
         buffer(buffer), gzip_buffer(gzip_buffer), alloc_buffer(alloc_buffer),
-        endpoint(std::move(endpoint)), job_name(std::move(job_name)), authorization(std::move(authorization)) {}
+        endpoint(std::move(endpoint)), job_name(std::move(job_name)), authorization(std::move(authorization)),
+        method(method) {}
 
     template <typename Self>
     void operator()(
@@ -187,7 +198,7 @@ private:
         buffer.clear();
         alloc_buffer.reset();
 
-        request.method(beast::http::verb::post);
+        request.method(method);
         request.target("/metrics/job/" + job_name);
         request.version(11);
 

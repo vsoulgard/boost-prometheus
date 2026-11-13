@@ -68,6 +68,7 @@ int main()
     ioc.run();
 }
 ```
+Try it on [Compiler Explorer](https://godbolt.org/z/n9TEGddaa)
 ## Contributing
 Contributions and feedback are highly welcome! To ensure a smooth process:
 - Please **open an issue first** to discuss any major improvements, architectural changes, or new features before submitting a pull request.
