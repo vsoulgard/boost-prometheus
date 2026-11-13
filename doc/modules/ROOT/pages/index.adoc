@@ -136,3 +136,5 @@ int main()
     ioc.run();
 }
 ----
+
+Try it on https://godbolt.org/z/n9TEGddaa[Compiler Explorer]
