@@ -23,6 +23,9 @@
 #include "test_common/pushgateway_utils.hpp"
 #include "test_common/setup_registry.hpp"
 
+#include <chrono>
+#include <thread>
+
 using namespace boost;
 using namespace beast;
 using namespace boost::asio;
@@ -31,6 +34,45 @@ using namespace boost::prometheus::test;
 
 const ip::tcp::endpoint target_ep(asio::ip::address_v4::loopback(), 9091);
 const std::string test_job_name = "test";
+
+// Scrape Pushgateway with retries, because it updates its metrics async
+template <typename CheckFunc>
+std::string fetch_metrics_with_retry(
+    const boost::asio::ip::tcp::endpoint& ep,
+    std::string_view host,
+    std::string_view accept,
+    CheckFunc&& check,
+    std::chrono::milliseconds timeout = std::chrono::seconds(3),
+    std::chrono::milliseconds interval = std::chrono::milliseconds(100))
+{
+    auto deadline = std::chrono::steady_clock::now() + timeout;
+
+    while (std::chrono::steady_clock::now() < deadline)
+    {
+        boost::asio::io_context ioc;
+        beast::tcp_stream stream(ioc);
+        beast::error_code ec;
+
+        stream.connect(ep, ec);
+        if (!ec)
+        {
+            std::string result = make_request(stream, host, "/metrics", accept);
+            if (check(result)) {
+                return result;
+            }
+        }
+
+        std::this_thread::sleep_for(interval);
+    }
+
+    BOOST_FAIL("Timeout: metrics did not appear in Pushgateway within the expected time");
+    return "";
+}
+
+bool check_registry1_ready(std::string_view str)
+{
+    return str.find("requests_total{instance=\"\",job=\"test\",method=\"GET\"} 5\n") != std::string_view::npos;
+}
 
 void check_registry1(std::string_view str, bool found = true)
 {
@@ -81,6 +123,11 @@ void check_registry1(std::string_view str, bool found = true)
     BOOST_CHECK(find(
         "# TYPE cpu_temperature_celsius_gcount gauge\n"
         "cpu_temperature_celsius_gcount{instance=\"\",job=\"test\"} 1\n"));
+}
+
+bool check_registry2_ready(std::string_view str)
+{
+    return str.find("requests2_total{instance=\"\",job=\"test\",method=\"POST\"} 15\n") != std::string_view::npos;
 }
 
 void check_registry2(std::string_view str, bool found = true)
@@ -140,12 +187,11 @@ void test_push()
         }
     );
     ioc.run();
-
-    beast::tcp_stream stream(ioc);
-    beast::error_code ec;
-    stream.connect(target_ep, ec);
-    if (ec) BOOST_FAIL("Failed to connect: " << ec.message());
-    std::string result = make_request(stream, "127.0.0.1:9091", "/metrics", "text/plain;version=0.0.4");
+    std::string result = fetch_metrics_with_retry(
+        target_ep,
+        "127.0.0.1:9091",
+        "text/plain;version=0.0.4",
+        check_registry1_ready);
     // Parse scrapped metrics.
     check_registry1(result);
 }
@@ -174,11 +220,11 @@ void test_clear_and_push()
         );
         ioc.run();
 
-        beast::tcp_stream stream(ioc);
-        beast::error_code ec;
-        stream.connect(target_ep, ec);
-        if (ec) BOOST_FAIL("Failed to connect: " << ec.message());
-        std::string result = make_request(stream, "127.0.0.1:9091", "/metrics", "text/plain;version=0.0.4");
+        std::string result = fetch_metrics_with_retry(
+            target_ep,
+            "127.0.0.1:9091",
+            "text/plain;version=0.0.4",
+            check_registry1_ready);
         // Parse scrapped metrics.
         check_registry1(result);
         check_registry2(result, false);
@@ -204,11 +250,11 @@ void test_clear_and_push()
         );
         ioc.run();
 
-        beast::tcp_stream stream(ioc);
-        beast::error_code ec;
-        stream.connect(target_ep, ec);
-        if (ec) BOOST_FAIL("Failed to connect: " << ec.message());
-        std::string result = make_request(stream, "127.0.0.1:9091", "/metrics", "text/plain;version=0.0.4");
+        std::string result = fetch_metrics_with_retry(
+            target_ep,
+            "127.0.0.1:9091",
+            "text/plain;version=0.0.4",
+            check_registry2_ready);
         check_registry1(result, false);
         check_registry2(result);
     }
@@ -263,11 +309,13 @@ BOOST_AUTO_TEST_CASE(push_static_registry)
     );
     ioc.run();
 
-    beast::tcp_stream stream(ioc);
-    beast::error_code ec;
-    stream.connect(target_ep, ec);
-    if (ec) BOOST_FAIL("Failed to connect: " << ec.message());
-    std::string result = make_request(stream, "127.0.0.1:9091", "/metrics", "text/plain;version=0.0.4");
+    std::string result = fetch_metrics_with_retry(
+        target_ep,
+        "127.0.0.1:9091",
+        "text/plain;version=0.0.4",
+        [](std::string_view str)
+        { return str.find("requests_total{instance=\"\",job=\"test\",method=\"POST\"} 15\n")
+            != std::string_view::npos; });
     // Parse scrapped metrics.
     // Pushgateway uses metadata order: # HELP # TYPE.
     // Pushgateway adds instance and job labels.
