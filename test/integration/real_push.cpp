@@ -35,6 +35,7 @@ using namespace boost::prometheus::test;
 const ip::tcp::endpoint target_ep(asio::ip::address_v4::loopback(), 9091);
 const std::string test_job_name = "test";
 
+// Scrape Pushgateway with retries, because it updates its metrics async
 template <typename CheckFunc>
 std::string fetch_metrics_with_retry(
     const boost::asio::ip::tcp::endpoint& ep,
@@ -220,10 +221,10 @@ void test_clear_and_push()
         ioc.run();
 
         std::string result = fetch_metrics_with_retry(
-        target_ep,
-        "127.0.0.1:9091",
-        "text/plain;version=0.0.4",
-        check_registry1_ready);
+            target_ep,
+            "127.0.0.1:9091",
+            "text/plain;version=0.0.4",
+            check_registry1_ready);
         // Parse scrapped metrics.
         check_registry1(result);
         check_registry2(result, false);
@@ -250,10 +251,10 @@ void test_clear_and_push()
         ioc.run();
 
         std::string result = fetch_metrics_with_retry(
-        target_ep,
-        "127.0.0.1:9091",
-        "text/plain;version=0.0.4",
-        check_registry2_ready);
+            target_ep,
+            "127.0.0.1:9091",
+            "text/plain;version=0.0.4",
+            check_registry2_ready);
         check_registry1(result, false);
         check_registry2(result);
     }
